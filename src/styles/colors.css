@@ -1,0 +1,68 @@
+/* src/styles/colors.css */
+:root {
+  --shadow: rgba(0, 0, 0, 0.25);
+  --gradient-pro: linear-gradient(hsl(40, 50%, 50%) 0%, hsl(40, 50%, 75%) 100%);
+  --w1: hsl(0, 0%, 95%);
+  --w2: hsl(0, 0%, 40%);
+  --w3: hsl(200, 75%, 95%);
+  --w4: hsl(60, 85%, 95%);
+  --t-pro: #142952;
+  --bg-pro: rgb(239, 163, 11);
+  --bg-t-info: #8ff;
+  --bg-t-success: #8f8;
+  --bg-t-warning: #ff6;
+  --bg-t-error: #f66;
+  --g0: hsl(130, 40%, 81%);
+  --g1: hsl(131, 77%, 81%);
+  --g2: #7ee790;
+  --g3: #20602c;
+  --r1: #ecc9c6;
+  --r2: #f07f75;
+  --r3: #602420;
+  --y0: #fbfaf9;
+  --y1: rgb(250, 248, 245);
+  --y2: rgb(242, 238, 233);
+  --y3: #e8e1d9;
+  --y5: #7e7567;
+  --y6: #ece7df;
+  --y7: #2e271f;
+  --y8: #594e40;
+  --y9: #988c81;
+  --y10: #d6cec2;
+  --bb: #544e45;
+  --bg-main: var(--y1);
+  --bg-side: var(--y3);
+  --bg-card: var(--y2);
+  --bg-group: var(--y6);
+  --bg-chat-l: var(--w3);
+  --bg-chat-r: var(--w4);
+  --text-head: var(--y7);
+  --text-title: var(--y8);
+  --text-base: var(--y8);
+  --text-accent: var(--y0);
+  --border: var(--y10);
+}
+
+/*
+html[data-theme='dark'] {
+  --shadow: rgba(255, 255, 255, 0.2);
+  --gradient-pro: linear-gradient(hsl(20, 50%, 50%) 0%, hsl(40, 80%, 45%) 100%);
+  --w1: rgb(96, 96, 96);
+  --w2: rgb(64, 64, 64);
+  --g1: hsl(100, 60%, 60%);
+  --g2: hsl(90, 80%, 40%);
+  --g3: hsl(140, 50%, 10%);
+  --r1: #ff2d55;
+  --r2: #ff453a;
+  --r3: #ff8e85;
+  --y0: hsl(180, 20%, 95%);
+  --y1: hsl(200, 5%, 19%);
+  --y2: hsl(220, 8%, 23%);
+  --y3: hsl(210, 8%, 26%);
+  --y5: hsl(200, 10%, 75%);
+  --y6: hsl(260, 5%, 30%);
+  --y7: hsl(48, 56%, 90%);
+  --y8: hsl(60, 6%, 65%);
+  --y9: hsl(200, 10%, 40%);
+  --y10: hsl(0, 0%, 33%);
+} */

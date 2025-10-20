@@ -1,0 +1,171 @@
+{
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "language": "Language",
+    "appLanguage": "Application language",
+    "languageToLearn": "Language to learn",
+    "voiceSettings": "Voice settings",
+    "voice": "Voice",
+    "defaultVoice": "Default voice (WaveNet, female)",
+    "speechRate": "Speech rate",
+    "preListening": "Pre-listening",
+    "test": "Test"
+  },
+  "buttons": {
+    "ok": "OK",
+    "done": "Done",
+    "profile": "Profile",
+    "logOut": "Log out",
+    "delete": "Delete account",
+    "del": "Delete",
+    "startFree": "Start free trial",
+    "dialogList": "Dialog List",
+    "analysis": "Dialog Analysis",
+    "listen": "Listen to the Dialog",
+    "analysisM": "Analysis",
+    "listenM": "Listen all",
+    "delDialog": "Delete Dialog",
+    "learning": "Learn",
+    "listening": "Listen",
+    "speaking": "Speak",
+    "translation": "Translate",
+    "cancel": "Cancel",
+    "save": "Save",
+    "findMore": "Find out more",
+    "close": "Close",
+    "reDialog": "Repeat the dialogue",
+    "reLine": "Repeat the line",
+    "nextLine": "Next line",
+    "endPractice": "End practice",
+    "mic": "Microphone"
+  },
+  "welcome": {
+    "title": "European Languages with AI",
+    "subtitle": "Dialogues for Life",
+    "text1": "Create personalized dialogues in any of the available European languages by specifying your level, topic, and keywords.",
+    "text2": "The application is your personal tutor, offering unique training modes: from simple text familiarization to practicing pronunciation and translation skills.",
+    "text3": "Get instant feedback, detailed grammatical and lexical analysis, adapted to your level."
+  },
+  "auth": {
+    "in": "Log in",
+    "up": "Sign up",
+    "errPass": "Incorrect password. Please try again.",
+    "errUser": "User with this email address not found.",
+    "errEmail": "This email address is already in use.",
+    "errDefault": "An error occurred. Please try again later.",
+    "email": "E-mail",
+    "pass": "Password",
+    "or": "or",
+    "notAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?"
+  },
+  "all": {
+    "createNew": "New dialog",
+    "profile": "Profile",
+    "settings": "Settings",
+    "savedDialogs": "Saved dialogs",
+    "notDialogs": "You don't have any dialogs yet.",
+    "createFirst": "First dialog"
+  },
+  "profile": {
+    "title": "Profile",
+    "subscr": "Subscription",
+    "yourSubscr": "Your subscription: ",
+    "genToday": "Generations today: ",
+    "savedDialog": "Saved dialogues: ",
+    "unlimit": "unlimited",
+    "unlimGen": "Unlimited dialogue generations",
+    "unlimStor": "Unlimited dialogue storage",
+    "qualityVoice": "High-quality voices (Google Cloud)",
+    "allLevels": "Access to all levels (A1-C1)",
+    "allModes": "All training modes",
+    "analysis": "Lexical and grammar analysis of dialogues (AI)",
+    "upgrade": "Upgrade to PRO",
+    "validUntil": "Valid until",
+    "manageSubscr": "Renew",
+    "accountMenag": "Account management",
+    "logoutConfirmTitle": "Log out of account?",
+    "logoutConfirmMsg": "Are you sure you want to log out?",
+    "deleteConfirmTitle": "Delete account?",
+    "deleteConfirmMsg": "Warning! This action is irreversible. All your data and dialogues will be permanently deleted."
+  },
+  "view": {
+    "inPro": "Dialog analysis is available in the PRO version.",
+    "headerAnalysis": "Grammatical and lexical analysis.",
+    "goToPro": "Upgrade to PRO",
+    "unlock": "Unlock all the features of the app!",
+    "description1": "You've fully used your free PRO access limit for today — that's our daily gift!",
+    "description2": "To continue using all PRO features without restrictions, get a subscription.",
+    "description3": "Get unlimited access now and use them as much as you need.",
+    "description4": "Switch to a PRO subscription and get maximum benefits today!",
+    "usePro": "PRO access used. Left: ",
+    "endPro": "Last PRO access for today used.",
+    "deleteConfirmMsg": "Are you sure you want to delete this dialogue?"
+  },
+  "new": {
+    "createNew": "Create new dialog",
+    "topic": "Dialog topic",
+    "reqWords": "Required words (comma-separated)",
+    "wordsPlaceholder": "word-1, word-2, word-3 ...",
+    "level": "Difficulty level",
+    "lines": "Number of lines",
+    "usePro": "PRO access used. Generations left: ",
+    "limit1": "Daily generation limit (",
+    "limit2": ") exhausted.",
+    "error": "An error occurred while creating the dialogue. Try again."
+  },
+  "modal": {
+    "title": "Dialogue completed.",
+    "text": "Great job! You can listen to it, analyze it, or start the training again."
+  },
+  "level1": {
+    "slogan": "Learn dialogues step by step!",
+    "description": "Listen to the line, read the original and translation. Step by step. Repeat the phrase or the entire dialogue at any time.",
+    "descriptionMobile": "Listen, read, and repeat step by step.",
+    "next": "next",
+    "reDialog": "from start",
+    "reLine": "repeat",
+    "endPractice": "exit"
+  },
+  "level2": {
+    "slogan": "Speak boldly and correctly!",
+    "description": "Check your pronunciation and fix mistakes. Move through the dialogue step by step, repeating its parts for perfect mastery.",
+    "descriptionMobile": "Speak boldly and correctly! Check your pronunciation and fix mistakes.",
+    "info": "'Microphone': say the line. Press again to check for errors."
+  },
+  "level3": {
+    "slogan": "Translate and check!",
+    "description": "Translate the line, speak it into 'Microphone'. Press again to activate semantic error analysis. Perfect for training fast and accurate speaking.",
+    "descriptionMobile": "Analysis of semantic errors in your translation.",
+    "info": "'Microphone': say the line. Press again to check translation."
+  },
+  "level4": {
+    "slogan": "Listen. Choose. Understand!",
+    "description": "Listen to the line and choose the correct translation from the suggested cards. Train your listening comprehension in the context of a real dialogue.",
+    "descriptionMobile": "Check how well you understand live speech."
+  },
+  "card": {
+    "level": "Level ",
+    "lines": "Lines "
+  },
+  "store": {
+    "listening": "Listening...",
+    "error": "An error occurred",
+    "resultError": "Failed to load analysis. Try again.",
+    "trError": "Failed to verify translation. Try again.",
+    "delDialogError": "Failed to delete dialogue. Try again.",
+    "noData": "Not enough data for analysis.",
+    "noSpeechApi": "Speech recognition is not supported in this browser.",
+    "errRec": "Speech recognition error: "
+  },
+  "feedback": {
+    "perfect": "Meaning is correct, and it sounds natural!",
+    "natural": "Meaning is correct, but better to say: ",
+    "minor": "Very close! Instead of 'X' here it's better 'Y'.",
+    "wrong": "Meaning is wrong. Try this:"
+  }
+}
