@@ -1,32 +1,67 @@
+// LinguaFlow/functions/index.js
+import functions from 'firebase-functions';
+import { TextToSpeechClient } from '@google-cloud/text-to-speech';
+import cors from 'cors';
+
+// Инициализируем CORS
+const corsHandler = cors({ origin: true });
+
+// Инициализируем клиент TTS
+const ttsClient = new TextToSpeechClient();
+
 /**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ * Вызываемая функция для синтеза речи.
+ * Получает: data.text, data.langCode, data.voiceName, data.speechRate
  */
+export const getSpeech = functions.https.onRequest((request, response) => {
+  // Оборачиваем функцию в CORS
+  corsHandler(request, response, async () => {
+    // ✨ 1. ПОЛУЧАЕМ ВСЕ НОВЫЕ ДАННЫЕ ИЗ ЗАПРОСА
+    const { text, langCode, voiceName, speechRate } = request.body.data;
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
-const logger = require("firebase-functions/logger");
+    // 2. Проверка данных
+    if (!text || !langCode) {
+      console.error('Нет текста или кода языка');
+      response.status(400).send({ error: 'Не предоставлен текст или код языка.' });
+      return;
+    }
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+    // ✨ 3. СОЗДАЕМ ДИНАМИЧЕСКИЙ ОБЪЕКТ ГОЛОСА
+    const voiceConfig = {
+      languageCode: langCode,
+    };
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+    // Если пользователь выбрал НЕ "default", мы используем конкретное имя голоса.
+    if (voiceName && voiceName !== 'default') {
+      voiceConfig.name = voiceName;
+    } else {
+      // Иначе, просто просим "Нейтральный" пол (Google выберет лучший).
+      voiceConfig.ssmlGender = 'NEUTRAL';
+    }
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+    // 4. Формирование запроса к Google Cloud TTS
+    const ttsRequest = {
+      input: { text: text },
+      voice: voiceConfig, // ✨ Используем наш новый voiceConfig
+      audioConfig: {
+        audioEncoding: 'MP3',
+        speakingRate: speechRate || 1.0, // ✨ Используем скорость (или 1.0 по умолчанию)
+      },
+    };
+
+    try {
+      // 5. Вызов API
+      const [ttsResponse] = await ttsClient.synthesizeSpeech(ttsRequest);
+
+      // 6. Отправка аудио обратно во Vue
+      response.send({
+        data: {
+          audioContent: ttsResponse.audioContent.toString('base64'),
+        },
+      });
+    } catch (error) {
+      console.error('Ошибка синтеза речи:', error);
+      response.status(500).send({ error: 'Не удалось синтезировать речь.' });
+    }
+  });
+});

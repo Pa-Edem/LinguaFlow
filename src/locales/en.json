@@ -160,7 +160,8 @@
     "delDialogError": "Failed to delete dialogue. Try again.",
     "noData": "Not enough data for analysis.",
     "noSpeechApi": "Speech recognition is not supported in this browser.",
-    "errRec": "Speech recognition error: "
+    "errRec": "Speech recognition error: ",
+    "ttsError": "Failed to load premium voice."
   },
   "feedback": {
     "perfect": "Meaning is correct, and it sounds natural!",

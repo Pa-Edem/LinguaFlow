@@ -7,6 +7,8 @@ export const useSettingsStore = defineStore('settings', {
     theme: 'light',
     uiLanguage: 'en',
     learningLanguage: 'Suomi',
+    speechRate: 1.0,
+    voiceName: 'default',
     limit: {
       useProMode: 2,
       dailyGenerations: 2,
@@ -30,6 +32,14 @@ export const useSettingsStore = defineStore('settings', {
     setLearningLanguage(lang) {
       this.learningLanguage = lang;
       localStorage.setItem('app-learning-language', lang);
+    },
+    setSpeechRate(rate) {
+      this.speechRate = rate;
+      localStorage.setItem('app-speech-rate', rate);
+    },
+    setVoiceName(voice) {
+      this.voiceName = voice;
+      localStorage.setItem('app-voice-name', voice);
     },
     incrementCount(type) {
       const usageJSON = localStorage.getItem('usage');
@@ -76,6 +86,15 @@ export const useSettingsStore = defineStore('settings', {
         this.setLearningLanguage(savedLearningLang);
       } else {
         this.setLearningLanguage('fi');
+      }
+      // ЗАГРУЗКА НАСТРОЕК ОЗВУЧКИ
+      const savedRate = localStorage.getItem('app-speech-rate');
+      if (savedRate) {
+        this.speechRate = parseFloat(savedRate);
+      }
+      const savedVoice = localStorage.getItem('app-voice-name');
+      if (savedVoice) {
+        this.voiceName = savedVoice;
       }
       // ЛОГИКА ЗАГРУЗКИ СЧЁТЧИКОВ
       const savedUsage = JSON.parse(localStorage.getItem('usage'));

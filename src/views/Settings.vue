@@ -74,11 +74,7 @@
       <div class="settings-group">
         <h2 class="group-title">
           {{ $t('settings.voiceSettings') }}
-          <span
-            v-if="!userStore.isPro"
-            class="material-symbols-outlined pro"
-            >crown</span
-          >
+          <span class="material-symbols-outlined pro">crown</span>
         </h2>
         <div class="setting-item">
           <label for="voice-select">{{ $t('settings.voice') }}</label>
@@ -96,8 +92,8 @@
             <input
               id="speed-slider"
               type="range"
-              min="0.5"
-              max="1.5"
+              min="0.75"
+              max="1.25"
               step="0.05"
               v-model="speechRate"
               :disabled="!userStore.isPro"
@@ -131,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useTrainingStore } from '../stores/trainingStore';
 import { useUserStore } from '../stores/userStore';
@@ -183,8 +179,15 @@ const learningLanguage = computed({
   set: (value) => settingsStore.setLearningLanguage(value),
 });
 
-const selectedVoice = ref('default');
-const speechRate = ref(1.0);
+const speechRate = computed({
+  get: () => settingsStore.speechRate,
+  set: (value) => settingsStore.setSpeechRate(value),
+});
+
+const selectedVoice = computed({
+  get: () => settingsStore.voiceName,
+  set: (value) => settingsStore.setVoiceName(value),
+});
 
 const togglePlayTest = () => {
   trainingStore.playProDemoVoice();
@@ -233,7 +236,7 @@ const goBack = () => {
   border-bottom: 1px solid var(--border);
 }
 .group-title .pro {
-  font-size: var(--md);
+  font-size: var(--sm);
   color: var(--bg-pro);
   vertical-align: middle;
   margin-left: 8px;

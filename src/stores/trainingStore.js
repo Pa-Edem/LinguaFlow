@@ -5,9 +5,12 @@ import { marked } from 'marked';
 import { useDialogStore } from './dialogStore';
 import { useSettingsStore } from './settingsStore';
 import { useUiStore } from './uiStore';
+import { useUserStore } from './userStore';
 import { compareAndFormatTexts } from '../utils/compareTexts';
 import { fetchGeminiResponse } from '../services/geminiService';
 import { getLangCode, getDemoPhrase } from '../utils/languageUtils';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../firebase';
 
 function getUiLanguageName(langCode) {
   const names = {
@@ -46,6 +49,7 @@ export const useTrainingStore = defineStore('training', {
     formattedRecognitionText: '',
     geminiResult: '',
     isLoading: false,
+    currentAudio: null,
   }),
   getters: {
     currentQuizOptions(state) {
@@ -106,43 +110,73 @@ export const useTrainingStore = defineStore('training', {
     playProDemoVoice() {
       const settingsStore = useSettingsStore();
       const langName = settingsStore.learningLanguage;
-      const langCode = getLangCode(langName);
       const demoText = getDemoPhrase(langName);
-
-      const proVoiceUtterance = new SpeechSynthesisUtterance(demoText);
-      proVoiceUtterance.lang = langCode;
-
-      const voices = speechSynthesis.getVoices();
-      const proVoice = voices.find(
-        (voice) => voice.lang === langCode && (voice.name.includes('Google') || voice.name.includes('WaveNet'))
-      );
-      if (proVoice) {
-        proVoiceUtterance.voice = proVoice;
-      }
-
-      this.stopSpeech();
-      speechSynthesis.speak(proVoiceUtterance);
+      this.playText(demoText, true);
     },
-    playText(text) {
+    async playText(text, forcePro = false) {
       if (!text) return;
       this.stopSpeech();
 
       const settingsStore = useSettingsStore();
+      const userStore = useUserStore();
+      const uiStore = useUiStore();
       const langCode = getLangCode(settingsStore.learningLanguage);
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = langCode;
-      speechSynthesis.speak(utterance);
+      const rate = settingsStore.speechRate;
+      const voice = settingsStore.voiceName;
 
-      utterance.onstart = () => {
+      // Проверяем, нужно ли использовать PRO-голос
+      if (userStore.isPro || forcePro) {
+        // === ЛОГИКА ДЛЯ PRO (Google Cloud TTS) ===
         this.isVoiceOver = true;
-      };
-      utterance.onend = () => {
-        this.isVoiceOver = false;
-      };
+        try {
+          const getSpeech = httpsCallable(functions, 'getSpeech');
+          const response = await getSpeech({
+            text: text,
+            langCode: langCode,
+            speechRate: rate,
+            voiceName: voice,
+          });
+
+          const audioData = response.data.audioContent;
+          const audio = new Audio('data:audio/mp3;base64,' + audioData);
+
+          this.currentAudio = audio;
+          audio.play();
+
+          audio.onended = () => {
+            this.isVoiceOver = false;
+            this.currentAudio = null;
+          };
+        } catch (error) {
+          console.error('Ошибка вызова Cloud TTS:', error);
+          uiStore.showToast(i18n.global.t('store.ttsError'), 'error');
+          this.isVoiceOver = false;
+          this.currentAudio = null;
+        }
+      } else {
+        // === ЛОГИКА ДЛЯ FREE (Браузерная озвучка) ===
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = langCode;
+        utterance.rate = rate;
+        speechSynthesis.speak(utterance);
+
+        utterance.onstart = () => {
+          this.isVoiceOver = true;
+        };
+        utterance.onend = () => {
+          this.isVoiceOver = false;
+        };
+      }
     },
     stopSpeech() {
       speechSynthesis.cancel();
+
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio = null;
+      }
+
       this.isVoiceOver = false;
     },
     togglePlayStop(text) {

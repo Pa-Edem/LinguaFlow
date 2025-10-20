@@ -74,7 +74,7 @@
     <footer class="actions-footer">
       <TrainingSidebar
         :dialogId="props.id"
-        :description="$t('level1.description_mobile')"
+        :description="$t('level1.descriptionMobile')"
       >
         <template #extra-controls>
           <button
