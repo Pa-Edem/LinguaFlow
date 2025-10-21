@@ -11,20 +11,13 @@
             <span class="dialog-info-level">{{ dialog?.level }}</span>
           </div>
           <!-- кнопка анализ диалога -->
-          <button
-            class="btn btn-menu"
-            @click="getInfo"
-            :disabled="!canView()"
-          >
+          <button class="btn btn-menu" @click="getInfo" :disabled="!canView()">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysis') }}
             <span class="material-symbols-outlined pro">crown</span>
           </button>
           <!-- кнопка прослушать диалог -->
-          <button
-            class="btn btn-menu"
-            @click="toggleListening"
-          >
+          <button class="btn btn-menu" @click="toggleListening">
             <span class="material-symbols-outlined">volume_up</span>
             {{ $t('buttons.listen') }}
           </button>
@@ -39,32 +32,18 @@
           >
             <span class="material-symbols-outlined">{{ level.icon }}</span>
             {{ level.text }}
-            <span
-              v-if="level.isPro"
-              class="material-symbols-outlined pro"
-              >crown</span
-            >
+            <span v-if="level.isPro" class="material-symbols-outlined pro">crown</span>
           </button>
           <div class="grow"></div>
           <!-- кнопка удалить диалог -->
-          <button
-            class="btn btn-danger"
-            @click="handleDelete"
-          >
+          <button class="btn btn-danger" @click="handleDelete">
             <span class="material-symbols-outlined">delete</span>
             {{ $t('buttons.delDialog') }}
           </button>
         </template>
         <!-- текст диалога -->
-        <div
-          v-if="dialog"
-          class="scroll-container"
-        >
-          <div
-            v-for="(fin, index) in dialog.fin"
-            :key="index"
-            class="dialog-line"
-          >
+        <div v-if="dialog" class="scroll-container">
+          <div v-for="(fin, index) in dialog.fin" :key="index" class="dialog-line">
             <p class="finnish-text">{{ fin }}</p>
             <p class="russian-text">{{ dialog.rus[index] }}</p>
           </div>
@@ -73,16 +52,9 @@
     </div>
 
     <!-- FOR MOBILE -->
-    <div
-      v-else
-      class="page-container"
-    >
+    <div v-else class="page-container">
       <header class="header">
-        <router-link
-          to="/dialogs"
-          name="all-dialogs"
-          class="header-btn"
-        >
+        <router-link to="/dialogs" name="all-dialogs" class="header-btn">
           <span class="material-symbols-outlined i">arrow_back_ios</span>
         </router-link>
         <div class="header-title">
@@ -105,26 +77,16 @@
       </main>
       <footer class="actions-footer">
         <div class="actions-grid">
-          <button
-            class="btn btn-danger mobile w-50"
-            @click="handleDelete"
-          >
+          <button class="btn btn-danger mobile w-50" @click="handleDelete">
             <span class="material-symbols-outlined">delete</span>
           </button>
 
-          <button
-            class="btn btn-menu mobile"
-            @click="getInfo"
-            :disabled="!canView()"
-          >
+          <button class="btn btn-menu mobile" @click="getInfo" :disabled="!canView()">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysisM') }}
             <span class="material-symbols-outlined pro">crown</span>
           </button>
-          <button
-            class="btn btn-menu mobile"
-            @click="toggleListening"
-          >
+          <button class="btn btn-menu mobile" @click="toggleListening">
             <span class="material-symbols-outlined">volume_up</span>
             {{ $t('buttons.listenM') }}
           </button>
@@ -139,11 +101,7 @@
           >
             <span class="material-symbols-outlined">{{ level.icon }}</span>
             {{ level.text }}
-            <span
-              v-if="level.isPro"
-              class="material-symbols-outlined pro"
-              >crown</span
-            >
+            <span v-if="level.isPro" class="material-symbols-outlined pro">crown</span>
           </button>
         </div>
       </footer>
@@ -327,7 +285,7 @@ const goToTraining = (level) => {
   right: 0;
   margin-top: 8px;
   margin-right: 8px;
-  font-size: var(--lg);
+  font-size: var(--xs);
   color: var(--bg-pro);
   background: none;
 }

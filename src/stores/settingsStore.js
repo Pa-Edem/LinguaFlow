@@ -1,6 +1,9 @@
 // src/stores/settingsStore.js
 import { defineStore } from 'pinia';
 import i18n from '../i18n';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../firebase';
+import { getLangCode } from '../utils/languageUtils';
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
@@ -9,6 +12,8 @@ export const useSettingsStore = defineStore('settings', {
     learningLanguage: 'Suomi',
     speechRate: 1.0,
     voiceName: 'default',
+    availableVoices: [],
+    isLoadingVoices: false,
     limit: {
       useProMode: 2,
       dailyGenerations: 2,
@@ -32,6 +37,9 @@ export const useSettingsStore = defineStore('settings', {
     setLearningLanguage(lang) {
       this.learningLanguage = lang;
       localStorage.setItem('app-learning-language', lang);
+
+      this.setVoiceName('default');
+      this.fetchAvailableVoices();
     },
     setSpeechRate(rate) {
       this.speechRate = rate;
@@ -40,6 +48,25 @@ export const useSettingsStore = defineStore('settings', {
     setVoiceName(voice) {
       this.voiceName = voice;
       localStorage.setItem('app-voice-name', voice);
+    },
+    async fetchAvailableVoices() {
+      this.isLoadingVoices = true;
+      this.availableVoices = [];
+      try {
+        const langCode = getLangCode(this.learningLanguage);
+        const getVoices = httpsCallable(functions, 'getAvailableVoices');
+        const response = await getVoices({ langCode: langCode });
+
+        console.log('ПОЛУЧЕНЫ ГОЛОСА:', response.data.voices);
+
+        if (response.data && response.data.voices) {
+          this.availableVoices = response.data.voices;
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке списка голосов:', error);
+      } finally {
+        this.isLoadingVoices = false;
+      }
     },
     incrementCount(type) {
       const usageJSON = localStorage.getItem('usage');
@@ -82,11 +109,7 @@ export const useSettingsStore = defineStore('settings', {
         this.setUiLanguage(savedUiLang || 'en');
       }
       const savedLearningLang = localStorage.getItem('app-learning-language');
-      if (savedLearningLang) {
-        this.setLearningLanguage(savedLearningLang);
-      } else {
-        this.setLearningLanguage('fi');
-      }
+      this.setLearningLanguage(savedLearningLang || 'Suomi');
       // ЗАГРУЗКА НАСТРОЕК ОЗВУЧКИ
       const savedRate = localStorage.getItem('app-speech-rate');
       if (savedRate) {

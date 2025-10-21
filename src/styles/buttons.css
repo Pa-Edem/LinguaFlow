@@ -10,8 +10,7 @@
   padding: 12px 4px;
   border-radius: 4px;
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--md);
-  font-weight: 500;
+  font-size: var(--xs);
   text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
@@ -19,7 +18,7 @@
   transition: all 0.2s ease-in-out;
 }
 .mobile {
-  font-size: var(--sm);
+  font-size: var(--xs);
   max-width: 160px;
   min-width: 100px;
   padding: 8px 4px;
@@ -35,8 +34,11 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+.material-symbols-outlined {
+  font-size: 18px;
+}
 .icon {
-  width: 24px;
+  width: 16px;
   aspect-ratio: 1/1;
 }
 /* ACTION */
@@ -78,7 +80,7 @@
 }
 /* CONTROL */
 .btn-control {
-  font-size: var(--sm);
+  font-size: var(--xs);
   background-color: var(--y0);
   color: var(--text-head);
   border: 1px solid var(--bb);

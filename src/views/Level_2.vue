@@ -23,10 +23,7 @@
       </template>
 
       <div class="content-wrapper">
-        <div
-          class="dialog-text-container-desktop"
-          ref="desktopContent"
-        >
+        <div class="dialog-text-container-desktop" ref="desktopContent">
           <div
             v-for="(line, index) in visibleLines.fin"
             :key="index"
@@ -44,10 +41,7 @@
             class="recognized-text"
             v-html="trainingStore.formattedRecognitionText"
           ></p>
-          <p
-            v-else
-            class="placeholder-text"
-          >
+          <p v-else class="placeholder-text">
             {{ $t('level2.info') }}
           </p>
         </div>
@@ -55,15 +49,9 @@
     </DialogLayout>
   </div>
 
-  <div
-    v-else-if="dialog"
-    class="page-container"
-  >
+  <div v-else-if="dialog" class="page-container">
     <header class="level-header">
-      <router-link
-        to="/dialogs"
-        class="level-header-btn"
-      >
+      <router-link to="/dialogs" class="level-header-btn">
         <span class="material-symbols-outlined i">arrow_back_ios</span>
       </router-link>
       <div class="level-header-title">
@@ -71,10 +59,7 @@
       </div>
     </header>
 
-    <main
-      class="content"
-      ref="mobileContent"
-    >
+    <main class="content" ref="mobileContent">
       <div class="chat-container">
         <div
           v-for="(line, index) in visibleLines.fin"
@@ -95,17 +80,11 @@
           class="recognized-text-mobile"
           v-html="trainingStore.formattedRecognitionText"
         ></p>
-        <p
-          v-else
-          class="placeholder-text-mobile"
-        >
+        <p v-else class="placeholder-text-mobile">
           {{ $t('level2.info') }}
         </p>
       </div>
-      <TrainingSidebar
-        :dialogId="props.id"
-        :description="$t('level2.description_mobile')"
-      >
+      <TrainingSidebar :dialogId="props.id" :description="$t('level2.descriptionMobile')">
         <template #extra-controls>
           <button
             class="btn btn-control mobile mic"

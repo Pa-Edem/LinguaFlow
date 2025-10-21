@@ -3,11 +3,7 @@
   <div class="settings-page">
     <header class="page-header">
       <h1 class="page-title">{{ $t('settings.title') }}</h1>
-      <button
-        v-if="!isDesktop"
-        @click="goBack"
-        class="btn btn-action mobile"
-      >
+      <button v-if="!isDesktop" @click="goBack" class="btn btn-action mobile">
         <span class="material-symbols-outlined">check</span>
         {{ $t('buttons.done') }}
       </button>
@@ -19,17 +15,11 @@
         <div class="setting-item">
           <label>{{ $t('settings.theme') }}</label>
           <div class="theme-switcher">
-            <button
-              @click="settingsStore.setTheme('light')"
-              :class="{ active: settingsStore.theme === 'light' }"
-            >
+            <button @click="settingsStore.setTheme('light')" :class="{ active: settingsStore.theme === 'light' }">
               <span class="material-symbols-outlined">light_mode</span>
               {{ $t('settings.light') }}
             </button>
-            <button
-              @click="settingsStore.setTheme('dark')"
-              :class="{ active: settingsStore.theme === 'dark' }"
-            >
+            <button @click="settingsStore.setTheme('dark')" :class="{ active: settingsStore.theme === 'dark' }">
               <span class="material-symbols-outlined">dark_mode</span>
               {{ $t('settings.dark') }}
             </button>
@@ -41,30 +31,16 @@
         <h2 class="group-title">{{ $t('settings.language') }}</h2>
         <div class="setting-item">
           <label for="ui-lang-select">{{ $t('settings.appLanguage') }}</label>
-          <select
-            id="ui-lang-select"
-            v-model="uiLanguage"
-          >
-            <option
-              v-for="lang in uiLanguages"
-              :key="lang.code"
-              :value="lang.code"
-            >
+          <select id="ui-lang-select" v-model="uiLanguage">
+            <option v-for="lang in uiLanguages" :key="lang.code" :value="lang.code">
               {{ lang.name }}
             </option>
           </select>
         </div>
         <div class="setting-item">
           <label for="learning-lang-select">{{ $t('settings.languageToLearn') }}</label>
-          <select
-            id="learning-lang-select"
-            v-model="learningLanguage"
-          >
-            <option
-              v-for="lang in learningLanguages"
-              :key="lang"
-              :value="lang"
-            >
+          <select id="learning-lang-select" v-model="learningLanguage">
+            <option v-for="lang in learningLanguages" :key="lang" :value="lang">
               {{ lang }}
             </option>
           </select>
@@ -78,14 +54,21 @@
         </h2>
         <div class="setting-item">
           <label for="voice-select">{{ $t('settings.voice') }}</label>
-          <select
-            id="voice-select"
-            v-model="selectedVoice"
-            :disabled="!userStore.isPro"
-          >
-            <option value="default">{{ $t('settings.defaultVoice') }}</option>
-          </select>
+          <div class="voice-selector-wrapper">
+            <Loader v-if="settingsStore.isLoadingVoices" class="mini-loader" />
+            <select
+              id="voice-select"
+              v-model="selectedVoice"
+              :disabled="!userStore.isPro || settingsStore.isLoadingVoices"
+            >
+              <option value="default">{{ $t('settings.defaultVoice') }}</option>
+              <option v-for="(voice, index) in settingsStore.availableVoices" :key="voice.name" :value="voice.name">
+                {{ formatVoiceName(voice, index) }}
+              </option>
+            </select>
+          </div>
         </div>
+
         <div class="setting-item">
           <label for="speed-slider">{{ $t('settings.speechRate') }}</label>
           <div class="slider-container">
@@ -98,15 +81,13 @@
               v-model="speechRate"
               :disabled="!userStore.isPro"
             />
-            <span>{{ speechRate }}x</span>
+            <span>{{ parseFloat(speechRate).toFixed(2) }}x</span>
           </div>
         </div>
+
         <div class="setting-item">
           <label>{{ $t('settings.preListening') }}</label>
-          <button
-            class="btn btn-common mobile"
-            @click="togglePlayTest"
-          >
+          <button class="btn btn-common mobile" @click="togglePlayTest">
             <span class="material-symbols-outlined">play_circle</span>
             {{ $t('settings.test') }}
           </button>
@@ -115,10 +96,7 @@
     </main>
 
     <footer class="page-footer desktop-only">
-      <button
-        @click="goBack"
-        class="btn btn-action w-250"
-      >
+      <button @click="goBack" class="btn btn-action w-250">
         <span class="material-symbols-outlined">check</span>
         {{ $t('buttons.done') }}
       </button>
@@ -127,18 +105,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useTrainingStore } from '../stores/trainingStore';
 import { useUserStore } from '../stores/userStore';
 import { useRouter } from 'vue-router';
 import { useBreakpoint } from '../composables/useBreakpoint';
+import { useI18n } from 'vue-i18n';
+import Loader from '../components/Loader.vue';
 
 const settingsStore = useSettingsStore();
 const trainingStore = useTrainingStore();
 const userStore = useUserStore();
 const router = useRouter();
-
+const { t } = useI18n();
 const { isDesktop } = useBreakpoint();
 
 const uiLanguages = [
@@ -169,7 +149,6 @@ const learningLanguages = [
   'Slovenčina',
 ];
 
-// --- "Умные" computed свойства для v-model ---
 const uiLanguage = computed({
   get: () => settingsStore.uiLanguage,
   set: (value) => settingsStore.setUiLanguage(value),
@@ -178,21 +157,34 @@ const learningLanguage = computed({
   get: () => settingsStore.learningLanguage,
   set: (value) => settingsStore.setLearningLanguage(value),
 });
-
 const speechRate = computed({
   get: () => settingsStore.speechRate,
-  set: (value) => settingsStore.setSpeechRate(value),
+  set: (value) => settingsStore.setSpeechRate(parseFloat(value)),
 });
-
 const selectedVoice = computed({
   get: () => settingsStore.voiceName,
   set: (value) => settingsStore.setVoiceName(value),
 });
+const formatVoiceName = (voice, index) => {
+  if (!voice || !voice.name) {
+    return '...';
+  }
 
+  const genderMap = {
+    FEMALE: '(Жен.)',
+    MALE: '(Муж.)',
+    NEUTRAL: '(Нейтр.)',
+  };
+
+  const tech = voice.name.includes('Wavenet') ? 'WaveNet' : 'Neural2';
+  const gender = genderMap[voice.ssmlGender] || '';
+
+  // Присваиваем номер, начиная с 1
+  return `Голос ${index + 1} (${tech} ${gender})`;
+};
 const togglePlayTest = () => {
   trainingStore.playProDemoVoice();
 };
-
 const goBack = () => {
   router.back();
 };
@@ -236,7 +228,7 @@ const goBack = () => {
   border-bottom: 1px solid var(--border);
 }
 .group-title .pro {
-  font-size: var(--sm);
+  font-size: var(--xs);
   color: var(--bg-pro);
   vertical-align: middle;
   margin-left: 8px;
@@ -328,6 +320,19 @@ input[type='range']::-moz-range-thumb {
 .setting-item *:disabled::-moz-range-thumb {
   background: var(--text-base);
 }
+/*  */
+.voice-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mini-loader {
+  background: none;
+  backdrop-filter: none;
+  position: static;
+}
+
+/*  */
 @media (min-width: 768px) {
   .settings-page {
     display: flex;
