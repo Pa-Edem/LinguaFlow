@@ -1,9 +1,6 @@
 <!-- src\components\DialogCard.vue -->
 <template>
-  <router-link
-    :to="{ name: 'view-dialog', params: { id: dialog.id } }"
-    class="dialog-card"
-  >
+  <router-link :to="{ name: 'view-dialog', params: { id: dialog.id } }" class="dialog-card">
     <div class="card-content">
       <div class="card-title">{{ dialog.title }}</div>
       <div class="card-info">
@@ -25,6 +22,7 @@ const props = defineProps({
 
 <style scoped>
 .dialog-card {
+  font-family: 'Roboto Condensed', sans-serif;
   display: block;
   width: 100%;
   background-color: var(--bg-card);
@@ -57,7 +55,7 @@ const props = defineProps({
 }
 .card-info .levelClass,
 .card-info .levelLines {
-  font-size: var(--sm);
+  font-size: var(--xs);
   color: var(--text-base);
 }
 @media (min-width: 768px) {

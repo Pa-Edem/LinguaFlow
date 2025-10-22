@@ -61,7 +61,18 @@
           <h1>{{ dialog.title }}</h1>
           <span class="badge">{{ dialog.level }}</span>
         </div>
+        <button @click="toggleMenu" class="header-btn">
+          <span class="material-symbols-outlined drop">more_vert</span>
+        </button>
       </header>
+      <Transition name="fade">
+        <div v-if="isMenuOpen" class="dropdown-menu">
+          <button @click="handleDelete" class="dropdown-item danger">
+            <span class="material-symbols-outlined">delete</span>
+            {{ $t('buttons.delDialog') }}
+          </button>
+        </div>
+      </Transition>
       <main class="content">
         <div class="chat-container">
           <div
@@ -77,25 +88,26 @@
       </main>
       <footer class="actions-footer">
         <div class="actions-grid">
-          <button class="btn btn-danger mobile w-50" @click="handleDelete">
+          <!-- <button class="btn btn-danger mobile w-0" @click="handleDelete">
             <span class="material-symbols-outlined">delete</span>
-          </button>
+          </button> -->
 
-          <button class="btn btn-menu mobile" @click="getInfo" :disabled="!canView()">
+          <button class="btn btn-menu mobile oooo looo" @click="getInfo" :disabled="!canView()">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysisM') }}
             <span class="material-symbols-outlined pro">crown</span>
           </button>
-          <button class="btn btn-menu mobile" @click="toggleListening">
+          <button class="btn btn-menu mobile oooo oool" @click="toggleListening">
             <span class="material-symbols-outlined">volume_up</span>
             {{ $t('buttons.listenM') }}
           </button>
         </div>
         <div class="trainings-grid">
           <button
-            v-for="level in trainingLevels"
+            v-for="(level, index) in trainingLevels"
             :key="level.name"
-            class="btn btn-menu mobile w-100p"
+            class="btn btn-menu mobile oooo w-100p"
+            :class="index % 2 === 0 ? 'looo' : 'oool'"
             :disabled="level.isPro && !canView()"
             @click="goToTraining(level)"
           >
@@ -107,71 +119,11 @@
       </footer>
     </div>
   </div>
-
-  <!-- <Teleport to="body">
-    <Modal>
-      <template #header>
-        <h3
-          v-if="uiStore.modalContent === 'analysis'"
-          class="title"
-        >
-          {{ $t('view.headerAnalysis') }}
-        </h3>
-        <h3
-          v-else-if="uiStore.modalContent === 'upgrade'"
-          class="title"
-        >
-          {{ $t('view.goToPro') }}
-        </h3>
-      </template>
-
-      <div
-        v-if="uiStore.modalContent === 'analysis'"
-        v-html="trainingStore.geminiResult"
-      ></div>
-      <div
-        v-else-if="uiStore.modalContent === 'upgrade'"
-        class="pro-benefits"
-      >
-        <h4 class="subtitle">{{ $t('view.unlock') }}</h4>
-        <ul>
-          <li class="description">{{ $t('view.description1') }}</li>
-          <li class="description">{{ $t('view.description2') }}</li>
-          <li class="description">{{ $t('view.description3') }}</li>
-          <li class="description">{{ $t('view.description4') }}</li>
-        </ul>
-      </div>
-
-      <template
-        #footer
-        v-if="uiStore.modalContent !== 'analysis'"
-      >
-        <div class="buttons">
-          <button
-            class="btn btn-common w-150"
-            @click="uiStore.hideModal()"
-          >
-            <span class="material-symbols-outlined">close</span>
-            {{ $t('buttons.close') }}
-          </button>
-          <router-link
-            to="/profile"
-            @click="uiStore.hideModal()"
-          >
-            <button class="btn btn-action w-150">
-              <span class="material-symbols-outlined">details</span>
-              {{ $t('buttons.findMore') }}
-            </button>
-          </router-link>
-        </div>
-      </template>
-    </Modal>
-  </Teleport> -->
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n';
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useDialogStore } from '../stores/dialogStore';
@@ -192,6 +144,11 @@ const uiStore = useUiStore();
 const userStore = useUserStore();
 const { canView } = usePermissions();
 const { isDesktop } = useBreakpoint();
+
+const isMenuOpen = ref(false);
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value;
+};
 
 const dialog = computed(() => dialogStore.currentDialog);
 const trainingLevels = [
@@ -217,7 +174,8 @@ onMounted(() => {
   dialogStore.fetchDialogById(props.id);
 });
 const handleDelete = async () => {
-  // СНАЧАЛА ВЫЗЫВАЕМ МОДАЛЬНОЕ ОКНО
+  isMenuOpen.value = false;
+  // ВЫЗЫВАЕМ МОДАЛЬНОЕ ОКНО
   const confirmed = await uiStore.showConfirmation({
     title: t('buttons.delDialog'),
     message: t('view.deleteConfirmMsg'),
@@ -361,6 +319,7 @@ const goToTraining = (level) => {
 .header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 8px;
   background-color: var(--bg-side);
   border-bottom: 1px solid var(--bb);
@@ -389,14 +348,62 @@ const goToTraining = (level) => {
   gap: 4px;
 }
 .header-title h1 {
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--md);
   font-weight: 700;
   color: var(--text-head);
   line-height: 1;
 }
 .badge {
-  font-size: var(--sm);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--xs);
   font-weight: 600;
+}
+.drop {
+  font-size: 24px;
+}
+.dropdown-menu {
+  position: absolute;
+  top: 60px;
+  right: 24px;
+  z-index: 100;
+  border-radius: 24px;
+  border-top-right-radius: 2px;
+  border: 1px solid var(--r3);
+  box-shadow: 0 4px 12px var(--shadow);
+  overflow: hidden;
+}
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--r1);
+  font-size: var(--xs);
+  font-weight: 500;
+  width: 100%;
+}
+.dropdown-item:hover {
+  background-color: var(--r2);
+}
+.dropdown-item.danger {
+  font-family: 'Roboto Condensed', sans-serif;
+  text-transform: uppercase;
+  color: var(--r3);
+}
+.dropdown-item .material-symbols-outlined {
+  font-size: var(--md);
+}
+
+/* Анимация появления */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 .content {
   flex-grow: 1;
@@ -407,33 +414,6 @@ const goToTraining = (level) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-.message-bubble {
-  color: var(--text-head);
-  padding: 8px 16px;
-  border-radius: 1rem;
-  max-width: 80%;
-  border: 1px solid var(--bb);
-}
-.message-bubble.left {
-  background-color: var(--bg-chat-l);
-  border-bottom-left-radius: 2px;
-  align-self: flex-start;
-}
-.message-bubble.right {
-  background-color: var(--bg-chat-r);
-  border-bottom-right-radius: 2px;
-  align-self: flex-end;
-}
-.finnish-text-mobile {
-  font-size: var(--md);
-  font-weight: 600;
-}
-.russian-text-mobile {
-  font-size: var(--md);
-  font-style: italic;
-  text-align: right;
-  margin-top: 8px;
 }
 .actions-footer {
   flex-shrink: 0;
@@ -451,5 +431,14 @@ const goToTraining = (level) => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+.oooo {
+  border-radius: 24px;
+}
+.looo {
+  border-bottom-left-radius: 2px;
+}
+.oool {
+  border-bottom-right-radius: 2px;
 }
 </style>

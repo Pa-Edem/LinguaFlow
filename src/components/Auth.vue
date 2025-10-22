@@ -4,38 +4,19 @@
     <div class="form-card">
       <div class="title">{{ isLoginMode ? $t('auth.in') : $t('auth.up') }}</div>
 
-      <p
-        v-if="errorMessage"
-        class="error-message"
-      >
+      <p v-if="errorMessage" class="error-message">
         {{ errorMessage }}
       </p>
 
       <form @submit.prevent="handleSubmit">
         <div class="inputs">
-          <input
-            type="email"
-            v-model="email"
-            :placeholder="$t('auth.email')"
-            required
-          />
-          <input
-            type="password"
-            v-model="password"
-            :placeholder="$t('auth.pass')"
-            required
-          />
+          <input type="email" v-model="email" :placeholder="$t('auth.email')" required />
+          <input type="password" v-model="password" :placeholder="$t('auth.pass')" required />
         </div>
-        <button
-          type="submit"
-          class="btn btn-common"
-          :disabled="isLoading"
-        >
-          <span
-            v-if="!isLoading"
-            class="material-symbols-outlined"
-            >{{ isLoginMode ? 'login' : 'account_circle' }}</span
-          >
+        <button type="submit" class="btn btn-common" :disabled="isLoading">
+          <span v-if="!isLoading" class="material-symbols-outlined">{{
+            isLoginMode ? 'login' : 'account_circle'
+          }}</span>
           {{ isLoginMode ? $t('auth.in') : $t('auth.up') }}
         </button>
       </form>
@@ -43,25 +24,14 @@
       <div class="divider">
         <span>{{ $t('auth.or') }}</span>
       </div>
-      <button
-        @click="handleGoogleSignIn"
-        class="btn btn-common"
-        :disabled="isLoading"
-      >
-        <img
-          class="icon"
-          src="../assets/google.svg"
-          alt="Google icon"
-        />
+      <button @click="handleGoogleSignIn" class="btn btn-common" :disabled="isLoading">
+        <img class="icon" src="../assets/google.svg" alt="Google icon" />
         Google
       </button>
 
       <p class="toggle-mode">
         {{ isLoginMode ? $t('auth.notAccount') : $t('auth.haveAccount') }}
-        <button
-          @click="toggleMode"
-          class="toggle-link"
-        >
+        <button @click="toggleMode" class="toggle-link">
           {{ isLoginMode ? $t('auth.up') : $t('auth.in') }}
         </button>
       </p>
@@ -143,14 +113,14 @@ function getFriendlyErrorMessage(errorCode) {
 .form-card {
   width: 100%;
   max-width: 420px;
-  background: var(--bg-card);
+  background: var(--bg-side);
   padding: 32px 24px;
   border-radius: 8px;
   box-shadow: 0 4px 12px var(--shadow);
 }
 .title {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   font-size: var(--xxl);
 }
 .form-group {
@@ -167,7 +137,8 @@ select {
   margin: 1rem auto;
   border: 1px solid var(--border);
   border-radius: 4px;
-  font-size: var(--md);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
 }
 input:focus,
 select:focus {
@@ -189,7 +160,8 @@ select:focus {
   align-items: center;
   text-align: center;
   color: var(--text-title);
-  margin: 24px 0;
+  margin: 16px 0;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--base);
 }
 .divider::before,
@@ -206,7 +178,8 @@ select:focus {
 }
 .toggle-mode {
   margin-top: 32px;
-  font-size: var(--base);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
   color: var(--text-title);
   text-align: center;
 }
@@ -214,9 +187,9 @@ select:focus {
   background: none;
   border: none;
   padding: 0;
-  margin-left: 8px;
-  font-size: var(--base);
-  font-weight: 500;
+  margin-left: 16px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
   color: var(--head);
   cursor: pointer;
   text-decoration: underline;

@@ -132,7 +132,7 @@ body {
 .message-bubble {
   color: var(--text-head);
   padding: 8px 16px;
-  border-radius: 32px;
+  border-radius: 24px;
   max-width: 80%;
   border: 1px solid var(--bb);
 }
@@ -147,11 +147,12 @@ body {
   align-self: flex-end;
 }
 .finnish-text-mobile {
-  font-size: var(--md);
+  font-size: var(--sm);
   font-weight: 600;
 }
 .russian-text-mobile {
-  font-size: var(--md);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
   font-style: italic;
   text-align: right;
   padding-left: 8px;

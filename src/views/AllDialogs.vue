@@ -1,33 +1,19 @@
 <!-- src\views\AllDialogs.vue -->
 <template>
-  <div
-    v-if="dialogs && !uiStore.loading"
-    class="page-wrapper"
-  >
+  <div v-if="dialogs && !uiStore.loading" class="page-wrapper">
     <aside class="desktop-sidebar">
       <h1 class="sidebar-title">Dialogit</h1>
-      <button
-        v-if="dialogs.length > 0"
-        @click="goToCreateDialog"
-        class="btn btn-action"
-        :disabled="!canGenerate()"
-      >
+      <button v-if="dialogs.length > 0" @click="goToCreateDialog" class="btn btn-action" :disabled="!canGenerate()">
         <span class="material-symbols-outlined">add</span>
         {{ $t('all.createNew') }}
       </button>
       <div class="grow"></div>
       <div class="user-profile">
-        <router-link
-          to="/profile"
-          class="btn btn-common"
-        >
+        <router-link to="/profile" class="btn btn-common">
           <span class="material-symbols-outlined">person</span>
           <span>{{ $t('all.profile') }}</span>
         </router-link>
-        <router-link
-          to="/settings"
-          class="btn btn-common"
-        >
+        <router-link to="/settings" class="btn btn-common">
           <span class="material-symbols-outlined">settings</span>
           <span>{{ $t('all.settings') }}</span>
         </router-link>
@@ -47,50 +33,26 @@
     </header>
 
     <main class="content">
-      <div
-        v-if="dialogs.length > 0"
-        class="dialogs-grid"
-      >
-        <div
-          v-if="!userStore.isPro"
-          class="usage-indicator"
-        >
+      <div v-if="dialogs.length > 0" class="dialogs-grid">
+        <div v-if="!userStore.isPro" class="usage-indicator">
           <div class="usage-text">
             <span>{{ $t('all.savedDialogs') }}</span>
             <span>{{ usage.total.count }} / {{ usage.total.limit }}</span>
           </div>
-          <progress
-            class="usage-progress"
-            :value="usage.total.count"
-            :max="usage.total.limit"
-          ></progress>
+          <progress class="usage-progress" :value="usage.total.count" :max="usage.total.limit"></progress>
         </div>
-        <template
-          v-for="level in levels"
-          :key="level"
-        >
+        <template v-for="level in levels" :key="level">
           <div v-if="groupedDialogs[level].length > 0">
             <div class="level-title">{{ level }}</div>
             <div class="dialogs-list">
-              <DialogCard
-                v-for="dialog in groupedDialogs[level]"
-                :key="dialog.id"
-                :dialog="dialog"
-              />
+              <DialogCard v-for="dialog in groupedDialogs[level]" :key="dialog.id" :dialog="dialog" />
             </div>
           </div>
         </template>
       </div>
-      <div
-        v-else
-        class="message-container"
-      >
+      <div v-else class="message-container">
         <p class="message-text">{{ $t('all.notDialogs') }}</p>
-        <router-link
-          :to="{ name: 'new-dialog' }"
-          class="btn btn-action"
-          :class="!isDesktop ? 'mobile' : 'w-250'"
-        >
+        <router-link :to="{ name: 'new-dialog' }" class="btn btn-action" :class="!isDesktop ? 'mobile' : 'w-250'">
           <span class="material-symbols-outlined">add</span>
           {{ $t('all.createFirst') }}
         </router-link>
@@ -99,17 +61,11 @@
 
     <footer class="mobile-footer">
       <div class="tab-bar">
-        <router-link
-          to="/settings"
-          class="tab-item"
-        >
+        <router-link to="/settings" class="tab-item">
           <span class="material-symbols-outlined">settings</span>
           <span>{{ $t('all.settings') }}</span>
         </router-link>
-        <router-link
-          to="/profile"
-          class="tab-item"
-        >
+        <router-link to="/profile" class="tab-item">
           <span class="material-symbols-outlined">person</span>
           <span>{{ $t('all.profile') }}</span>
         </router-link>
@@ -218,7 +174,7 @@ const goToCreateDialog = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 8px 16px;
   background-color: var(--bg-side);
   border-bottom: 1px solid var(--bb);
 }
@@ -268,6 +224,7 @@ const goToCreateDialog = () => {
   align-items: center;
   padding: 8px 16px;
   color: var(--text-head);
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--xxs);
 }
 .message-container {

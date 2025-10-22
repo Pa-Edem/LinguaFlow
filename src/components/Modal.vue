@@ -1,57 +1,32 @@
 <!-- \\src\components\Modal.vue -->
 <template>
   <Transition name="modal">
-    <div
-      v-if="uiStore.isModalActive"
-      class="modal-mask"
-      @click.self="uiStore.cancelModal()"
-    >
-      <div
-        class="modal-container"
-        :class="containerClass"
-      >
+    <div v-if="uiStore.isModalActive" class="modal-mask" @click.self="uiStore.cancelModal()">
+      <div class="modal-container" :class="containerClass">
         <div class="modal-header">
           <!-- v-if="uiStore.modalContent === 'analysis'" -->
-          <h3
-            v-if="uiStore.modalContent === 'analysis'"
-            class="title"
-          >
+          <h3 v-if="uiStore.modalContent === 'analysis'" class="title">
             {{ $t('view.headerAnalysis') }}
           </h3>
           <!-- v-if="uiStore.modalContent === 'upgrade'" -->
-          <h3
-            v-else-if="uiStore.modalContent === 'upgrade'"
-            class="title"
-          >
+          <h3 v-else-if="uiStore.modalContent === 'upgrade'" class="title">
             {{ $t('view.goToPro') }}
           </h3>
           <!-- v-if="uiStore.modalContent === 'endOfLevel'" -->
-          <h3
-            v-else-if="uiStore.modalContent === 'endOfLevel'"
-            class="title"
-          >
+          <h3 v-else-if="uiStore.modalContent === 'endOfLevel'" class="title">
             {{ $t('modal.title') }}
           </h3>
           <!-- v-if="uiStore.modalContent === 'confirm'" -->
-          <h3
-            v-else-if="uiStore.modalContent === 'confirm'"
-            class="title"
-          >
+          <h3 v-else-if="uiStore.modalContent === 'confirm'" class="title">
             {{ uiStore.modalProps.title }}
           </h3>
         </div>
 
         <div class="modal-body">
           <!-- v-if="uiStore.modalContent === 'analysis'" -->
-          <div
-            v-if="uiStore.modalContent === 'analysis'"
-            v-html="trainingStore.geminiResult"
-          ></div>
+          <div v-if="uiStore.modalContent === 'analysis'" v-html="trainingStore.geminiResult"></div>
           <!-- v-if="uiStore.modalContent === 'upgrade'" -->
-          <div
-            v-else-if="uiStore.modalContent === 'upgrade'"
-            class="pro-benefits"
-          >
+          <div v-else-if="uiStore.modalContent === 'upgrade'" class="pro-benefits">
             <h4 class="subtitle">{{ $t('view.unlock') }}</h4>
             <ul>
               <ProBenefitItem>{{ $t('view.description1') }}</ProBenefitItem>
@@ -61,17 +36,11 @@
             </ul>
           </div>
           <!-- v-if="uiStore.modalContent === 'endOfLevel'" -->
-          <div
-            v-else-if="uiStore.modalContent === 'endOfLevel'"
-            class="end-message"
-          >
+          <div v-else-if="uiStore.modalContent === 'endOfLevel'" class="end-message">
             <p>{{ $t('modal.text') }}</p>
           </div>
           <!-- v-if="uiStore.modalContent === 'confirm'" -->
-          <div
-            v-else-if="uiStore.modalContent === 'confirm'"
-            class="confirm-message"
-          >
+          <div v-else-if="uiStore.modalContent === 'confirm'" class="confirm-message">
             {{ uiStore.modalProps.message }}
           </div>
         </div>
@@ -81,27 +50,20 @@
           <button
             v-if="uiStore.modalContent === 'analysis'"
             class="btn btn-common"
-            :class="isDesktop ? 'w-150' : 'mobile'"
+            :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
             <span class="material-symbols-outlined">close</span>
             {{ $t('buttons.close') }}
           </button>
           <!-- v-if="uiStore.modalContent === 'upgrade'" -->
-          <div
-            v-else-if="uiStore.modalContent === 'upgrade'"
-            class="footer-buttons"
-          >
-            <button
-              class="btn btn-common"
-              :class="isDesktop ? 'w-150' : 'mobile'"
-              @click="uiStore.hideModal()"
-            >
+          <div v-else-if="uiStore.modalContent === 'upgrade'" class="footer-buttons">
+            <button class="btn btn-common" :class="isDesktop ? 'w-150' : 'mobile w-100'" @click="uiStore.hideModal()">
               {{ $t('buttons.close') }}
             </button>
             <router-link
               class="btn btn-action"
-              :class="isDesktop ? 'w-150' : 'mobile'"
+              :class="isDesktop ? 'w-150' : 'mobile w-100'"
               to="/profile"
               @click="uiStore.hideModal()"
             >
@@ -113,26 +75,19 @@
           <button
             v-else-if="uiStore.modalContent === 'endOfLevel'"
             class="btn btn-common"
-            :class="isDesktop ? 'w-150' : 'mobile'"
+            :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
             {{ $t('buttons.close') }}
           </button>
           <!-- v-if="uiStore.modalContent === 'confirm'" -->
-          <div
-            v-else-if="uiStore.modalContent === 'confirm'"
-            class="footer-buttons"
-          >
-            <button
-              class="btn btn-common"
-              :class="isDesktop ? 'w-150' : 'mobile'"
-              @click="uiStore.cancelModal()"
-            >
+          <div v-else-if="uiStore.modalContent === 'confirm'" class="footer-buttons">
+            <button class="btn btn-common" :class="isDesktop ? 'w-150' : 'mobile w-100'" @click="uiStore.cancelModal()">
               {{ uiStore.modalProps.cancelText || $t('buttons.cancel') }}
             </button>
             <button
               class="btn btn-danger"
-              :class="isDesktop ? 'w-150' : 'mobile'"
+              :class="isDesktop ? 'w-150' : 'mobile w-100'"
               @click="uiStore.confirmModal()"
             >
               {{ uiStore.modalProps.confirmText || $t('buttons.ok') }}
@@ -246,6 +201,7 @@ const containerClass = computed(() => {
 }
 .confirm-message,
 .end-message {
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--md);
   text-align: center;
 }

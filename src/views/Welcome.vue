@@ -13,33 +13,19 @@
           {{ $t('welcome.text3') }}
         </div>
         <div class="btn-container">
-          <select
-            class="w-150"
-            name="uiLanguage"
-            v-model="uiLanguage"
-          >
-            <option
-              v-for="lang in uiLanguages"
-              :key="lang.code"
-              :value="lang.code"
-            >
+          <select class="w-150" name="uiLanguage" v-model="uiLanguage">
+            <option v-for="lang in uiLanguages" :key="lang.code" :value="lang.code">
               {{ lang.name }}
             </option>
           </select>
-          <router-link
-            to="/auth"
-            class="btn btn-menu w-150"
-          >
+          <router-link to="/auth" class="btn btn-menu w-150">
             <span class="material-symbols-outlined">account_circle</span>
             {{ $t('buttons.done') }}
           </router-link>
         </div>
       </div>
       <div class="page-image">
-        <img
-          class="image"
-          src="../assets/wordcloud.png"
-        />
+        <img class="image" src="../assets/wordcloud.png" />
       </div>
     </div>
   </div>
@@ -112,12 +98,14 @@ const uiLanguage = computed({
   height: auto;
 }
 select {
-  height: 50px;
+  height: 44px;
   padding: 8px;
   border-radius: 4px;
   border: 1px solid var(--bb);
   background-color: var(--y0);
-  font-size: var(--md);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--xs);
+  text-transform: uppercase;
   color: var(--text-head);
 }
 @media (min-width: 992px) {
