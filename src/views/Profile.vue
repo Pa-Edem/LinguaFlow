@@ -4,26 +4,14 @@
     <main class="profile-content">
       <header class="page-header">
         <h1 class="page-title">{{ $t('profile.title') }}</h1>
-        <button
-          @click="goBack"
-          class="btn btn-action"
-          :class="isDesktop ? 'w-250' : 'mobile'"
-        >
+        <button @click="goBack" class="btn btn-action" :class="isDesktop ? 'w-250' : 'mobile'">
           <span class="material-symbols-outlined">check</span>
           {{ $t('buttons.done') }}
         </button>
       </header>
       <section class="profile-group user-info">
-        <img
-          v-if="user?.photoURL"
-          :src="user.photoURL"
-          alt="User avatar"
-          class="avatar"
-        />
-        <div
-          v-else
-          class="avatar-placeholder"
-        >
+        <img v-if="user?.photoURL" :src="user.photoURL" alt="User avatar" class="avatar" />
+        <div v-else class="avatar-placeholder">
           <span class="material-symbols-outlined">person</span>
         </div>
         <div class="user-details">
@@ -36,10 +24,7 @@
         <h3 class="group-title">{{ $t('profile.subscr') }}</h3>
 
         <div class="current-plan-card">
-          <div
-            v-if="userStore.isPro"
-            class="plan-pro"
-          >
+          <div v-if="userStore.isPro" class="plan-pro">
             <p class="usage-info">
               <span>{{ $t('profile.yourSubscr') }}</span>
               <span class="strong">PRO</span>
@@ -52,26 +37,16 @@
               <span>{{ $t('profile.savedDialog') }}</span>
               <span class="strong">{{ $t('profile.unlimit') }}</span>
             </p>
-            <p
-              v-if="userStore.subscriptionEndDate"
-              class="usage-info"
-            >
+            <p v-if="userStore.subscriptionEndDate" class="usage-info">
               <span>{{ $t('profile.validUntil') }}</span>
               <span class="strong">{{ userStore.subscriptionEndDate }}</span>
             </p>
-            <button
-              class="btn btn-common btn-manage"
-              :class="isDesktop ? 'w-250' : 'mobile'"
-              @click="renewSubscr"
-            >
+            <button class="btn btn-common btn-manage" :class="isDesktop ? 'w-250' : 'mobile'" @click="renewSubscr">
               <span class="material-symbols-outlined">rocket_launch</span>
               {{ $t('profile.manageSubscr') }}
             </button>
           </div>
-          <div
-            v-else
-            class="plan-free"
-          >
+          <div v-else class="plan-free">
             <p class="usage-info">
               <span>{{ $t('profile.yourSubscr') }}</span>
               <span class="strong">Free</span>
@@ -86,10 +61,7 @@
             </p>
           </div>
         </div>
-        <div
-          class="pro-card"
-          v-if="!userStore.isPro"
-        >
+        <div class="pro-card" v-if="!userStore.isPro">
           <div class="pro-header">
             <span class="material-symbols-outlined">rocket_launch</span>
             <h2>{{ $t('profile.upgrade') }}</h2>
@@ -102,11 +74,7 @@
             <ProBenefitItem>{{ $t('profile.allModes') }}</ProBenefitItem>
             <ProBenefitItem>{{ $t('profile.analysis') }}</ProBenefitItem>
           </ul>
-          <button
-            class="btn btn-action"
-            :class="isDesktop ? 'w-250' : 'mobile'"
-            @click="handleUpgrade"
-          >
+          <button class="btn btn-action" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleUpgrade">
             <span class="material-symbols-outlined">rocket_launch</span>
             {{ $t('buttons.startFree') }}
           </button>
@@ -116,19 +84,11 @@
       <section class="profile-group">
         <h3 class="group-title">{{ $t('profile.accountMenag') }}</h3>
         <div class="actions-list">
-          <button
-            class="btn btn-danger"
-            :class="isDesktop ? 'w-250' : 'mobile'"
-            @click="handleDeleteAccount"
-          >
+          <button class="btn btn-danger" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleDeleteAccount">
             <span class="material-symbols-outlined">delete_forever</span>
             {{ $t('buttons.delete') }}
           </button>
-          <button
-            class="btn btn-danger"
-            :class="isDesktop ? 'w-250' : 'mobile'"
-            @click="handleLogout"
-          >
+          <button class="btn btn-danger" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleLogout">
             <span class="material-symbols-outlined">logout</span>
             {{ $t('buttons.logOut') }}
           </button>
@@ -145,6 +105,7 @@ import { useUiStore } from '../stores/uiStore';
 import { useUserStore } from '../stores/userStore';
 import { useDialogStore } from '../stores/dialogStore';
 import { useSettingsStore } from '../stores/settingsStore.js';
+import { useI18n } from 'vue-i18n';
 import ProBenefitItem from '../components/ProBenefitItem.vue';
 import { useBreakpoint } from '../composables/useBreakpoint.js';
 import { clearAllDialogCache } from '../utils/dataTransformer.js';
@@ -154,6 +115,7 @@ const uiStore = useUiStore();
 const userStore = useUserStore();
 const dialogStore = useDialogStore();
 const settingsStore = useSettingsStore();
+const { t } = useI18n();
 
 const user = computed(() => userStore.user);
 

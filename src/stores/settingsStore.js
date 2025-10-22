@@ -5,13 +5,15 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase';
 import { getLangCode } from '../utils/languageUtils';
 
+export const DEFAULT_VOICE_CONFIG = { name: 'default', pitch: 0.0 };
+
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
     theme: 'light',
     uiLanguage: 'en',
     learningLanguage: 'Suomi',
     speechRate: 1.0,
-    voiceName: 'default',
+    selectedVoiceConfig: DEFAULT_VOICE_CONFIG,
     availableVoices: [],
     isLoadingVoices: false,
     limit: {
@@ -38,16 +40,16 @@ export const useSettingsStore = defineStore('settings', {
       this.learningLanguage = lang;
       localStorage.setItem('app-learning-language', lang);
 
-      this.setVoiceName('default');
+      this.setSelectedVoiceConfig(DEFAULT_VOICE_CONFIG);
       this.fetchAvailableVoices();
     },
     setSpeechRate(rate) {
-      this.speechRate = rate;
-      localStorage.setItem('app-speech-rate', rate);
+      this.speechRate = parseFloat(rate);
+      localStorage.setItem('app-speech-rate', this.speechRate);
     },
-    setVoiceName(voice) {
-      this.voiceName = voice;
-      localStorage.setItem('app-voice-name', voice);
+    setSelectedVoiceConfig(config) {
+      this.selectedVoiceConfig = config;
+      localStorage.setItem('app-voice-config', JSON.stringify(config));
     },
     async fetchAvailableVoices() {
       this.isLoadingVoices = true;
@@ -56,8 +58,6 @@ export const useSettingsStore = defineStore('settings', {
         const langCode = getLangCode(this.learningLanguage);
         const getVoices = httpsCallable(functions, 'getAvailableVoices');
         const response = await getVoices({ langCode: langCode });
-
-        console.log('ПОЛУЧЕНЫ ГОЛОСА:', response.data.voices);
 
         if (response.data && response.data.voices) {
           this.availableVoices = response.data.voices;
@@ -115,10 +115,11 @@ export const useSettingsStore = defineStore('settings', {
       if (savedRate) {
         this.speechRate = parseFloat(savedRate);
       }
-      const savedVoice = localStorage.getItem('app-voice-name');
-      if (savedVoice) {
-        this.voiceName = savedVoice;
+      const savedVoiceConfig = localStorage.getItem('app-voice-config');
+      if (savedVoiceConfig) {
+        this.selectedVoiceConfig = JSON.parse(savedVoiceConfig);
       }
+      this.fetchAvailableVoices();
       // ЛОГИКА ЗАГРУЗКИ СЧЁТЧИКОВ
       const savedUsage = JSON.parse(localStorage.getItem('usage'));
       if (savedUsage && savedUsage.date === new Date().toDateString()) {

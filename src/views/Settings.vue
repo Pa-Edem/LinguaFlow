@@ -58,12 +58,13 @@
             <Loader v-if="settingsStore.isLoadingVoices" class="mini-loader" />
             <select
               id="voice-select"
-              v-model="selectedVoice"
+              v-model="selectedVoiceConfig"
               :disabled="!userStore.isPro || settingsStore.isLoadingVoices"
             >
-              <option value="default">{{ $t('settings.defaultVoice') }}</option>
-              <option v-for="(voice, index) in settingsStore.availableVoices" :key="voice.name" :value="voice.name">
-                {{ formatVoiceName(voice, index) }}
+              <option :value="DEFAULT_VOICE_CONFIG">{{ $t('settings.defaultVoice') }}</option>
+
+              <option v-for="(voice, index) in settingsStore.availableVoices" :key="index" :value="voice.config">
+                {{ formatVoiceName(voice) }}
               </option>
             </select>
           </div>
@@ -105,8 +106,8 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
-import { useSettingsStore } from '../stores/settingsStore';
+import { computed } from 'vue';
+import { useSettingsStore, DEFAULT_VOICE_CONFIG } from '../stores/settingsStore';
 import { useTrainingStore } from '../stores/trainingStore';
 import { useUserStore } from '../stores/userStore';
 import { useRouter } from 'vue-router';
@@ -126,7 +127,6 @@ const uiLanguages = [
   { code: 'ru', name: 'Русский' },
   { code: 'uk', name: 'Українська' },
 ];
-
 const learningLanguages = [
   'English',
   'Español',
@@ -159,28 +159,15 @@ const learningLanguage = computed({
 });
 const speechRate = computed({
   get: () => settingsStore.speechRate,
-  set: (value) => settingsStore.setSpeechRate(parseFloat(value)),
+  set: (value) => settingsStore.setSpeechRate(value),
 });
-const selectedVoice = computed({
-  get: () => settingsStore.voiceName,
-  set: (value) => settingsStore.setVoiceName(value),
+const selectedVoiceConfig = computed({
+  get: () => settingsStore.selectedVoiceConfig,
+  set: (value) => settingsStore.setSelectedVoiceConfig(value),
 });
-const formatVoiceName = (voice, index) => {
-  if (!voice || !voice.name) {
-    return '...';
-  }
-
-  const genderMap = {
-    FEMALE: '(Жен.)',
-    MALE: '(Муж.)',
-    NEUTRAL: '(Нейтр.)',
-  };
-
-  const tech = voice.name.includes('Wavenet') ? 'WaveNet' : 'Neural2';
-  const gender = genderMap[voice.ssmlGender] || '';
-
-  // Присваиваем номер, начиная с 1
-  return `Голос ${index + 1} (${tech} ${gender})`;
+const formatVoiceName = (voice) => {
+  if (!voice) return '...';
+  return `${voice.isPremium ? '👑 ' : ''}${voice.displayName}`;
 };
 const togglePlayTest = () => {
   trainingStore.playProDemoVoice();
@@ -252,6 +239,12 @@ const goBack = () => {
   background-color: var(--bg-group);
   font-size: var(--sm);
   color: var(--text-base);
+}
+.setting-item select option .pro-voice {
+  font-size: var(--xs);
+  color: var(--bg-pro);
+  vertical-align: middle;
+  margin-left: 8px;
 }
 .theme-switcher {
   display: flex;

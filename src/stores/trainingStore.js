@@ -123,7 +123,7 @@ export const useTrainingStore = defineStore('training', {
       const langCode = getLangCode(settingsStore.learningLanguage);
 
       const rate = settingsStore.speechRate;
-      const voice = settingsStore.voiceName;
+      const voiceConfig = settingsStore.selectedVoiceConfig;
 
       // Проверяем, нужно ли использовать PRO-голос
       if (userStore.isPro || forcePro) {
@@ -135,7 +135,8 @@ export const useTrainingStore = defineStore('training', {
             text: text,
             langCode: langCode,
             speechRate: rate,
-            voiceName: voice,
+            voiceName: voiceConfig.name,
+            pitch: voiceConfig.pitch,
           });
 
           const audioData = response.data.audioContent;
@@ -159,6 +160,7 @@ export const useTrainingStore = defineStore('training', {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = langCode;
         utterance.rate = rate;
+        utterance.pitch = voiceConfig.pitch;
         speechSynthesis.speak(utterance);
 
         utterance.onstart = () => {

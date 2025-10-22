@@ -3,57 +3,41 @@ import functions from 'firebase-functions';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import cors from 'cors';
 
-// Инициализируем CORS
 const corsHandler = cors({ origin: true });
-
-// Инициализируем клиент TTS
 const ttsClient = new TextToSpeechClient();
 
-/**
- * Вызываемая функция для синтеза речи.
- * Получает: data.text, data.langCode, data.voiceName, data.speechRate
- */
 export const getSpeech = functions.https.onRequest((request, response) => {
-  // Оборачиваем функцию в CORS
   corsHandler(request, response, async () => {
-    // ПОЛУЧАЕМ ВСЕ НОВЫЕ ДАННЫЕ ИЗ ЗАПРОСА
-    const { text, langCode, voiceName, speechRate } = request.body.data;
+    const { text, langCode, voiceName, speechRate, pitch } = request.body.data;
 
     // 2. Проверка данных
     if (!text || !langCode) {
       console.error('Нет текста или кода языка');
-      response.status(400).send({ error: 'Не предоставлен текст или код языка.' });
-      return;
+      return response.status(400).send({ error: 'Не предоставлен текст или код языка.' });
     }
 
-    // 3. СОЗДАЕМ ДИНАМИЧЕСКИЙ ОБЪЕКТ ГОЛОСА
     const voiceConfig = {
       languageCode: langCode,
     };
 
-    // Если пользователь выбрал НЕ "default", мы используем конкретное имя голоса.
     if (voiceName && voiceName !== 'default') {
       voiceConfig.name = voiceName;
     } else {
-      // Иначе, просто просим "Нейтральный" пол (Google выберет лучший).
       voiceConfig.ssmlGender = 'NEUTRAL';
     }
 
-    // 4. Формирование запроса к Google Cloud TTS
     const ttsRequest = {
       input: { text: text },
-      voice: voiceConfig, // ✨ Используем наш новый voiceConfig
+      voice: voiceConfig,
       audioConfig: {
         audioEncoding: 'MP3',
-        speakingRate: speechRate || 1.0, // ✨ Используем скорость (или 1.0 по умолчанию)
+        speakingRate: speechRate || 1.0,
+        pitch: pitch || 0.0,
       },
     };
 
     try {
-      // 5. Вызов API
       const [ttsResponse] = await ttsClient.synthesizeSpeech(ttsRequest);
-
-      // 6. Отправка аудио обратно во Vue
       response.send({
         data: {
           audioContent: ttsResponse.audioContent.toString('base64'),
@@ -66,39 +50,111 @@ export const getSpeech = functions.https.onRequest((request, response) => {
   });
 });
 
-/**
- * Функция Получение списка голосов
- * Получает: data.langCode
- */
 export const getAvailableVoices = functions.https.onRequest((request, response) => {
   corsHandler(request, response, async () => {
     const { langCode } = request.body.data;
-
     if (!langCode) {
-      console.error('Код языка не предоставлен для getAvailableVoices');
       return response.status(400).send({ error: 'Код языка не предоставлен.' });
     }
 
     try {
-      // 1. Делаем запрос в Google API
       const [result] = await ttsClient.listVoices({ languageCode: langCode });
 
-      // 2. ФИЛЬТРУЕМ СПИСОК
-      // Оставляем ТОЛЬКО премиум-голоса (Wavenet или Neural2)
-      const premiumVoices = result.voices.filter(
-        (voice) => voice.name.includes('Wavenet') || voice.name.includes('Neural2')
+      // 1. Разделяем все голоса по качеству И полу
+      const premiumFemales = result.voices.filter(
+        (v) => (v.name.includes('Wavenet') || v.name.includes('Neural2')) && v.ssmlGender === 'FEMALE'
+      );
+      const premiumMales = result.voices.filter(
+        (v) => (v.name.includes('Wavenet') || v.name.includes('Neural2')) && v.ssmlGender === 'MALE'
+      );
+      const standardFemales = result.voices.filter(
+        (v) => !v.name.includes('Wavenet') && !v.name.includes('Neural2') && v.ssmlGender === 'FEMALE'
+      );
+      const standardMales = result.voices.filter(
+        (v) => !v.name.includes('Wavenet') && !v.name.includes('Neural2') && v.ssmlGender === 'MALE'
       );
 
-      // 3. Упрощаем отфильтрованный список
-      const voices = premiumVoices.map((voice) => {
-        return {
-          name: voice.name, // e.g., "fi-FI-Wavenet-A"
-          ssmlGender: voice.ssmlGender, // e.g., "FEMALE"
-        };
-      });
+      let curatedList = [];
+      let voiceNumber = 1;
+      const MAX_VOICES = 10;
+      const TARGET_PER_GENDER = 5; // 5 мужских, 5 женских
 
-      // 4. Отправляем ТОЛЬКО ПРЕМИУМ голоса обратно во Vue
-      response.send({ data: { voices: voices } });
+      // 2. ФОРМИРУЕМ СПИСОК (ПРИОРИТЕТ PREMIUM)
+
+      // --- Женские голоса ---
+      let femaleVoices = [];
+      // Сначала пресеты из премиум-голосов (максимум 2-3)
+      for (const voice of premiumFemales.slice(0, 2)) {
+        // Берем макс. 2 премиум-женщин
+        const tech = voice.name.includes('Wavenet') ? 'WaveNet' : 'Neural2';
+        femaleVoices.push({
+          displayName: `Голос ${voiceNumber++} (Premium ${tech} Жен.)`,
+          isPremium: true,
+          ssmlGender: voice.ssmlGender,
+          config: { name: voice.name, pitch: 0.0 },
+        });
+        femaleVoices.push({
+          displayName: `Голос ${voiceNumber++} (Premium ${tech} Жен. - низкий)`,
+          isPremium: true,
+          ssmlGender: voice.ssmlGender,
+          config: { name: voice.name, pitch: -2.0 },
+        });
+      }
+      // "Добиваем" до 5 стандартными женскими
+      const femalesNeeded = TARGET_PER_GENDER - femaleVoices.length;
+      if (femalesNeeded > 0) {
+        standardFemales.slice(0, femalesNeeded).forEach((voice) => {
+          femaleVoices.push({
+            displayName: `Голос ${voiceNumber++} (Standard Жен.)`,
+            isPremium: false,
+            ssmlGender: voice.ssmlGender,
+            config: { name: voice.name, pitch: 0.0 },
+          });
+        });
+      }
+
+      // --- Мужские голоса ---
+      let maleVoices = [];
+      // Сначала пресеты из премиум-голосов (максимум 2-3)
+      for (const voice of premiumMales.slice(0, 2)) {
+        // Берем макс. 2 премиум-мужчин
+        const tech = voice.name.includes('Wavenet') ? 'WaveNet' : 'Neural2';
+        maleVoices.push({
+          displayName: `Голос ${voiceNumber++} (Premium ${tech} Муж.)`,
+          isPremium: true,
+          ssmlGender: voice.ssmlGender,
+          config: { name: voice.name, pitch: 0.0 },
+        });
+        maleVoices.push({
+          displayName: `Голос ${voiceNumber++} (Premium ${tech} Муж. - низкий)`,
+          isPremium: true,
+          ssmlGender: voice.ssmlGender,
+          config: { name: voice.name, pitch: -2.0 },
+        });
+      }
+      // "Добиваем" до 5 стандартными мужскими
+      const malesNeeded = TARGET_PER_GENDER - maleVoices.length;
+      if (malesNeeded > 0) {
+        standardMales.slice(0, malesNeeded).forEach((voice) => {
+          maleVoices.push({
+            displayName: `Голос ${voiceNumber++} (Standard Муж.)`,
+            isPremium: false,
+            ssmlGender: voice.ssmlGender,
+            config: { name: voice.name, pitch: 0.0 },
+          });
+        });
+      }
+
+      // 3. Собираем финальный список
+      curatedList = [...femaleVoices, ...maleVoices];
+
+      // 4. Финальная обрезка (на случай, если премиум-пресетов > 10)
+      if (curatedList.length > MAX_VOICES) {
+        curatedList = curatedList.slice(0, MAX_VOICES);
+      }
+
+      // 5. Отправляем готовый список
+      response.send({ data: { voices: curatedList } });
     } catch (error) {
       console.error('Ошибка получения списка голосов:', error);
       response.status(500).send({ error: 'Не удалось получить список голосов.' });
