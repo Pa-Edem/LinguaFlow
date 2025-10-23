@@ -10,6 +10,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--md);
   color: var(--text-head);
   margin-bottom: 8px;

@@ -149,3 +149,18 @@
   min-width: 100%;
   width: 100%;
 }
+.oooo {
+  border-radius: 24px;
+}
+.looo {
+  border-bottom-left-radius: 2px;
+}
+.oloo {
+  border-top-left-radius: 2px;
+}
+.oolo {
+  border-top-right-radius: 2px;
+}
+.oool {
+  border-bottom-right-radius: 2px;
+}

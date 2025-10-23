@@ -394,7 +394,6 @@ const goToTraining = (level) => {
 .dropdown-item .material-symbols-outlined {
   font-size: var(--md);
 }
-
 /* Анимация появления */
 .fade-enter-active,
 .fade-leave-active {

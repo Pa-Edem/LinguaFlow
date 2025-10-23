@@ -30,7 +30,8 @@ const isLoading = computed(() => uiStore.loading);
 <style scoped>
 .app-wrapper {
   min-height: 100vh;
-  min-width: 100vw;
+  /* min-width: 100vw; */
+  width: 100%;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-main);

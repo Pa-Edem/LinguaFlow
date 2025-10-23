@@ -13,12 +13,12 @@
           {{ $t('welcome.text3') }}
         </div>
         <div class="btn-container">
-          <select class="w-150" name="uiLanguage" v-model="uiLanguage">
+          <select :class="isDesktop ? 'w-150 py12' : 'mobile w-100'" name="uiLanguage" v-model="uiLanguage">
             <option v-for="lang in uiLanguages" :key="lang.code" :value="lang.code">
               {{ lang.name }}
             </option>
           </select>
-          <router-link to="/auth" class="btn btn-menu w-150">
+          <router-link to="/auth" class="btn btn-menu" :class="isDesktop ? 'w-150' : 'mobile w-100'">
             <span class="material-symbols-outlined">account_circle</span>
             {{ $t('buttons.done') }}
           </router-link>
@@ -35,6 +35,9 @@
 import { computed } from 'vue';
 import { useSettingsStore } from '../stores/settingsStore';
 const settingsStore = useSettingsStore();
+import { useBreakpoint } from '../composables/useBreakpoint.js';
+
+const { isDesktop } = useBreakpoint();
 
 const uiLanguages = [
   { code: 'en', name: 'English' },
@@ -91,15 +94,13 @@ const uiLanguage = computed({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
 }
 .image {
   width: 100%;
   height: auto;
 }
 select {
-  height: 44px;
-  padding: 8px;
+  padding: 9px 4px;
   border-radius: 4px;
   border: 1px solid var(--bb);
   background-color: var(--y0);
@@ -107,6 +108,9 @@ select {
   font-size: var(--xs);
   text-transform: uppercase;
   color: var(--text-head);
+}
+.py12 {
+  padding: 11px 4px;
 }
 @media (min-width: 992px) {
   .page-container {

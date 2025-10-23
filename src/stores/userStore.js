@@ -18,7 +18,7 @@ export const useUserStore = defineStore('user', {
   }),
   getters: {
     isPro: (state) => {
-      return true;
+      return false;
     },
     subscriptionEndDate: (state) => {
       // В будущем: получать дату из state.user.subscriptionData

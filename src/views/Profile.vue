@@ -4,19 +4,33 @@
     <main class="profile-content">
       <header class="page-header">
         <h1 class="page-title">{{ $t('profile.title') }}</h1>
-        <button @click="goBack" class="btn btn-action" :class="isDesktop ? 'w-250' : 'mobile'">
-          <span class="material-symbols-outlined">check</span>
-          {{ $t('buttons.done') }}
-        </button>
       </header>
       <section class="profile-group user-info">
-        <img v-if="user?.photoURL" :src="user.photoURL" alt="User avatar" class="avatar" />
+        <img v-if="user?.photoURL" :src="user.photoURL" class="avatar" />
         <div v-else class="avatar-placeholder">
           <span class="material-symbols-outlined">person</span>
         </div>
         <div class="user-details">
           <h2 class="user-name">{{ user?.displayName || 'Anonymous' }}</h2>
           <p class="user-email">{{ user?.email }}</p>
+        </div>
+
+        <div class="user-menu-container">
+          <button @click="isMenuOpen = !isMenuOpen" class="btn-menu-dots">
+            <span class="material-symbols-outlined drop">more_vert</span>
+          </button>
+          <Transition name="fade">
+            <div v-if="isMenuOpen" class="dropdown-menu">
+              <button @click="handleLogout" class="dropdown-item danger">
+                <span class="material-symbols-outlined">logout</span>
+                {{ $t('buttons.logOut') }}
+              </button>
+              <button @click="handleDeleteAccount" class="dropdown-item danger">
+                <span class="material-symbols-outlined">delete_forever</span>
+                {{ $t('buttons.delete') }}
+              </button>
+            </div>
+          </Transition>
         </div>
       </section>
 
@@ -41,7 +55,11 @@
               <span>{{ $t('profile.validUntil') }}</span>
               <span class="strong">{{ userStore.subscriptionEndDate }}</span>
             </p>
-            <button class="btn btn-common btn-manage" :class="isDesktop ? 'w-250' : 'mobile'" @click="renewSubscr">
+            <button
+              class="btn btn-common btn-manage oooo oool"
+              :class="isDesktop ? 'w-250' : 'mobile'"
+              @click="renewSubscr"
+            >
               <span class="material-symbols-outlined">rocket_launch</span>
               {{ $t('profile.manageSubscr') }}
             </button>
@@ -74,32 +92,24 @@
             <ProBenefitItem>{{ $t('profile.allModes') }}</ProBenefitItem>
             <ProBenefitItem>{{ $t('profile.analysis') }}</ProBenefitItem>
           </ul>
-          <button class="btn btn-action" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleUpgrade">
+          <button class="btn btn-action oooo oolo" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleUpgrade">
             <span class="material-symbols-outlined">rocket_launch</span>
             {{ $t('buttons.startFree') }}
           </button>
         </div>
       </section>
-      <div class="grow"></div>
-      <section class="profile-group">
-        <h3 class="group-title">{{ $t('profile.accountMenag') }}</h3>
-        <div class="actions-list">
-          <button class="btn btn-danger" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleDeleteAccount">
-            <span class="material-symbols-outlined">delete_forever</span>
-            {{ $t('buttons.delete') }}
-          </button>
-          <button class="btn btn-danger" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleLogout">
-            <span class="material-symbols-outlined">logout</span>
-            {{ $t('buttons.logOut') }}
-          </button>
-        </div>
-      </section>
     </main>
+    <footer class="page-footer">
+      <button @click="goBack" class="btn btn-action oooo oloo" :class="isDesktop ? 'w-250' : 'mobile'">
+        <span class="material-symbols-outlined">check</span>
+        {{ $t('buttons.done') }}
+      </button>
+    </footer>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUiStore } from '../stores/uiStore';
 import { useUserStore } from '../stores/userStore';
@@ -120,6 +130,7 @@ const { t } = useI18n();
 const user = computed(() => userStore.user);
 
 const { isDesktop } = useBreakpoint();
+const isMenuOpen = ref(false);
 
 const usage = computed(() => {
   return {
@@ -152,6 +163,7 @@ const renewSubscr = () => {
   console.log('Renew Subscr!');
 };
 const handleLogout = async () => {
+  isMenuOpen.value = false;
   const confirmed = await uiStore.showConfirmation({
     title: t('profile.logoutConfirmTitle'),
     message: t('profile.logoutConfirmMsg'),
@@ -171,6 +183,7 @@ const handleUpgrade = () => {
   alert('Функция PRO-подписки пока не реализована.');
 };
 const handleDeleteAccount = async () => {
+  isMenuOpen.value = false;
   const confirmed = await uiStore.showConfirmation({
     title: t('profile.deleteConfirmTitle'),
     message: t('profile.deleteConfirmMsg'),
@@ -194,12 +207,12 @@ const handleDeleteAccount = async () => {
 .profile-page {
   display: flex;
   flex-direction: column;
+  height: 100vh;
   max-width: 800px;
   margin: 0 auto;
   padding: 16px;
   min-height: 0;
-  height: 100vh;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 .page-header {
   display: flex;
@@ -208,7 +221,7 @@ const handleDeleteAccount = async () => {
   margin-bottom: 16px;
 }
 .page-title {
-  font-size: var(--xxl);
+  font-size: var(--lg);
   font-family: 'Roboto Condensed', sans-serif;
   color: var(--text-head);
   margin: 0;
@@ -219,29 +232,32 @@ const handleDeleteAccount = async () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
 }
 .profile-group {
   margin-bottom: 16px;
 }
 .group-title {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
-  font-weight: 700;
+  font-size: var(--xs);
+  font-weight: 500;
   color: var(--text-base);
   text-transform: uppercase;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .user-info {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 16px;
+  position: relative;
 }
 .avatar,
 .avatar-placeholder {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -254,22 +270,90 @@ const handleDeleteAccount = async () => {
   border: 1px solid var(--border);
 }
 .avatar-placeholder .material-symbols-outlined {
-  font-size: var(--xxxl);
+  font-size: var(--xxl);
   color: var(--text-base);
 }
 .user-name {
-  font-size: var(--md);
+  font-size: var(--sm);
   font-weight: 700;
   color: var(--text-head);
 }
+.user-details {
+  flex-grow: 1;
+}
 .user-email {
-  font-size: var(--sm);
+  font-size: var(--xs);
   color: var(--text-title);
   word-break: break-all;
 }
+.user-menu-container {
+  position: relative;
+}
+.btn-menu-dots {
+  background: none;
+  color: var(--text-title);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin-right: 4px;
+  border-radius: 50%;
+}
+.btn-menu-dots:hover {
+  background-color: var(--r1);
+  color: var(--r3);
+  transform: translateY(-2px);
+  border: 1px solid var(--r3);
+}
+.drop {
+  font-size: 24px;
+}
+.dropdown-menu {
+  position: absolute;
+  top: 40px;
+  right: 24px;
+  z-index: 100;
+  width: 160px;
+  border-radius: 24px;
+  border-top-right-radius: 2px;
+  border: 1px solid var(--r3);
+  box-shadow: 0 4px 4px var(--shadow);
+  overflow: hidden;
+}
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0;
+  background: var(--r1);
+  font-size: var(--xs);
+  font-weight: 500;
+  width: 100%;
+}
+.dropdown-item:hover {
+  background-color: var(--r2);
+}
+.dropdown-item.danger {
+  font-family: 'Roboto Condensed', sans-serif;
+  text-transform: uppercase;
+  color: var(--r3);
+}
+.dropdown-item .material-symbols-outlined {
+  font-size: var(--sm);
+}
+/* Анимация появления */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
 .current-plan-card {
   background-color: var(--bg-group);
-  padding: 16px;
+  padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 16px;
   display: flex;
@@ -290,10 +374,10 @@ const handleDeleteAccount = async () => {
   display: flex;
   flex-wrap: nowrap;
   justify-content: space-between;
-  font-family: 'Roboto Condensed', Helvetica, sans-serif;
-  font-size: var(--md);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
   color: var(--text-title);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .usage-info .strong {
   color: var(--text-head);
@@ -313,7 +397,7 @@ const handleDeleteAccount = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 10px 20px var(--shadow);
+  box-shadow: 0 2px 4px var(--shadow);
 }
 .pro-header {
   display: flex;
@@ -323,7 +407,9 @@ const handleDeleteAccount = async () => {
   margin-bottom: 16px;
 }
 .pro-header h2 {
-  font-size: var(--lg);
+  font-family: 'Roboto Condensed', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--md);
   font-weight: 700;
 }
 .benefits-list {
@@ -334,11 +420,12 @@ const handleDeleteAccount = async () => {
   margin: 0 8px;
   margin-bottom: 16px;
 }
-.actions-list {
+.page-footer {
+  flex-shrink: 0;
+  padding: 1rem;
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: center;
-  gap: 16px;
-  margin-top: 16px;
 }
 /* 2. Улучшения для ДЕСКТОПОВ */
 @media (min-width: 768px) {
@@ -365,10 +452,6 @@ const handleDeleteAccount = async () => {
   .pro-header h2 {
     font-family: 'Roboto Condensed', sans-serif;
     font-size: var(--xxl);
-  }
-  .actions-list {
-    flex-direction: row;
-    gap: 32px;
   }
 }
 </style>
