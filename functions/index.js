@@ -74,27 +74,22 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
         (v) => !v.name.includes('Wavenet') && !v.name.includes('Neural2') && v.ssmlGender === 'MALE'
       );
 
-      let curatedList = [];
-      let voiceNumber = 1;
+      const curatedList = [];
       const MAX_VOICES = 10;
-      const TARGET_PER_GENDER = 5; // 5 мужских, 5 женских
+      const TARGET_PER_GENDER = 5;
 
       // 2. ФОРМИРУЕМ СПИСОК (ПРИОРИТЕТ PREMIUM)
 
       // --- Женские голоса ---
       let femaleVoices = [];
-      // Сначала пресеты из премиум-голосов (максимум 2-3)
+      // Сначала пресеты из премиум-голосов (макс. 2 голоса, 4 пресета)
       for (const voice of premiumFemales.slice(0, 2)) {
-        // Берем макс. 2 премиум-женщин
-        const tech = voice.name.includes('Wavenet') ? 'WaveNet' : 'Neural2';
         femaleVoices.push({
-          displayName: `Голос ${voiceNumber++} (Premium ${tech} Жен.)`,
           isPremium: true,
           ssmlGender: voice.ssmlGender,
           config: { name: voice.name, pitch: 0.0 },
         });
         femaleVoices.push({
-          displayName: `Голос ${voiceNumber++} (Premium ${tech} Жен. - низкий)`,
           isPremium: true,
           ssmlGender: voice.ssmlGender,
           config: { name: voice.name, pitch: -2.0 },
@@ -105,7 +100,6 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
       if (femalesNeeded > 0) {
         standardFemales.slice(0, femalesNeeded).forEach((voice) => {
           femaleVoices.push({
-            displayName: `Голос ${voiceNumber++} (Standard Жен.)`,
             isPremium: false,
             ssmlGender: voice.ssmlGender,
             config: { name: voice.name, pitch: 0.0 },
@@ -115,29 +109,26 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
 
       // --- Мужские голоса ---
       let maleVoices = [];
-      // Сначала пресеты из премиум-голосов (максимум 2-3)
+      // Сначала пресеты из премиум-голосов
       for (const voice of premiumMales.slice(0, 2)) {
-        // Берем макс. 2 премиум-мужчин
-        const tech = voice.name.includes('Wavenet') ? 'WaveNet' : 'Neural2';
         maleVoices.push({
-          displayName: `Голос ${voiceNumber++} (Premium ${tech} Муж.)`,
           isPremium: true,
           ssmlGender: voice.ssmlGender,
           config: { name: voice.name, pitch: 0.0 },
         });
-        maleVoices.push({
-          displayName: `Голос ${voiceNumber++} (Premium ${tech} Муж. - низкий)`,
-          isPremium: true,
-          ssmlGender: voice.ssmlGender,
-          config: { name: voice.name, pitch: -2.0 },
-        });
+        if (maleVoices.length < TARGET_PER_GENDER) {
+          maleVoices.push({
+            isPremium: true,
+            ssmlGender: voice.ssmlGender,
+            config: { name: voice.name, pitch: -2.0 },
+          });
+        }
       }
       // "Добиваем" до 5 стандартными мужскими
       const malesNeeded = TARGET_PER_GENDER - maleVoices.length;
       if (malesNeeded > 0) {
         standardMales.slice(0, malesNeeded).forEach((voice) => {
           maleVoices.push({
-            displayName: `Голос ${voiceNumber++} (Standard Муж.)`,
             isPremium: false,
             ssmlGender: voice.ssmlGender,
             config: { name: voice.name, pitch: 0.0 },
@@ -145,16 +136,11 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
         });
       }
 
-      // 3. Собираем финальный список
-      curatedList = [...femaleVoices, ...maleVoices];
+      // 3. Собираем финальный список и обрезаем до 10
+      const finalRawList = [...femaleVoices, ...maleVoices].slice(0, MAX_VOICES);
 
-      // 4. Финальная обрезка (на случай, если премиум-пресетов > 10)
-      if (curatedList.length > MAX_VOICES) {
-        curatedList = curatedList.slice(0, MAX_VOICES);
-      }
-
-      // 5. Отправляем готовый список
-      response.send({ data: { voices: curatedList } });
+      // 4. Отправляем "сырые" данные
+      response.send({ data: { voices: finalRawList } });
     } catch (error) {
       console.error('Ошибка получения списка голосов:', error);
       response.status(500).send({ error: 'Не удалось получить список голосов.' });

@@ -14,6 +14,7 @@ export const useSettingsStore = defineStore('settings', {
     learningLanguage: 'Suomi',
     speechRate: 1.0,
     selectedVoiceConfig: DEFAULT_VOICE_CONFIG,
+    preferBrowserTTS: false,
     availableVoices: [],
     isLoadingVoices: false,
     limit: {
@@ -51,6 +52,10 @@ export const useSettingsStore = defineStore('settings', {
       this.selectedVoiceConfig = config;
       localStorage.setItem('app-voice-config', JSON.stringify(config));
     },
+    setPreferBrowserTTS(value) {
+      this.preferBrowserTTS = value;
+      localStorage.setItem('app-prefer-browser-tts', JSON.stringify(value));
+    },
     async fetchAvailableVoices() {
       this.isLoadingVoices = true;
       this.availableVoices = [];
@@ -63,7 +68,8 @@ export const useSettingsStore = defineStore('settings', {
           this.availableVoices = response.data.voices;
         }
       } catch (error) {
-        console.error('Ошибка при загрузке списка голосов:', error);
+        const errorMessage = i18n.global.t('store.voicesError');
+        console.error(errorMessage, error);
       } finally {
         this.isLoadingVoices = false;
       }
@@ -120,6 +126,10 @@ export const useSettingsStore = defineStore('settings', {
         this.selectedVoiceConfig = JSON.parse(savedVoiceConfig);
       }
       this.fetchAvailableVoices();
+      const savedPreferBrowserTTS = localStorage.getItem('app-prefer-browser-tts');
+      if (savedPreferBrowserTTS) {
+        this.preferBrowserTTS = JSON.parse(savedPreferBrowserTTS);
+      }
       // ЛОГИКА ЗАГРУЗКИ СЧЁТЧИКОВ
       const savedUsage = JSON.parse(localStorage.getItem('usage'));
       if (savedUsage && savedUsage.date === new Date().toDateString()) {

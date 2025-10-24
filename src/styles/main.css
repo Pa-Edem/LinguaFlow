@@ -147,8 +147,10 @@ body {
   align-self: flex-end;
 }
 .finnish-text-mobile {
-  font-size: var(--sm);
-  font-weight: 600;
+  font-family: 'Roboto Condensed', sans-serif;
+  color: var(--text-head);
+  font-size: var(--md);
+  font-weight: 500;
 }
 .russian-text-mobile {
   font-family: 'Roboto Condensed', sans-serif;

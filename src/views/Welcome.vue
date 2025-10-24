@@ -18,9 +18,9 @@
               {{ lang.name }}
             </option>
           </select>
-          <router-link to="/auth" class="btn btn-menu" :class="isDesktop ? 'w-150' : 'mobile w-100'">
+          <router-link to="/auth" class="btn btn-menu oooo oolo" :class="isDesktop ? 'w-150' : 'mobile w-100'">
             <span class="material-symbols-outlined">account_circle</span>
-            {{ $t('buttons.done') }}
+            {{ $t('buttons.start') }}
           </router-link>
         </div>
       </div>

@@ -3,13 +3,10 @@
   <div class="settings-page">
     <header class="page-header">
       <h1 class="page-title">{{ $t('settings.title') }}</h1>
-      <button v-if="!isDesktop" @click="goBack" class="btn btn-action mobile">
-        <span class="material-symbols-outlined">check</span>
-        {{ $t('buttons.done') }}
-      </button>
     </header>
 
     <main class="settings-content">
+      <!-- тема -->
       <div class="settings-group">
         <h2 class="group-title">{{ $t('settings.appearance') }}</h2>
         <div class="setting-item">
@@ -17,16 +14,16 @@
           <div class="theme-switcher">
             <button @click="settingsStore.setTheme('light')" :class="{ active: settingsStore.theme === 'light' }">
               <span class="material-symbols-outlined">light_mode</span>
-              {{ $t('settings.light') }}
+              <!-- {{ $t('settings.light') }} -->
             </button>
             <button @click="settingsStore.setTheme('dark')" :class="{ active: settingsStore.theme === 'dark' }">
               <span class="material-symbols-outlined">dark_mode</span>
-              {{ $t('settings.dark') }}
+              <!-- {{ $t('settings.dark') }} -->
             </button>
           </div>
         </div>
       </div>
-
+      <!-- язык -->
       <div class="settings-group">
         <h2 class="group-title">{{ $t('settings.language') }}</h2>
         <div class="setting-item">
@@ -46,15 +43,21 @@
           </select>
         </div>
       </div>
-
+      <!-- озвучка -->
       <div class="settings-group">
         <h2 class="group-title">
           {{ $t('settings.voiceSettings') }}
           <span class="material-symbols-outlined pro">crown</span>
         </h2>
-        <div class="setting-item">
+
+        <div v-if="userStore.isPro" class="setting-item">
+          <label for="browser-tts-check">{{ $t('settings.useBrowserTTS') }}</label>
+          <input id="browser-tts-check" type="checkbox" class="toggle-switch" v-model="preferBrowserTTS" />
+        </div>
+
+        <div v-if="!preferBrowserTTS" class="setting-item">
           <label for="voice-select">{{ $t('settings.voice') }}</label>
-          <div class="voice-selector-wrapper">
+          <div class-="voice-selector-wrapper">
             <Loader v-if="settingsStore.isLoadingVoices" class="mini-loader" />
             <select
               id="voice-select"
@@ -62,16 +65,18 @@
               :disabled="!userStore.isPro || settingsStore.isLoadingVoices"
             >
               <option :value="DEFAULT_VOICE_CONFIG">{{ $t('settings.defaultVoice') }}</option>
-
               <option v-for="(voice, index) in settingsStore.availableVoices" :key="index" :value="voice.config">
-                {{ formatVoiceName(voice) }}
+                {{ formatVoiceName(voice, index) }}
               </option>
             </select>
           </div>
         </div>
 
-        <div class="setting-item">
-          <label for="speed-slider">{{ $t('settings.speechRate') }}</label>
+        <div class="setting-item slider">
+          <div class="slider-info">
+            <label for="speed-slider">{{ $t('settings.speechRate') }}</label>
+            <span>x{{ parseFloat(speechRate).toFixed(2) }}</span>
+          </div>
           <div class="slider-container">
             <input
               id="speed-slider"
@@ -82,13 +87,17 @@
               v-model="speechRate"
               :disabled="!userStore.isPro"
             />
-            <span>{{ parseFloat(speechRate).toFixed(2) }}x</span>
           </div>
         </div>
 
-        <div class="setting-item">
+        <div class="setting-item test">
           <label>{{ $t('settings.preListening') }}</label>
-          <button class="btn btn-common mobile" @click="togglePlayTest">
+          <button
+            class="btn btn-common oooo oolo"
+            :class="isDesktop ? 'w-250' : 'mobile w-100'"
+            @click="togglePlayTest"
+            :disabled="!userStore.isPro"
+          >
             <span class="material-symbols-outlined">play_circle</span>
             {{ $t('settings.test') }}
           </button>
@@ -96,8 +105,8 @@
       </div>
     </main>
 
-    <footer class="page-footer desktop-only">
-      <button @click="goBack" class="btn btn-action w-250">
+    <footer class="page-footer">
+      <button @click="goBack" class="btn btn-action oooo looo" :class="isDesktop ? 'w-250' : 'mobile'">
         <span class="material-symbols-outlined">check</span>
         {{ $t('buttons.done') }}
       </button>
@@ -165,9 +174,23 @@ const selectedVoiceConfig = computed({
   get: () => settingsStore.selectedVoiceConfig,
   set: (value) => settingsStore.setSelectedVoiceConfig(value),
 });
-const formatVoiceName = (voice) => {
-  if (!voice) return '...';
-  return `${voice.isPremium ? '👑 ' : ''}${voice.displayName}`;
+const preferBrowserTTS = computed({
+  get: () => settingsStore.preferBrowserTTS,
+  set: (value) => settingsStore.setPreferBrowserTTS(value),
+});
+const formatVoiceName = (voice, index) => {
+  if (!voice || !voice.config) return '...';
+
+  const genderMap = {
+    FEMALE: t('settings.female'),
+    MALE: t('settings.male'),
+    NEUTRAL: t('settings.neutral'),
+  };
+  const gender = genderMap[voice.ssmlGender] || '';
+
+  const displayName = `${t('settings.voice')} ${index + 1} ${gender} ${voice.isPremium ? '👑 ' : ''}`;
+
+  return displayName;
 };
 const togglePlayTest = () => {
   trainingStore.playProDemoVoice();
@@ -179,18 +202,22 @@ const goBack = () => {
 
 <style scoped>
 .settings-page {
-  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   max-width: 800px;
   margin: 0 auto;
+  overflow: hidden;
 }
 .page-header {
+  flex-shrink: 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 8px;
 }
 .page-title {
-  font-size: var(--xxl);
+  margin: 16px 0 0 16px;
+  font-size: var(--lg);
   font-family: 'Roboto Condensed', sans-serif;
   color: var(--text-head);
 }
@@ -198,20 +225,21 @@ const goBack = () => {
   display: none;
 }
 .settings-content {
-  display: flex;
-  flex-direction: column;
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0 16px 32px 16px;
 }
 .settings-group {
-  padding: 16px 0;
+  padding: 12px 0;
 }
 .group-title {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
+  font-size: var(--xs);
   font-weight: 700;
   text-align: center;
   color: var(--text-base);
   text-transform: uppercase;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
   border-bottom: 1px solid var(--border);
 }
 .group-title .pro {
@@ -220,16 +248,45 @@ const goBack = () => {
   vertical-align: middle;
   margin-left: 8px;
 }
+.page-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
 .setting-item {
+  height: 36px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 40px;
   margin-top: 8px;
 }
 .setting-item label {
-  font-size: var(--md);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
   color: var(--text-title);
+}
+.theme-switcher {
+  display: flex;
+  border-radius: 8px;
+  gap: 16px;
+}
+.theme-switcher button {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  background-color: var(--bg-side);
+  color: var(--text-head);
+  cursor: pointer;
+  box-shadow: 2px 2px 3px var(--shadow);
+  transition: all 0.2s ease-in-out;
+}
+.theme-switcher button.active {
+  background-color: var(--y5);
+  color: var(--y0);
+  box-shadow: inset 2px 2px 3px var(--shadow);
 }
 .setting-item select {
   max-width: 240px;
@@ -246,42 +303,74 @@ const goBack = () => {
   vertical-align: middle;
   margin-left: 8px;
 }
-.theme-switcher {
-  display: flex;
-  border-radius: 8px;
-  background-color: var(--bg-group);
-  padding: 4px;
-  margin-top: 8px;
-  gap: 8px;
-}
-.theme-switcher button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: var(--md);
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--y0);
+  border-radius: 34px;
+  border: 1px solid var(--border);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s;
 }
-.theme-switcher button.active {
-  background-color: var(--bg-main);
-  color: var(--y3);
-  box-shadow: 0 1px 3px var(--shadow);
+.toggle-switch::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  background-color: var(--y10);
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch:checked {
+  background-color: var(--y9);
+}
+.toggle-switch:checked::before {
+  background-color: var(--bg-pro);
+  transform: translateX(20px);
+}
+.toggle-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.setting-item.slider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .slider-container {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+}
+.slider-info {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.slider-info label,
+.slider-info span {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
+  color: var(--text-title);
 }
 .slider-container span {
-  font-size: var(--base);
+  font-size: var(--xs);
   color: var(--text-base);
 }
-input[type='range'] {
+.slider-container input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
-  width: 200px;
+  width: 100%;
   height: 8px;
   background: var(--bg-group);
   border-radius: 4px;
@@ -303,6 +392,9 @@ input[type='range']::-moz-range-thumb {
   cursor: pointer;
   border-radius: 50%;
 }
+.setting-item.test {
+  margin-top: 16px;
+}
 .setting-item *:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -313,7 +405,6 @@ input[type='range']::-moz-range-thumb {
 .setting-item *:disabled::-moz-range-thumb {
   background: var(--text-base);
 }
-/*  */
 .voice-selector-wrapper {
   display: flex;
   align-items: center;
@@ -324,8 +415,6 @@ input[type='range']::-moz-range-thumb {
   backdrop-filter: none;
   position: static;
 }
-
-/*  */
 @media (min-width: 768px) {
   .settings-page {
     display: flex;

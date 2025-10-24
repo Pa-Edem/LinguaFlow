@@ -1,7 +1,7 @@
 /* src/styles/colors.css */
 :root {
   --shadow: rgba(0, 0, 0, 0.25);
-  --gradient-pro: linear-gradient(hsl(40, 50%, 50%) 0%, hsl(40, 50%, 75%) 100%);
+  --gradient-pro: linear-gradient(hsl(40, 60%, 60%) 0%, hsl(40, 60%, 85%) 100%);
   --w1: hsl(0, 0%, 95%);
   --w2: hsl(0, 0%, 40%);
   --w3: hsl(200, 75%, 95%);
@@ -20,8 +20,8 @@
   --r2: #f07f75;
   --r3: #602420;
   --y0: #fbfaf9;
-  --y1: rgb(250, 248, 245);
-  --y2: rgb(242, 238, 233);
+  --y1: #faf8f5;
+  --y2: #f2eee9;
   --y3: #e8e1d9;
   --y5: #7e7567;
   --y6: #ece7df;

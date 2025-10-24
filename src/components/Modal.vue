@@ -49,7 +49,7 @@
           <!-- v-if="uiStore.modalContent === 'analysis'" -->
           <button
             v-if="uiStore.modalContent === 'analysis'"
-            class="btn btn-common"
+            class="btn btn-common oooo oloo"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
@@ -58,12 +58,16 @@
           </button>
           <!-- v-if="uiStore.modalContent === 'upgrade'" -->
           <div v-else-if="uiStore.modalContent === 'upgrade'" class="footer-buttons">
-            <button class="btn btn-common" :class="isDesktop ? 'w-150' : 'mobile w-100'" @click="uiStore.hideModal()">
+            <button
+              class="btn btn-common oooo looo"
+              :class="isDesktop ? 'w-150' : 'mobile w-125'"
+              @click="uiStore.hideModal()"
+            >
               {{ $t('buttons.close') }}
             </button>
             <router-link
-              class="btn btn-action"
-              :class="isDesktop ? 'w-150' : 'mobile w-100'"
+              class="btn btn-action oooo oool"
+              :class="isDesktop ? 'w-150' : 'mobile w-125'"
               to="/profile"
               @click="uiStore.hideModal()"
             >
@@ -167,7 +171,7 @@ const containerClass = computed(() => {
   background: var(--gradient-pro);
 }
 .modal-header {
-  padding: 16px 0;
+  padding-top: 16px;
   flex-shrink: 0;
 }
 .modal-header .title {
@@ -176,12 +180,9 @@ const containerClass = computed(() => {
   margin: 0;
   text-align: center;
 }
-.upgrade .modal-header .title {
-  font-size: var(--xxl);
-}
 .modal-body {
   overflow-y: auto;
-  padding: 24px;
+  padding: 24px 16px;
   flex-grow: 1;
 }
 .modal-footer {
@@ -190,7 +191,6 @@ const containerClass = computed(() => {
   align-items: center;
   padding: 16px 0;
   border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }
 .modal-footer .footer-buttons {
@@ -219,7 +219,8 @@ const containerClass = computed(() => {
   padding-left: 8px;
   margin-bottom: 32px;
 }
-.analysis .modal-body ul li {
+.analysis .modal-body ul li,
+.analysis .modal-body p {
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--md);
   color: var(--text-base);
@@ -228,9 +229,15 @@ const containerClass = computed(() => {
 }
 .modal-body .pro-benefits .subtitle {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xl);
+  font-size: var(--md);
   color: var(--g3);
   text-align: center;
+  margin-bottom: 8px;
+}
+.modal-body .pro-benefits ul li {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
+  color: var(--head);
   margin-bottom: 8px;
 }
 .modal-body li code,

@@ -88,16 +88,12 @@
       </main>
       <footer class="actions-footer">
         <div class="actions-grid">
-          <!-- <button class="btn btn-danger mobile w-0" @click="handleDelete">
-            <span class="material-symbols-outlined">delete</span>
-          </button> -->
-
-          <button class="btn btn-menu mobile oooo looo" @click="getInfo" :disabled="!canView()">
+          <button class="btn btn-menu mobile oooo oloo" @click="getInfo" :disabled="!canView()">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysisM') }}
             <span class="material-symbols-outlined pro">crown</span>
           </button>
-          <button class="btn btn-menu mobile oooo oool" @click="toggleListening">
+          <button class="btn btn-menu mobile oooo oolo" @click="toggleListening">
             <span class="material-symbols-outlined">volume_up</span>
             {{ $t('buttons.listenM') }}
           </button>
@@ -107,7 +103,7 @@
             v-for="(level, index) in trainingLevels"
             :key="level.name"
             class="btn btn-menu mobile oooo w-100p"
-            :class="index % 2 === 0 ? 'looo' : 'oool'"
+            :class="btnClasses[index]"
             :disabled="level.isPro && !canView()"
             @click="goToTraining(level)"
           >
@@ -169,6 +165,7 @@ const trainingLevels = [
   },
   { name: 'level-3', icon: 'translate', text: t('buttons.translation'), isPro: true, feature: 'useAdvancedTraining' },
 ];
+const btnClasses = ['oool', 'looo', 'oolo', 'oloo'];
 
 onMounted(() => {
   dialogStore.fetchDialogById(props.id);
@@ -430,14 +427,5 @@ const goToTraining = (level) => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-}
-.oooo {
-  border-radius: 24px;
-}
-.looo {
-  border-bottom-left-radius: 2px;
-}
-.oool {
-  border-bottom-right-radius: 2px;
 }
 </style>

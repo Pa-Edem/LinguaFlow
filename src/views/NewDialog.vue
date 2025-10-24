@@ -2,42 +2,21 @@
 <template>
   <div class="layout">
     <div class="title">{{ $t('new.createNew') }}</div>
-    <form
-      @submit.prevent="saveDialog"
-      class="dialog-form"
-    >
+    <form @submit.prevent="saveDialog" class="dialog-form">
       <div class="form-group">
         <label for="topic">{{ $t('new.topic') }}</label>
-        <input
-          id="topic"
-          v-model="form.topic"
-          type="text"
-          required
-        />
+        <input id="topic" v-model="form.topic" type="text" required />
       </div>
 
       <div class="form-group">
         <label for="words">{{ $t('new.reqWords') }}</label>
-        <textarea
-          id="words"
-          v-model="form.words"
-          rows="3"
-          :placeholder="$t('new.wordsPlaceholder')"
-        ></textarea>
+        <textarea id="words" v-model="form.words" rows="3" :placeholder="$t('new.wordsPlaceholder')"></textarea>
       </div>
 
       <div class="form-group">
         <label for="level">{{ $t('new.level') }}</label>
-        <select
-          id="level"
-          v-model="form.level"
-          required
-        >
-          <option
-            v-for="level in levels"
-            :key="level"
-            :value="level"
-          >
+        <select id="level" v-model="form.level" required>
+          <option v-for="level in levels" :key="level" :value="level">
             {{ level }}
           </option>
         </select>
@@ -45,26 +24,15 @@
 
       <div class="form-group">
         <label for="replicas">{{ $t('new.lines') }}</label>
-        <input
-          id="replicas"
-          v-model.number="form.replicas"
-          type="number"
-          min="6"
-          max="20"
-          required
-        />
+        <input id="replicas" v-model.number="form.replicas" type="number" min="6" max="20" required />
       </div>
       <div class="submit-wrap">
-        <router-link
-          to="/dialogs"
-          class="btn btn-common"
-          :class="isDesktop ? 'w-250' : 'mobile'"
-        >
-          <span class="material-symbols-outlined icon">cancel</span>
+        <router-link to="/dialogs" class="btn btn-common oooo oloo" :class="isDesktop ? 'w-250' : 'mobile'">
+          <span class="material-symbols-outlined icon">close</span>
           {{ $t('buttons.cancel') }}
         </router-link>
         <button
-          class="btn btn-action"
+          class="btn btn-action oooo oool"
           :class="isDesktop ? 'w-250' : 'mobile'"
           type="submit"
           :disabled="!isFormValid || trainingStore.isLoading"
@@ -75,10 +43,7 @@
       </div>
     </form>
 
-    <p
-      v-if="errorMessage"
-      class="message error"
-    >
+    <p v-if="errorMessage" class="message error">
       {{ errorMessage }}
     </p>
   </div>

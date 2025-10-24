@@ -125,8 +125,10 @@ export const useTrainingStore = defineStore('training', {
       const rate = settingsStore.speechRate;
       const voiceConfig = settingsStore.selectedVoiceConfig;
 
+      const useProVoice = (userStore.isPro || forcePro) && !settingsStore.preferBrowserTTS;
+
       // Проверяем, нужно ли использовать PRO-голос
-      if (userStore.isPro || forcePro) {
+      if (useProVoice) {
         // === ЛОГИКА ДЛЯ PRO (Google Cloud TTS) ===
         this.isVoiceOver = true;
         try {
@@ -298,6 +300,11 @@ export const useTrainingStore = defineStore('training', {
       const dialog = dialogStore.currentDialog;
       if (!dialog) return;
 
+      if (dialog.analysis) {
+        this.geminiResult = dialog.analysis;
+        return;
+      }
+
       this.isLoading = true;
       this.geminiResult = '';
       try {
@@ -305,7 +312,9 @@ export const useTrainingStore = defineStore('training', {
         const prompt = this.getPromptInfo(fullDialogText, dialog.level);
         const rawResult = await fetchGeminiResponse(prompt);
 
-        this.geminiResult = marked.parse(rawResult);
+        const formattedResult = marked.parse(rawResult);
+        this.geminiResult = formattedResult;
+        await dialogStore.updateDialogAnalysis(dialog.id, formattedResult);
       } catch (error) {
         console.error('Error getting dialogue analysis:', error);
         const errorMessage = i18n.global.t('store.resultError');

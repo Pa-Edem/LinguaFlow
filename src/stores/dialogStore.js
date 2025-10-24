@@ -1,7 +1,7 @@
 // src\stores\dialogStore.js
 import { defineStore } from 'pinia';
 import { db, auth } from '../firebase';
-import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, query, where, updateDoc } from 'firebase/firestore';
 import {
   prepareDialogForFirestore,
   prepareDialogFromFirestore,
@@ -99,6 +99,26 @@ export const useDialogStore = defineStore('dialogs', {
       } catch (error) {
         console.error('Error saving dialogue:', error);
         return null;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async updateDialogAnalysis(dialogId, analysisText) {
+      this.isLoading = true;
+      try {
+        const docRef = doc(db, 'dialogs', dialogId);
+        await updateDoc(docRef, {
+          analysis: analysisText,
+        });
+
+        if (this.currentDialog && this.currentDialog.id === dialogId) {
+          this.currentDialog.analysis = analysisText;
+
+          saveDialogToCache(this.currentDialog);
+        }
+      } catch (error) {
+        console.error('Ошибка обновления анализа:', error);
       } finally {
         this.isLoading = false;
       }

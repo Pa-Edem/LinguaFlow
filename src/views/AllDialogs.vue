@@ -137,15 +137,15 @@ const goToCreateDialog = () => {
   if (userStore.isPro) {
     router.push({ name: 'new-dialog' });
   }
-  // для бесплатных проверяем оба лимита и жестко проверяем общий лимит
-  else if (canGenerate() && usage.value.total.count < usage.value.total.limit) {
-    router.push({ name: 'new-dialog' });
-  }
   // если нельзя генерировать
-  else if (!canNew()) {
+  else if (usage.value.daily.count === usage.value.daily.limit || usage.value.total.count === usage.value.total.limit) {
     // делаем инкремент и показываем модалку
     settingsStore.incrementCount('new');
     uiStore.showUpgradeModal();
+  }
+  // для бесплатных проверяем оба лимита и жестко проверяем общий лимит
+  else if (canGenerate()) {
+    router.push({ name: 'new-dialog' });
   }
   // если достигнут общий лимит диалогов
   else {
@@ -163,7 +163,7 @@ const goToCreateDialog = () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;
+  /*  overflow: hidden; */
   background-color: var(--bg-main);
 }
 .desktop-sidebar {
@@ -191,10 +191,11 @@ const goToCreateDialog = () => {
   padding: 0;
   border-radius: 50%;
 }
-.content {
+main.content {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
   padding: 16px;
+  min-height: 0;
 }
 .level-title {
   font-size: var(--xxs);
@@ -211,6 +212,7 @@ const goToCreateDialog = () => {
 }
 .mobile-footer {
   flex-shrink: 0;
+  z-index: 10;
 }
 .tab-bar {
   display: flex;
@@ -306,8 +308,9 @@ const goToCreateDialog = () => {
   }
   .content {
     padding: 32px;
-    overflow: auto;
-    flex-grow: 1;
+    overflow: visible;
+    /* flex-grow: 1; */
+    min-height: auto;
   }
   .dialogs-list {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

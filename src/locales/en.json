@@ -9,11 +9,15 @@
     "appLanguage": "Application language",
     "languageToLearn": "Language to learn",
     "voiceSettings": "Voice settings",
-    "voice": "Voice",
-    "defaultVoice": "Default voice (WaveNet, female)",
     "speechRate": "Speech rate",
     "preListening": "Pre-listening",
-    "test": "Test"
+    "test": "Test",
+    "useBrowserTTS": "Use browser voices",
+    "voice": "Voice",
+    "default": "default",
+    "female": "female",
+    "male": "male",
+    "low": "low"
   },
   "buttons": {
     "ok": "OK",
@@ -161,7 +165,8 @@
     "noData": "Not enough data for analysis.",
     "noSpeechApi": "Speech recognition is not supported in this browser.",
     "errRec": "Speech recognition error: ",
-    "ttsError": "Failed to load premium voice."
+    "ttsError": "Failed to load premium voice.",
+    "voicesError": ":"
   },
   "feedback": {
     "perfect": "Meaning is correct, and it sounds natural!",

@@ -17,7 +17,8 @@
 
         <div class="user-menu-container">
           <button @click="isMenuOpen = !isMenuOpen" class="btn-menu-dots">
-            <span class="material-symbols-outlined drop">more_vert</span>
+            <span class="material-symbols-outlined drop" v-if="!isMenuOpen">menu</span>
+            <span class="material-symbols-outlined drop" v-if="isMenuOpen">close</span>
           </button>
           <Transition name="fade">
             <div v-if="isMenuOpen" class="dropdown-menu">
@@ -298,12 +299,12 @@ const handleDeleteAccount = async () => {
   margin-right: 4px;
   border-radius: 50%;
 }
-.btn-menu-dots:hover {
+/* .btn-menu-dots:hover {
   background-color: var(--r1);
   color: var(--r3);
   transform: translateY(-2px);
   border: 1px solid var(--r3);
-}
+} */
 .drop {
   font-size: 24px;
 }
@@ -422,7 +423,7 @@ const handleDeleteAccount = async () => {
 }
 .page-footer {
   flex-shrink: 0;
-  padding: 1rem;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: center;
