@@ -423,15 +423,15 @@ const goToTraining = (level) => {
   color: var(--text-head);
 }
 .dialog-line {
-  padding-bottom: 8px;
-  margin-bottom: 8px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
 .finnish-text {
   font-size: var(--md);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-head);
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 .russian-text {
   font-size: var(--sm);

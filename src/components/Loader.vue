@@ -114,7 +114,7 @@
   transform: translate(-50%, -50%);
   transform-style: preserve-3d;
   perspective: calc(var(--size) * 2);
-  background: radial-gradient(rgba(242, 238, 233, 0.75), 15%, rgba(242, 238, 233, 0) 65%);
+  background: radial-gradient(var(--radial-15) 15%, var(--radial-65) 65%);
   border-radius: 50%;
 }
 .tagcloud-wrapper .tagcloud-tags {

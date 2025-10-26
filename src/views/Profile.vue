@@ -299,12 +299,6 @@ const handleDeleteAccount = async () => {
   margin-right: 4px;
   border-radius: 50%;
 }
-/* .btn-menu-dots:hover {
-  background-color: var(--r1);
-  color: var(--r3);
-  transform: translateY(-2px);
-  border: 1px solid var(--r3);
-} */
 .drop {
   font-size: 24px;
 }
@@ -353,7 +347,7 @@ const handleDeleteAccount = async () => {
   transform: translateY(-10px);
 }
 .current-plan-card {
-  background-color: var(--bg-group);
+  background: var(--gradient-pro);
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 16px;

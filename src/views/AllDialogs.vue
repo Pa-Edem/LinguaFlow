@@ -61,7 +61,11 @@
       </div>
       <div v-else class="message-container">
         <p class="message-text">{{ $t('all.notDialogs') }}</p>
-        <router-link :to="{ name: 'new-dialog' }" class="btn btn-action" :class="!isDesktop ? 'mobile' : 'w-250'">
+        <router-link
+          :to="{ name: 'new-dialog' }"
+          class="btn btn-action oooo looo"
+          :class="!isDesktop ? 'mobile' : 'w-250'"
+        >
           <span class="material-symbols-outlined">add</span>
           {{ $t('all.createFirst') }}
         </router-link>
