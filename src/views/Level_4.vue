@@ -4,16 +4,9 @@
   <div v-if="isDesktop">
     <DialogLayout>
       <template #sidebar-content>
-        <TrainingSidebar
-          :dialogId="props.id"
-          :slogan="$t('level4.slogan')"
-          :description="$t('level4.description')"
-        >
+        <TrainingSidebar :dialogId="props.id" :slogan="$t('level4.slogan')" :description="$t('level4.description')">
           <template #extra-controls>
-            <button
-              class="btn btn-control"
-              disabled
-            >
+            <button class="btn btn-control oooo" disabled>
               <span class="material-symbols-outlined icon">mic_off</span>
               <span class="btn-text">{{ $t('buttons.mic') }}</span>
             </button>
@@ -21,10 +14,7 @@
         </TrainingSidebar>
       </template>
 
-      <div
-        v-if="dialog"
-        class="quiz-content"
-      >
+      <div v-if="dialog" class="quiz-content">
         <div class="options-container">
           <button
             v-for="(option, index) in trainingStore.currentQuizOptions"
@@ -44,15 +34,9 @@
     </DialogLayout>
   </div>
 
-  <div
-    v-else-if="dialog"
-    class="page-container"
-  >
+  <div v-else-if="dialog" class="page-container">
     <header class="header">
-      <router-link
-        to="/dialogs"
-        class="header-btn"
-      >
+      <router-link to="/dialogs" class="header-btn">
         <span class="material-symbols-outlined i">arrow_back_ios</span>
       </router-link>
       <div class="header-title">
@@ -79,15 +63,9 @@
     </main>
 
     <footer class="actions-footer">
-      <TrainingSidebar
-        :dialogId="props.id"
-        :description="$t('level4.descriptionMobile')"
-      >
+      <TrainingSidebar :dialogId="props.id" :description="$t('level4.descriptionMobile')">
         <template #extra-controls>
-          <button
-            class="btn btn-control mobile"
-            disabled
-          >
+          <button class="btn btn-control oooo mobile" disabled>
             <span class="material-symbols-outlined icon">mic_off</span>
           </button>
         </template>

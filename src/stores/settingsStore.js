@@ -25,6 +25,7 @@ export const useSettingsStore = defineStore('settings', {
     dailyPreviewCount: 0,
     dailyGenerationCount: 0,
     date: new Date().toDateString(),
+    skippedNoteIDs: [],
   }),
   actions: {
     setTheme(newTheme) {
@@ -74,6 +75,25 @@ export const useSettingsStore = defineStore('settings', {
         this.isLoadingVoices = false;
       }
     },
+    skipCulturalNoteToday(dialogId) {
+      if (!this.skippedNoteIDs.includes(dialogId)) {
+        this.skippedNoteIDs.push(dialogId);
+      }
+
+      const usageJSON = localStorage.getItem('usage');
+      let usage = usageJSON
+        ? JSON.parse(usageJSON)
+        : {
+            countView: this.dailyPreviewCount,
+            countNew: this.dailyGenerationCount,
+            date: this.date,
+            skippedNoteIDs: [],
+          };
+
+      usage.skippedNoteIDs = this.skippedNoteIDs;
+      usage.date = this.date;
+      localStorage.setItem('usage', JSON.stringify(usage));
+    },
     incrementCount(type) {
       const usageJSON = localStorage.getItem('usage');
       let usage;
@@ -85,6 +105,7 @@ export const useSettingsStore = defineStore('settings', {
           countView: 0,
           countNew: 0,
           date: null,
+          skippedNoteIDs: [],
         };
       }
 
@@ -134,12 +155,14 @@ export const useSettingsStore = defineStore('settings', {
       const savedUsage = JSON.parse(localStorage.getItem('usage'));
       if (savedUsage && savedUsage.date === new Date().toDateString()) {
         // Если есть запись за сегодня, загружаем счётчики
-        this.dailyPreviewCount = savedUsage.countView;
-        this.dailyGenerationCount = savedUsage.countNew;
+        this.dailyPreviewCount = savedUsage.countView || 0;
+        this.dailyGenerationCount = savedUsage.countNew || 0;
+        this.skippedNoteIDs = savedUsage.skippedNoteIDs || [];
       } else {
         // Если новый день или нет записи, счётчик равен 0
         this.dailyPreviewCount = 0;
         this.dailyGenerationCount = 0;
+        this.skippedNoteIDs = [];
         this.date = new Date().toDateString();
         localStorage.removeItem('usage');
       }

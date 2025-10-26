@@ -1,19 +1,27 @@
 <!-- src\views\AllDialogs.vue -->
 <template>
-  <div v-if="dialogs && !uiStore.loading" class="page-wrapper">
+  <div v-if="dialogs && !uiStore.loading" class="page-wrapper in-view">
     <aside class="desktop-sidebar">
-      <h1 class="sidebar-title">Dialogit</h1>
-      <button v-if="dialogs.length > 0" @click="goToCreateDialog" class="btn btn-action" :disabled="!canGenerate()">
+      <div class="sidebar-title">
+        <img class="image" src="../assets/logo.svg" />
+        <h1 class="header-title">Lingua Flow</h1>
+      </div>
+      <button
+        v-if="dialogs.length > 0"
+        @click="goToCreateDialog"
+        class="btn btn-action oooo looo"
+        :disabled="!canGenerate()"
+      >
         <span class="material-symbols-outlined">add</span>
         {{ $t('all.createNew') }}
       </button>
       <div class="grow"></div>
       <div class="user-profile">
-        <router-link to="/profile" class="btn btn-common">
+        <router-link to="/profile" class="btn btn-common oooo oool">
           <span class="material-symbols-outlined">person</span>
           <span>{{ $t('all.profile') }}</span>
         </router-link>
-        <router-link to="/settings" class="btn btn-common">
+        <router-link to="/settings" class="btn btn-common oooo oloo">
           <span class="material-symbols-outlined">settings</span>
           <span>{{ $t('all.settings') }}</span>
         </router-link>
@@ -21,7 +29,8 @@
     </aside>
     <!-- | -->
     <header class="mobile-header">
-      <h1 class="header-title">Dialogit</h1>
+      <img class="image" src="../assets/logo.svg" />
+      <h1 class="header-title">Lingua Flow</h1>
       <button
         v-if="dialogs.length > 0"
         @click="goToCreateDialog"
@@ -163,7 +172,7 @@ const goToCreateDialog = () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  /*  overflow: hidden; */
+  position: relative;
   background-color: var(--bg-main);
 }
 .desktop-sidebar {
@@ -178,11 +187,16 @@ const goToCreateDialog = () => {
   background-color: var(--bg-side);
   border-bottom: 1px solid var(--bb);
 }
+.image {
+  height: 40px;
+  margin-right: 16px;
+}
 .header-title {
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--xl);
   font-weight: 700;
   color: var(--text-head);
+  margin-right: auto;
 }
 .btn--icon-only {
   width: 40px;
@@ -196,6 +210,7 @@ main.content {
   overflow-y: auto;
   padding: 16px;
   min-height: 0;
+  margin-bottom: 50px;
 }
 .level-title {
   font-size: var(--xxs);
@@ -213,12 +228,15 @@ main.content {
 .mobile-footer {
   flex-shrink: 0;
   z-index: 10;
+  border-top: 1px solid var(--bb);
+  position: fixed;
+  width: 100%;
+  bottom: 0;
 }
 .tab-bar {
   display: flex;
   justify-content: space-around;
   background-color: var(--bg-side);
-  border-top: 1px solid var(--bb);
 }
 .tab-item {
   display: flex;
@@ -287,9 +305,10 @@ main.content {
     gap: 16px;
   }
   .sidebar-title {
-    font-size: var(--xxl);
-    color: var(--text-head);
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
     margin-bottom: 16px;
   }
   .user-profile {
@@ -309,7 +328,6 @@ main.content {
   .content {
     padding: 32px;
     overflow: visible;
-    /* flex-grow: 1; */
     min-height: auto;
   }
   .dialogs-list {

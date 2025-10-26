@@ -11,7 +11,7 @@
         >
           <template #extra-controls>
             <button
-              class="btn btn-control mic"
+              class="btn btn-control oooo oloo mic"
               @click="trainingStore.toggleSpeechRecognition()"
               :class="{ active: trainingStore.isMicActive }"
             >
@@ -87,7 +87,7 @@
       <TrainingSidebar :dialogId="props.id" :description="$t('level2.descriptionMobile')">
         <template #extra-controls>
           <button
-            class="btn btn-control mobile mic"
+            class="btn btn-control oooo oloo mobile mic"
             @click="trainingStore.toggleSpeechRecognition()"
             :class="{ active: trainingStore.isMicActive }"
           >

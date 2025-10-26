@@ -86,11 +86,15 @@
           </button>
           <!-- v-if="uiStore.modalContent === 'confirm'" -->
           <div v-else-if="uiStore.modalContent === 'confirm'" class="footer-buttons">
-            <button class="btn btn-common" :class="isDesktop ? 'w-150' : 'mobile w-100'" @click="uiStore.cancelModal()">
+            <button
+              class="btn btn-common oooo oloo"
+              :class="isDesktop ? 'w-150' : 'mobile w-100'"
+              @click="uiStore.cancelModal()"
+            >
               {{ uiStore.modalProps.cancelText || $t('buttons.cancel') }}
             </button>
             <button
-              class="btn btn-danger"
+              class="btn btn-danger oooo oool"
               :class="isDesktop ? 'w-150' : 'mobile w-100'"
               @click="uiStore.confirmModal()"
             >

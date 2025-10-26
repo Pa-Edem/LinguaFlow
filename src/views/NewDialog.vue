@@ -1,6 +1,6 @@
 <!-- src\views\NewDialog.vue -->
 <template>
-  <div class="layout">
+  <div class="layout in-view">
     <div class="title">{{ $t('new.createNew') }}</div>
     <form @submit.prevent="saveDialog" class="dialog-form">
       <div class="form-group">

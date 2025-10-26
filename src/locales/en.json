@@ -15,9 +15,11 @@
     "useBrowserTTS": "Use browser voices",
     "voice": "Voice",
     "default": "default",
+    "defaultVoice": "Default voice",
     "female": "female",
     "male": "male",
-    "low": "low"
+    "low": "low",
+    "neutral": "neutral"
   },
   "buttons": {
     "ok": "OK",
@@ -45,7 +47,9 @@
     "reLine": "Repeat the line",
     "nextLine": "Next line",
     "endPractice": "End practice",
-    "mic": "Microphone"
+    "mic": "Microphone",
+    "start": "Start",
+    "continue": "Continue"
   },
   "welcome": {
     "title": "European Languages with AI",
@@ -108,7 +112,8 @@
     "description4": "Switch to a PRO subscription and get maximum benefits today!",
     "usePro": "PRO access used. Left: ",
     "endPro": "Last PRO access for today used.",
-    "deleteConfirmMsg": "Are you sure you want to delete this dialogue?"
+    "deleteConfirmMsg": "Are you sure you want to delete this dialogue?",
+    "notView": "Don't show today"
   },
   "new": {
     "createNew": "Create new dialog",
@@ -166,7 +171,7 @@
     "noSpeechApi": "Speech recognition is not supported in this browser.",
     "errRec": "Speech recognition error: ",
     "ttsError": "Failed to load premium voice.",
-    "voicesError": ":"
+    "voicesError": "Error loading voice list:"
   },
   "feedback": {
     "perfect": "Meaning is correct, and it sounds natural!",

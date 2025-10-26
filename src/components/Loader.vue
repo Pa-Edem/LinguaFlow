@@ -3,152 +3,77 @@
   <div class="loader-overlay">
     <div class="tagcloud-wrapper">
       <div class="tagcloud-rotation">
-        <ul
-          class="tagcloud-tags"
-          style="--num-elements: 24"
-        >
-          <li
-            class="tagcloud-tag"
-            style="--index: 1"
-          >
+        <ul class="tagcloud-tags" style="--num-elements: 24">
+          <li class="tagcloud-tag" style="--index: 1">
             <div><span>water</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 2"
-          >
+          <li class="tagcloud-tag" style="--index: 2">
             <div><span>livre</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 3"
-          >
+          <li class="tagcloud-tag" style="--index: 3">
             <div><span>blume</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 4"
-          >
+          <li class="tagcloud-tag" style="--index: 4">
             <div><span>praia</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 5"
-          >
+          <li class="tagcloud-tag" style="--index: 5">
             <div><span>fiets</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 6"
-          >
+          <li class="tagcloud-tag" style="--index: 6">
             <div><span>ptak</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 7"
-          >
+          <li class="tagcloud-tag" style="--index: 7">
             <div><span>strom</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 8"
-          >
+          <li class="tagcloud-tag" style="--index: 8">
             <div><span>asztal</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 9"
-          >
+          <li class="tagcloud-tag" style="--index: 9">
             <div><span>tuli</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 10"
-          >
+          <li class="tagcloud-tag" style="--index: 10">
             <div><span>fjell</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 11"
-          >
+          <li class="tagcloud-tag" style="--index: 11">
             <div><span>havet</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 12"
-          >
+          <li class="tagcloud-tag" style="--index: 12">
             <div><span>cerul</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 13"
-          >
+          <li class="tagcloud-tag" style="--index: 13">
             <div><span>riba</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 14"
-          >
+          <li class="tagcloud-tag" style="--index: 14">
             <div><span>domov</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 15"
-          >
+          <li class="tagcloud-tag" style="--index: 15">
             <div><span>casa</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 16"
-          >
+          <li class="tagcloud-tag" style="--index: 16">
             <div><span>поле</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 17"
-          >
+          <li class="tagcloud-tag" style="--index: 17">
             <div><span>libro</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 18"
-          >
+          <li class="tagcloud-tag" style="--index: 18">
             <div><span>bord</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 19"
-          >
+          <li class="tagcloud-tag" style="--index: 19">
             <div><span>рука</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 20"
-          >
+          <li class="tagcloud-tag" style="--index: 20">
             <div><span>fenêtre</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 21"
-          >
+          <li class="tagcloud-tag" style="--index: 21">
             <div><span>kutya</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 22"
-          >
+          <li class="tagcloud-tag" style="--index: 22">
             <div><span>řeka</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 23"
-          >
+          <li class="tagcloud-tag" style="--index: 23">
             <div><span>schule</span></div>
           </li>
-          <li
-            class="tagcloud-tag"
-            style="--index: 24"
-          >
+          <li class="tagcloud-tag" style="--index: 24">
             <div><span>jabłko</span></div>
           </li>
         </ul>

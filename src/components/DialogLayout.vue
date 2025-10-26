@@ -1,15 +1,8 @@
 <!-- src\components\DialogLayout.vue -->
 <template>
-  <div
-    class="dialog-layout"
-    v-if="dialog"
-  >
+  <div class="dialog-layout" v-if="dialog">
     <aside class="sidebar">
-      <router-link
-        to="/dialogs"
-        name="all-dialogs"
-        class="btn btn-common back-link"
-      >
+      <router-link to="/dialogs" name="all-dialogs" class="btn btn-common oooo oloo back-link">
         <span class="material-symbols-outlined">arrow_back_ios</span>
         {{ $t('buttons.dialogList') }}
       </router-link>

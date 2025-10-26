@@ -11,7 +11,7 @@
         >
           <template #extra-controls>
             <button
-              class="btn btn-control mic"
+              class="btn btn-control oooo oloo mic"
               @click="trainingStore.toggleSpeechRecognition()"
               :class="{ active: trainingStore.isMicActive }"
             >
@@ -23,20 +23,14 @@
       </template>
 
       <div class="content-wrapper">
-        <div
-          class="dialog-text-container-desktop"
-          ref="desktopContent"
-        >
+        <div class="dialog-text-container-desktop" ref="desktopContent">
           <div
             v-for="(rusLine, index) in visibleLines.rus"
             :key="index"
             class="message-bubble-desktop fade-in"
             :class="index % 2 === 0 ? 'left' : 'right'"
           >
-            <p
-              v-if="visibleLines.fin[index]"
-              class="finnish-text"
-            >
+            <p v-if="visibleLines.fin[index]" class="finnish-text">
               {{ visibleLines.fin[index] }}
             </p>
 
@@ -47,16 +41,10 @@
         </div>
         <div class="div"></div>
         <div class="recognized-text-container">
-          <p
-            v-if="trainingStore.geminiResult"
-            class="gemini-result"
-          >
+          <p v-if="trainingStore.geminiResult" class="gemini-result">
             {{ trainingStore.geminiResult }}
           </p>
-          <p
-            v-else
-            class="placeholder-text"
-          >
+          <p v-else class="placeholder-text">
             {{ $t('level3.info') }}
           </p>
         </div>
@@ -64,15 +52,9 @@
     </DialogLayout>
   </div>
 
-  <div
-    v-else-if="dialog"
-    class="page-container"
-  >
+  <div v-else-if="dialog" class="page-container">
     <header class="level-header">
-      <router-link
-        to="/dialogs"
-        class="level-header-btn"
-      >
+      <router-link to="/dialogs" class="level-header-btn">
         <span class="material-symbols-outlined i">arrow_back_ios</span>
       </router-link>
       <div class="level-header-title">
@@ -80,10 +62,7 @@
       </div>
     </header>
 
-    <main
-      class="content"
-      ref="mobileContent"
-    >
+    <main class="content" ref="mobileContent">
       <div class="chat-container">
         <div
           v-for="(rusLine, index) in visibleLines.rus"
@@ -91,10 +70,7 @@
           class="message-bubble fade-in"
           :class="index % 2 === 0 ? 'left' : 'right'"
         >
-          <p
-            v-if="visibleLines.fin[index]"
-            class="finnish-text-mobile"
-          >
+          <p v-if="visibleLines.fin[index]" class="finnish-text-mobile">
             {{ visibleLines.fin[index] }}
           </p>
 
@@ -107,26 +83,17 @@
 
     <footer class="actions-footer">
       <div class="recognized-text-container-mobile">
-        <p
-          v-if="trainingStore.geminiResult"
-          class="gemini-result"
-        >
+        <p v-if="trainingStore.geminiResult" class="gemini-result">
           {{ trainingStore.geminiResult }}
         </p>
-        <p
-          v-else
-          class="placeholder-text-mobile"
-        >
+        <p v-else class="placeholder-text-mobile">
           {{ $t('level3.info') }}
         </p>
       </div>
-      <TrainingSidebar
-        :dialogId="props.id"
-        :description="$t('level3.description_mobile')"
-      >
+      <TrainingSidebar :dialogId="props.id" :description="$t('level3.description_mobile')">
         <template #extra-controls>
           <button
-            class="btn btn-control mobile mic"
+            class="btn btn-control oooo oloo mobile mic"
             @click="trainingStore.toggleSpeechRecognition()"
             :class="{ active: trainingStore.isMicActive }"
           >

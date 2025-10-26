@@ -1,6 +1,6 @@
 <!-- \\src\views\Welcome.vue -->
 <template>
-  <div class="page">
+  <div class="page in-view">
     <div class="page-container">
       <div class="page-info">
         <div class="page-info-subtitle subtitle">{{ $t('welcome.subtitle') }}</div>
@@ -25,7 +25,7 @@
         </div>
       </div>
       <div class="page-image">
-        <img class="image" src="../assets/wordcloud.png" />
+        <img class="image" src="../assets/logo.svg" />
       </div>
     </div>
   </div>
@@ -95,10 +95,6 @@ const uiLanguage = computed({
   justify-content: space-between;
   align-items: center;
 }
-.image {
-  width: 100%;
-  height: auto;
-}
 select {
   padding: 9px 4px;
   border-radius: 4px;
@@ -111,6 +107,14 @@ select {
 }
 .py12 {
   padding: 11px 4px;
+}
+.page-image {
+  height: 120px;
+  width: auto;
+  margin: 0 auto;
+}
+.image {
+  height: 100%;
 }
 @media (min-width: 992px) {
   .page-container {
@@ -130,7 +134,11 @@ select {
     -webkit-box-flex: auto;
     -ms-flex: auto;
     flex: auto;
-    width: 200px;
+    height: 100%;
+    margin: 16px;
+  }
+  .image {
+    height: 400px;
     margin: 16px;
   }
 }

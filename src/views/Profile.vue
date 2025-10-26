@@ -1,6 +1,6 @@
 <!--\\src\views\Profile.vue -->
 <template>
-  <div class="profile-page">
+  <div class="profile-page in-view">
     <main class="profile-content">
       <header class="page-header">
         <h1 class="page-title">{{ $t('profile.title') }}</h1>

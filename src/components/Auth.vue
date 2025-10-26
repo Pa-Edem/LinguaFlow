@@ -1,6 +1,6 @@
 <!-- src\components\Auth.vue -->
 <template>
-  <div class="form-container">
+  <div class="form-container in-view">
     <div class="form-card">
       <div class="title">{{ isLoginMode ? $t('auth.in') : $t('auth.up') }}</div>
 
@@ -13,7 +13,7 @@
           <input type="email" v-model="email" :placeholder="$t('auth.email')" required />
           <input type="password" v-model="password" :placeholder="$t('auth.pass')" required />
         </div>
-        <button type="submit" class="btn btn-common" :disabled="isLoading">
+        <button type="submit" class="btn btn-common oooo oloo" :disabled="isLoading">
           <span v-if="!isLoading" class="material-symbols-outlined">{{
             isLoginMode ? 'login' : 'account_circle'
           }}</span>
@@ -24,7 +24,7 @@
       <div class="divider">
         <span>{{ $t('auth.or') }}</span>
       </div>
-      <button @click="handleGoogleSignIn" class="btn btn-common" :disabled="isLoading">
+      <button @click="handleGoogleSignIn" class="btn btn-common oooo looo" :disabled="isLoading">
         <img class="icon" src="../assets/google.svg" alt="Google icon" />
         Google
       </button>

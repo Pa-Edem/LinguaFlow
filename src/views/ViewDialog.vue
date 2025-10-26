@@ -1,8 +1,25 @@
 <!-- \\src\views\ViewDialog.vue -->
 <template>
   <div v-if="dialog && !uiStore.loading">
+    <!-- VIEW NOTE -->
+    <div v-if="!hasSeenNote && dialog.culturalNote" class="note-container fade-in">
+      <div class="note">
+        <span class="material-symbols-outlined icon">tips_and_updates</span>
+        <p class="note-text">{{ dialog.culturalNote }}</p>
+        <button @click="markNoteAsSeen" class="btn btn-action oooo oool" :class="isDesktop ? 'w-250' : 'mobile'">
+          <span class="material-symbols-outlined"> chevron_forward</span>
+
+          {{ $t('buttons.continue') }}
+        </button>
+        <div class="not-view-wrap">
+          <label for="notView">{{ $t('view.notView') }}</label>
+          <input id="notView" type="checkbox" class="toggle-switch" v-model="notView" />
+        </div>
+      </div>
+    </div>
+
     <!-- FOR DESKTOP -->
-    <div v-if="isDesktop">
+    <div v-else-if="isDesktop" class="in-view">
       <DialogLayout>
         <template #sidebar-content>
           <div class="grow"></div>
@@ -11,22 +28,23 @@
             <span class="dialog-info-level">{{ dialog?.level }}</span>
           </div>
           <!-- кнопка анализ диалога -->
-          <button class="btn btn-menu" @click="getInfo" :disabled="!canView()">
+          <button class="btn btn-menu oooo oloo" @click="getInfo" :disabled="!canView()">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysis') }}
             <span class="material-symbols-outlined pro">crown</span>
           </button>
           <!-- кнопка прослушать диалог -->
-          <button class="btn btn-menu" @click="toggleListening">
+          <button class="btn btn-menu oooo oool" @click="toggleListening">
             <span class="material-symbols-outlined">volume_up</span>
             {{ $t('buttons.listen') }}
           </button>
           <div class="grow"></div>
           <!-- кнопки тренировок -->
           <button
-            v-for="level in trainingLevels"
+            v-for="(level, index) in trainingLevels"
             :key="level.name"
-            class="btn btn-menu"
+            class="btn btn-menu oooo"
+            :class="btnClassesDesktop[index]"
             :disabled="level.isPro && !canView()"
             @click="goToTraining(level)"
           >
@@ -36,7 +54,7 @@
           </button>
           <div class="grow"></div>
           <!-- кнопка удалить диалог -->
-          <button class="btn btn-danger" @click="handleDelete">
+          <button class="btn btn-danger oooo looo" @click="handleDelete">
             <span class="material-symbols-outlined">delete</span>
             {{ $t('buttons.delDialog') }}
           </button>
@@ -52,7 +70,7 @@
     </div>
 
     <!-- FOR MOBILE -->
-    <div v-else class="page-container">
+    <div v-else class="page-container in-view">
       <header class="header">
         <router-link to="/dialogs" name="all-dialogs" class="header-btn">
           <span class="material-symbols-outlined i">arrow_back_ios</span>
@@ -142,6 +160,15 @@ const { canView } = usePermissions();
 const { isDesktop } = useBreakpoint();
 
 const isMenuOpen = ref(false);
+const notView = ref(false);
+const hasSeenNote = ref(settingsStore.skippedNoteIDs.includes(props.id));
+
+const markNoteAsSeen = () => {
+  if (notView.value) {
+    settingsStore.skipCulturalNoteToday(props.id);
+  }
+  hasSeenNote.value = true;
+};
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
@@ -166,9 +193,13 @@ const trainingLevels = [
   { name: 'level-3', icon: 'translate', text: t('buttons.translation'), isPro: true, feature: 'useAdvancedTraining' },
 ];
 const btnClasses = ['oool', 'looo', 'oolo', 'oloo'];
+const btnClassesDesktop = ['oloo', 'looo', 'oolo', 'oool'];
 
 onMounted(() => {
-  dialogStore.fetchDialogById(props.id);
+  hasSeenNote.value = settingsStore.skippedNoteIDs.includes(props.id);
+  if (!dialogStore.currentDialog || dialogStore.currentDialog.id !== props.id) {
+    dialogStore.fetchDialogById(props.id);
+  }
 });
 const handleDelete = async () => {
   isMenuOpen.value = false;
@@ -234,6 +265,110 @@ const goToTraining = (level) => {
 /* ============================================= */
 /* 1. ОБЩИЕ СТИЛИ (для обеих версий)             */
 /* ============================================= */
+.not-view-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
+  color: var(--text-base);
+  gap: 8px;
+}
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--y0);
+  border-radius: 34px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.toggle-switch::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  background-color: var(--y10);
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch:checked {
+  background-color: var(--y9);
+}
+.toggle-switch:checked::before {
+  background-color: var(--text-title);
+  transform: translateX(20px);
+}
+.toggle-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.note-container {
+  position: fixed;
+  width: 100%;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+  height: 100vh;
+  background-color: var(--bg-main);
+  text-align: center;
+  z-index: 100;
+}
+.fade-in {
+  animation-name: fade-in;
+  animation-duration: 0.8s;
+  animation-timing-function: ease-in-out;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.note {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+.note .icon {
+  font-size: 48px;
+  color: var(--bg-pro);
+}
+.note button {
+  margin-top: 16px;
+  margin-left: auto;
+}
+.note .note-text {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--lg);
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-title);
+}
+/* ============================================= */
+/* 2. СТИЛИ ДЛЯ ПЛАНШЕТОВ И ДЕСКТОПОВ */
+/* ============================================= */
+@media (min-width: 768px) {
+  .note {
+    max-width: 800px;
+  }
+  .note button {
+    margin-top: 32px;
+  }
+}
 .pro {
   position: absolute;
   top: 0;

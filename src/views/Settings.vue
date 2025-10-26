@@ -1,6 +1,6 @@
 <!-- \\src\views\Settings.vue -->
 <template>
-  <div class="settings-page">
+  <div class="settings-page in-view">
     <header class="page-header">
       <h1 class="page-title">{{ $t('settings.title') }}</h1>
     </header>
@@ -331,7 +331,7 @@ const goBack = () => {
   background-color: var(--y9);
 }
 .toggle-switch:checked::before {
-  background-color: var(--bg-pro);
+  background-color: var(--text-title);
   transform: translateX(20px);
 }
 .toggle-switch:disabled {
