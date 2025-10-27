@@ -90,7 +90,7 @@
           {{ $t('level3.info') }}
         </p>
       </div>
-      <TrainingSidebar :dialogId="props.id" :description="$t('level3.description_mobile')">
+      <TrainingSidebar :dialogId="props.id" :description="$t('level3.descriptionMobile')">
         <template #extra-controls>
           <button
             class="btn btn-control oooo oloo mobile mic"

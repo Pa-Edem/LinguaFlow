@@ -1,6 +1,7 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '../stores/userStore.js';
+import { usePermissions } from '../composables/usePermissions.js';
 import Welcome from '../views/Welcome.vue';
 import Auth from '../components/Auth.vue';
 import AllDialogs from '../views/AllDialogs.vue';
@@ -36,7 +37,7 @@ const routes = [
     path: '/new',
     name: 'new-dialog',
     component: NewDialog,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresGenerate: true },
   },
   {
     path: '/dialog/:id',
@@ -57,14 +58,14 @@ const routes = [
     name: 'level-2',
     component: Level_2,
     props: true,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresPro: true },
   },
   {
     path: '/training/level-3/:id',
     name: 'level-3',
     component: Level_3,
     props: true,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresPro: true },
   },
   {
     path: '/training/level-4/:id',
@@ -82,23 +83,39 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
-  const isLoggedIn = userStore.isLoggedIn;
+  const { canGenerate, canView } = usePermissions();
 
   if (userStore.isLoading) {
     await userStore.initUser();
   }
 
-  const requiresAuth = to.meta.requiresAuth;
+  const isLoggedIn = userStore.isLoggedIn;
 
-  if (requiresAuth && !isLoggedIn) {
-    next({ name: 'auth' });
-  } else if (to.name === 'auth' && isLoggedIn) {
-    // Авторизованных пользователей не пускаем на страницу входа
-    next({ name: 'all-dialogs' });
-  } else {
-    // Во всех остальных случаях разрешаем переход
-    next();
+  // --- Проверка №1: Требуется ли вход? ---
+  if (to.meta.requiresAuth && !isLoggedIn) {
+    return next({ name: 'auth' });
   }
+
+  // --- Проверка №2: Вход для залогиненных на страницу 'auth' ---
+  if (to.name === 'auth' && isLoggedIn) {
+    return next({ name: 'all-dialogs' });
+  }
+
+  // --- Проверка №3: Требуется ли право на ГЕНЕРАЦИЮ? ---
+  if (to.meta.requiresGenerate && !canGenerate()) {
+    // Если пользователь пытается зайти на /new, но лимиты исчерпаны
+    return next({ name: 'all-dialogs' }); // Отправляем его обратно
+  }
+
+  // --- Проверка №4: Требуется ли PRO? ---
+  if (to.meta.requiresPro && !canView()) {
+    // Если пользователь пытается зайти на /level-2 или /level-3
+    // (canView() вернет false, если он Free и потратил "пробные клики")
+    return next({ name: 'view-dialog', params: to.params });
+  }
+
+  // --- Проверка №5: Все в порядке ---
+  return next();
 });
 
 export default router;
