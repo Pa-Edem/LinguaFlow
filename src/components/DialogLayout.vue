@@ -2,7 +2,12 @@
 <template>
   <div class="dialog-layout" v-if="dialog">
     <aside class="sidebar">
-      <router-link to="/dialogs" name="all-dialogs" class="btn btn-common oooo oloo back-link">
+      <router-link
+        @click="trainingStore.stopSpeech()"
+        to="/dialogs"
+        name="all-dialogs"
+        class="btn btn-common oooo oloo back-link"
+      >
         <span class="material-symbols-outlined">arrow_back_ios</span>
         {{ $t('buttons.dialogList') }}
       </router-link>
@@ -17,8 +22,10 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useTrainingStore } from '../stores/trainingStore';
 import { useDialogStore } from '../stores/dialogStore';
 
+const trainingStore = useTrainingStore();
 const dialogStore = useDialogStore();
 const dialog = computed(() => dialogStore.currentDialog);
 </script>

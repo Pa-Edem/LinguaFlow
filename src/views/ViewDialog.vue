@@ -106,12 +106,12 @@
       </main>
       <footer class="actions-footer">
         <div class="actions-grid">
-          <button class="btn btn-menu mobile oooo oloo" @click="getInfo" :disabled="!canView()">
+          <button class="btn btn-menu mobile w-100p oooo oloo" @click="getInfo" :disabled="!canView()">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysisM') }}
             <span class="material-symbols-outlined pro">crown</span>
           </button>
-          <button class="btn btn-menu mobile oooo oolo" @click="toggleListening">
+          <button class="btn btn-menu mobile w-100p oooo oolo" @click="toggleListening">
             <span class="material-symbols-outlined">volume_up</span>
             {{ $t('buttons.listenM') }}
           </button>
@@ -554,7 +554,8 @@ const goToTraining = (level) => {
   box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
 }
 .actions-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
 }
