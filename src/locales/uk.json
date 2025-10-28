@@ -94,6 +94,8 @@
     "analysis": "Лексичний та граматичний аналіз діалогів (ШІ)",
     "upgrade": "Оновити до PRO",
     "validUntil": "Діє до ",
+    "promoCode": "У мене є промо-код",
+    "promoPlaceholder": "ХХХХХ",
     "manageSubscr": "Поновити",
     "accountMenag": "Керування обліковим записом",
     "logoutConfirmTitle": "Вийти з акаунта?",

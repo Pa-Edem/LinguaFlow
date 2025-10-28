@@ -59,7 +59,8 @@
             <button
               class="btn btn-common btn-manage oooo oool"
               :class="isDesktop ? 'w-250' : 'mobile'"
-              @click="renewSubscr"
+              @click="createPortalLink"
+              :disabled="isCreatingPortal"
             >
               <span class="material-symbols-outlined">rocket_launch</span>
               {{ $t('profile.manageSubscr') }}
@@ -93,6 +94,18 @@
             <ProBenefitItem>{{ $t('profile.allModes') }}</ProBenefitItem>
             <ProBenefitItem>{{ $t('profile.analysis') }}</ProBenefitItem>
           </ul>
+          <div class="promo-code-wrapper">
+            <label class="promo-label" for="promo-code">{{ $t('profile.promoCode') }}</label>
+            <input
+              id="promo-code"
+              type="text"
+              v-model="promoCode"
+              :placeholder="$t('profile.promoPlaceholder')"
+              class="promo-input"
+              :class="isDesktop ? 'w-250' : 'mobile'"
+              :disabled="isCreatingCheckout"
+            />
+          </div>
           <button class="btn btn-action oooo oolo" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleUpgrade">
             <span class="material-symbols-outlined">rocket_launch</span>
             {{ $t('buttons.startFree') }}
@@ -120,6 +133,7 @@ import { useI18n } from 'vue-i18n';
 import ProBenefitItem from '../components/ProBenefitItem.vue';
 import { useBreakpoint } from '../composables/useBreakpoint.js';
 import { clearAllDialogCache } from '../utils/dataTransformer.js';
+import { db, collection, addDoc, onSnapshot } from '../firebase';
 
 const router = useRouter();
 const uiStore = useUiStore();
@@ -132,6 +146,10 @@ const user = computed(() => userStore.user);
 
 const { isDesktop } = useBreakpoint();
 const isMenuOpen = ref(false);
+
+const promoCode = ref('');
+const isCreatingCheckout = ref(false);
+const isCreatingPortal = ref(false);
 
 const usage = computed(() => {
   return {
@@ -160,9 +178,6 @@ const dialogsCreatedToday = computed(() => {
 const goBack = () => {
   router.back();
 };
-const renewSubscr = () => {
-  console.log('Renew Subscr!');
-};
 const handleLogout = async () => {
   isMenuOpen.value = false;
   const confirmed = await uiStore.showConfirmation({
@@ -179,9 +194,62 @@ const handleLogout = async () => {
     router.push({ name: 'auth' });
   }
 };
-const handleUpgrade = () => {
-  // Здесь в дальнейшем реализуем переход на PRO-подписку
-  alert('Функция PRO-подписки пока не реализована.');
+const createPortalLink = async () => {
+  isCreatingPortal.value = true;
+  try {
+    // 1. Создаем ссылку на "портал" в Firestore
+    const portalLinkRef = await addDoc(collection(db, 'customers', user.value.uid, 'portal_links'), {
+      return_url: window.location.href, // Вернуться на эту же страницу
+    });
+
+    // 2. Слушаем изменения в этом документе
+    onSnapshot(portalLinkRef, (snap) => {
+      const data = snap.data();
+      if (data && data.url) {
+        // 3. Как только Stripe (через расширение) добавит ссылку, перенаправляем
+        window.location.assign(data.url);
+      }
+    });
+  } catch (error) {
+    console.error('Ошибка создания портала Stripe:', error);
+    uiStore.showToast('Не удалось открыть управление подпиской.', 'error');
+    isCreatingPortal.value = false;
+  }
+};
+const handleUpgrade = async () => {
+  isCreatingCheckout.value = true;
+
+  // ✨ 1. ВАШ ID ЦЕНЫ ИЗ STRIPE (Test mode)
+  const priceId = 'price_1SNAkc7sDoKjQqmA1uahnfAU';
+
+  try {
+    // 2. Создаем документ "checkout_session" в Firestore
+    const sessionRef = await addDoc(collection(db, 'customers', user.value.uid, 'checkout_sessions'), {
+      price: priceId,
+      // Указываем URL для успеха и отмены
+      success_url: window.location.origin + '/dialogs',
+      cancel_url: window.location.origin + '/profile',
+      // ✨ 3. ДОБАВЛЯЕМ ПРОМО-КОД
+      promotion_code: promoCode.value.trim() || null, // Отправляем, если он введен
+    });
+
+    // 4. Слушаем этот документ
+    onSnapshot(sessionRef, (snap) => {
+      const data = snap.data();
+      if (data && data.url) {
+        // 5. Как только Stripe вернет URL, перенаправляем пользователя на оплату
+        window.location.assign(data.url);
+      } else if (data && data.error) {
+        // 6. Если Stripe вернул ошибку (напр. "промо-код не найден")
+        console.error('Ошибка Stripe:', data.error.message);
+        uiStore.showToast(data.error.message, 'error');
+        isCreatingCheckout.value = false;
+      }
+    });
+  } catch (error) {
+    console.error('Ошибка создания сеанса Stripe:', error);
+    isCreatingCheckout.value = false;
+  }
 };
 const handleDeleteAccount = async () => {
   isMenuOpen.value = false;
@@ -414,6 +482,40 @@ const handleDeleteAccount = async () => {
   display: inline-block;
   margin: 0 8px;
   margin-bottom: 16px;
+}
+.promo-code-wrapper {
+  width: 100%;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+.promo-label {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--md);
+  color: var(--g3);
+}
+.promo-input {
+  background: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: var(--sm);
+  color: var(--g1);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 1px solid var(--g3);
+}
+.promo-input:focus {
+  border-color: var(--g1);
+  background: var(--g3);
+}
+.promo-input::placeholder {
+  transition: color 0.3s ease-out;
+}
+.promo-input:focus::placeholder {
+  color: transparent;
 }
 .page-footer {
   flex-shrink: 0;

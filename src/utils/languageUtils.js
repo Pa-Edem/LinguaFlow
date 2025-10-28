@@ -1,8 +1,5 @@
 // src/utils/languageUtils.js
-
-// 1. Карта "человеческих" названий (из settingsStore) в BCP 47 коды
 const languageMap = {
-  // 'Название из вашего списка': 'BCP 47 код'
   English: 'en-US',
   Español: 'es-ES',
   Français: 'fr-FR',
@@ -22,10 +19,8 @@ const languageMap = {
   Română: 'ro-RO',
   Hrvatski: 'hr-HR',
   Slovenčina: 'sk-SK',
-  // ... можно добавить еще
 };
 
-// 2. Карта с демо-фразами для каждого языка
 const demoPhrases = {
   Suomi: 'Näin ääni kuulostaa PRO-versiossa. Paljon parempi, eikö niin?',
   English: "This is how the voice sounds in the PRO version. Much better, isn't it?",
@@ -48,20 +43,10 @@ const demoPhrases = {
   Slovenčina: 'Tak znie hlas v PRO verzii. Oveľa lepšie, však?',
 };
 
-/**
- * Получает BCP 47 код языка по его "человеческому" названию.
- * @param {string} languageName - Название языка (напр. "Finnish" или "Suomi")
- * @returns {string} - Код BCP 47 (напр. "fi-FI")
- */
 export function getLangCode(languageName) {
-  return languageMap[languageName] || 'en-US'; // 'en-US' как запасной вариант
+  return languageMap[languageName] || 'en-US';
 }
 
-/**
- * Получает демо-фразу для выбранного языка.
- * @param {string} languageName - Название языка (напр. "Finnish" или "Suomi")
- * @returns {string} - Тестовая фраза
- */
 export function getDemoPhrase(languageName) {
-  return demoPhrases[languageName] || demoPhrases['English']; // 'English' как запасной
+  return demoPhrases[languageName] || demoPhrases['English'];
 }

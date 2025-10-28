@@ -94,6 +94,8 @@
     "analysis": "Lexical and grammar analysis of dialogues (AI)",
     "upgrade": "Upgrade to PRO",
     "validUntil": "Valid until",
+    "promoCode": "I have a promo code",
+    "promoPlaceholder": "ХХХХХ",
     "manageSubscr": "Renew",
     "accountMenag": "Account management",
     "logoutConfirmTitle": "Log out of account?",

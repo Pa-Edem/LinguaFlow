@@ -8,6 +8,11 @@ import {
   signInWithPopup,
   signOut,
   googleProvider,
+  db,
+  doc,
+  getDoc,
+  setDoc,
+  getIdTokenResult,
 } from '../firebase.js';
 
 export const useUserStore = defineStore('user', {
@@ -15,10 +20,12 @@ export const useUserStore = defineStore('user', {
     user: null,
     isLoggedIn: false,
     isLoading: true,
+    manualPro: false,
+    stripeRole: null,
   }),
   getters: {
     isPro: (state) => {
-      return true;
+      return state.manualPro === true || !!state.stripeRole;
     },
     subscriptionEndDate: (state) => {
       // В будущем: получать дату из state.user.subscriptionData
@@ -34,13 +41,58 @@ export const useUserStore = defineStore('user', {
   actions: {
     initUser() {
       return new Promise((resolve) => {
-        onAuthStateChanged(auth, (user) => {
-          this.user = user;
-          this.isLoggedIn = !!user;
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            this.user = user;
+            this.isLoggedIn = true;
+
+            await this.getOrCreateUserProfile(user);
+          } else {
+            this.user = null;
+            this.isLoggedIn = false;
+            this.manualPro = false;
+            this.stripeRole = null;
+          }
           this.isLoading = false;
           resolve();
         });
       });
+    },
+    async getOrCreateUserProfile(user) {
+      // 1. Проверяем Firestore (для "ручного" PRO)
+      const userDocRef = doc(db, 'users', user.uid);
+      try {
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          // --- Пользователь существует ---
+          const userData = userDoc.data();
+          this.manualPro = userData.manualProOverride === true;
+        } else {
+          // --- Пользователь НЕ существует ---
+          const newUserProfile = {
+            email: user.email,
+            displayName: user.displayName || 'Anonymous',
+            createdAt: new Date(),
+            manualProOverride: false,
+          };
+          await setDoc(userDocRef, newUserProfile);
+          this.manualPro = false;
+        }
+      } catch (error) {
+        console.error('Ошибка получения/создания профиля:', error);
+        this.manualPro = false;
+      }
+      // 2. ПРОВЕРЯЕМ "МЕТКИ" (Custom Claims) ОТ STRIPE
+      try {
+        // Принудительно обновляем токен, чтобы получить свежие данные от Stripe
+        const idTokenResult = await getIdTokenResult(user, true);
+        // Расширение Stripe записывает роль в 'stripeRole'
+        this.stripeRole = idTokenResult.claims.stripeRole || null;
+      } catch (error) {
+        console.error('Ошибка получения Custom Claims:', error);
+        this.stripeRole = null;
+      }
     },
     async loginWithEmail(email, password) {
       try {

@@ -92,6 +92,8 @@
     "analysis": "Лексический и грамматический анализ диалогов (ИИ)",
     "upgrade": "Обновить до PRO",
     "validUntil": "Действует до ",
+    "promoCode": "У меня есть промо-код",
+    "promoPlaceholder": "ХХХХХ",
     "manageSubscr": "Обновить",
     "accountMenag": "Управление аккаунтом",
     "logoutConfirmTitle": "Выйти из аккаунта?",

@@ -96,7 +96,6 @@
             class="btn btn-common oooo oolo"
             :class="isDesktop ? 'w-250' : 'mobile w-100'"
             @click="togglePlayTest"
-            :disabled="!userStore.isPro"
           >
             <span class="material-symbols-outlined">play_circle</span>
             {{ $t('settings.test') }}
