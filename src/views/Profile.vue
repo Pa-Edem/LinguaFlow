@@ -58,11 +58,13 @@
             </p>
             <button
               class="btn btn-common btn-manage oooo oool"
-              :class="isDesktop ? 'w-250' : 'mobile'"
+              :class="isDesktop ? 'w-250' : 'w-250 mobile'"
               @click="createPortalLink"
               :disabled="isCreatingPortal"
             >
-              <span class="material-symbols-outlined">rocket_launch</span>
+              <!-- <Spin v-if="isCreatingPortal" /> -->
+              <!-- <span v-else class="material-symbols-outlined">workspace_premium</span> -->
+              <span class="material-symbols-outlined">workspace_premium</span>
               {{ $t('profile.manageSubscr') }}
             </button>
           </div>
@@ -107,17 +109,23 @@
             />
           </div>
           <button class="btn btn-action oooo oolo" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleUpgrade">
-            <span class="material-symbols-outlined">rocket_launch</span>
+            <Spin v-if="isCreatingCheckout" />
+            <span v-else class="material-symbols-outlined">rocket_launch</span>
             {{ $t('buttons.startFree') }}
           </button>
         </div>
       </section>
     </main>
     <footer class="page-footer">
-      <button @click="goBack" class="btn btn-action oooo oloo" :class="isDesktop ? 'w-250' : 'mobile'">
+      <router-link
+        to="/dialogs"
+        name="all-dialogs"
+        class="btn btn-action oooo oloo"
+        :class="isDesktop ? 'w-250' : 'mobile'"
+      >
         <span class="material-symbols-outlined">check</span>
         {{ $t('buttons.done') }}
-      </button>
+      </router-link>
     </footer>
   </div>
 </template>
@@ -133,7 +141,9 @@ import { useI18n } from 'vue-i18n';
 import ProBenefitItem from '../components/ProBenefitItem.vue';
 import { useBreakpoint } from '../composables/useBreakpoint.js';
 import { clearAllDialogCache } from '../utils/dataTransformer.js';
-import { db, collection, addDoc, onSnapshot } from '../firebase';
+import { db } from '../firebase';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import Spin from '../components/Spin.vue';
 
 const router = useRouter();
 const uiStore = useUiStore();
@@ -143,13 +153,14 @@ const settingsStore = useSettingsStore();
 const { t } = useI18n();
 
 const user = computed(() => userStore.user);
+const isCreatingPortal = computed(() => userStore.isCreatingPortal);
 
 const { isDesktop } = useBreakpoint();
 const isMenuOpen = ref(false);
 
 const promoCode = ref('');
 const isCreatingCheckout = ref(false);
-const isCreatingPortal = ref(false);
+// const isCreatingPortal = ref(false);
 
 const usage = computed(() => {
   return {
@@ -175,9 +186,6 @@ const dialogsCreatedToday = computed(() => {
   }).length;
 });
 
-const goBack = () => {
-  router.back();
-};
 const handleLogout = async () => {
   isMenuOpen.value = false;
   const confirmed = await uiStore.showConfirmation({
@@ -195,59 +203,102 @@ const handleLogout = async () => {
   }
 };
 const createPortalLink = async () => {
-  isCreatingPortal.value = true;
+  if (!user.value || !user.value.uid) {
+    uiStore.showToast('Ошибка: пользователь не найден. Попробуйте перезагрузить.', 'error');
+    return;
+  }
+
+  // isCreatingPortal.value = true;
+  userStore.isCreatingPortal = true;
+
   try {
-    // 1. Создаем ссылку на "портал" в Firestore
-    const portalLinkRef = await addDoc(collection(db, 'customers', user.value.uid, 'portal_links'), {
-      return_url: window.location.href, // Вернуться на эту же страницу
+    // 1. Получаем экземпляр Firebase Functions
+    const functions = getFunctions(undefined, 'europe-west1');
+
+    // 2. Создаем "ссылку" на нашу облачную функцию по ее имени
+    const createPortalLinkCallable = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
+
+    // 3. Вызываем функцию и ждем ответа (await)
+    // Мы передаем 'returnUrl' как аргумент, как в документации
+    const { data } = await createPortalLinkCallable({
+      returnUrl: window.location.origin + '/profile',
+      // locale: "auto", // (Опционально) можно добавить, если нужно
     });
 
-    // 2. Слушаем изменения в этом документе
-    onSnapshot(portalLinkRef, (snap) => {
-      const data = snap.data();
-      if (data && data.url) {
-        // 3. Как только Stripe (через расширение) добавит ссылку, перенаправляем
-        window.location.assign(data.url);
-      }
-    });
+    // 4. Анализируем ответ
+    if (data && data.url) {
+      // УСПЕХ! Нас перенаправляют
+      window.location.assign(data.url);
+    } else {
+      // Функция ответила, но URL не прислала
+      console.error('Ошибка портала: получен неверный ответ от функции', data);
+      uiStore.showToast('Не удалось получить ссылку на портал.', 'error');
+    }
   } catch (error) {
-    console.error('Ошибка создания портала Stripe:', error);
-    uiStore.showToast('Не удалось открыть управление подпиской.', 'error');
-    isCreatingPortal.value = false;
+    // Ошибка при самом "звонке" (например, 'permission-denied')
+    console.error('Ошибка вызова функции createPortalLink:', error);
+
+    // Показываем пользователю понятную ошибку
+    if (error.code === 'permission-denied') {
+      uiStore.showToast('Ошибка: у вас нет прав для этого действия.', 'error');
+    } else {
+      uiStore.showToast(t('store.portalError'), 'error'); // Ваша старая ошибка 'запрос занял много времени'
+    }
+  } finally {
+    // В любом случае (успех или провал) убираем спиннер
+    userStore.isCreatingPortal = false;
+    // isCreatingPortal.value = false;
   }
 };
 const handleUpgrade = async () => {
-  isCreatingCheckout.value = true;
+  if (!user.value || !user.value.uid) {
+    uiStore.showToast('Ошибка: пользователь не найден. Попробуйте перезагрузить.', 'error');
+    return;
+  }
 
-  // ✨ 1. ВАШ ID ЦЕНЫ ИЗ STRIPE (Test mode)
+  isCreatingCheckout.value = true;
+  if (unsubscribe) unsubscribe();
+
+  // Таймаут на 10 секунд
+  const timeoutId = setTimeout(() => {
+    isCreatingCheckout.value = false;
+    uiStore.showToast(t('store.checkoutError'), 'error'); // "Ошибка: запрос занял слишком много времени"
+    if (unsubscribe) unsubscribe();
+  }, 10000);
+
+  // ID ЦЕНЫ ИЗ STRIPE (Test mode)
   const priceId = 'price_1SNAkc7sDoKjQqmA1uahnfAU';
 
   try {
-    // 2. Создаем документ "checkout_session" в Firestore
+    // Создаем документ "checkout_session" в Firestore
     const sessionRef = await addDoc(collection(db, 'customers', user.value.uid, 'checkout_sessions'), {
       price: priceId,
       // Указываем URL для успеха и отмены
       success_url: window.location.origin + '/dialogs',
       cancel_url: window.location.origin + '/profile',
-      // ✨ 3. ДОБАВЛЯЕМ ПРОМО-КОД
-      promotion_code: promoCode.value.trim() || null, // Отправляем, если он введен
+      // ДОБАВЛЯЕМ ПРОМО-КОД
+      promotion_code: promoCode.value.trim() || null,
     });
 
-    // 4. Слушаем этот документ
-    onSnapshot(sessionRef, (snap) => {
+    // Сохраняем функцию отписки
+    unsubscribe = onSnapshot(sessionRef, (snap) => {
       const data = snap.data();
       if (data && data.url) {
-        // 5. Как только Stripe вернет URL, перенаправляем пользователя на оплату
+        clearTimeout(timeoutId); // Успех
+        if (unsubscribe) unsubscribe();
         window.location.assign(data.url);
       } else if (data && data.error) {
-        // 6. Если Stripe вернул ошибку (напр. "промо-код не найден")
+        clearTimeout(timeoutId); // Ошибка
+        if (unsubscribe) unsubscribe();
         console.error('Ошибка Stripe:', data.error.message);
         uiStore.showToast(data.error.message, 'error');
         isCreatingCheckout.value = false;
       }
     });
   } catch (error) {
+    clearTimeout(timeoutId); // Ошибка
     console.error('Ошибка создания сеанса Stripe:', error);
+    uiStore.showToast(t('store.checkoutError'), 'error'); // Добавьте 'store.checkoutError' в i18n
     isCreatingCheckout.value = false;
   }
 };

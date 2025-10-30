@@ -19,7 +19,7 @@ export const useUiStore = defineStore('ui', {
       const dialogStore = useDialogStore();
       const userStore = useUserStore();
       const trainingStore = useTrainingStore();
-      return dialogStore.isLoading || userStore.isLoading || trainingStore.isLoading;
+      return dialogStore.isLoading || userStore.isLoading || trainingStore.isLoading || userStore.isCreatingPortal;
     },
   },
   actions: {

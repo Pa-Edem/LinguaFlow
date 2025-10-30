@@ -105,10 +105,15 @@
     </main>
 
     <footer class="page-footer">
-      <button @click="goBack" class="btn btn-action oooo looo" :class="isDesktop ? 'w-250' : 'mobile'">
+      <router-link
+        to="/dialogs"
+        name="all-dialogs"
+        class="btn btn-action oooo looo"
+        :class="isDesktop ? 'w-250' : 'mobile'"
+      >
         <span class="material-symbols-outlined">check</span>
         {{ $t('buttons.done') }}
-      </button>
+      </router-link>
     </footer>
   </div>
 </template>
@@ -118,7 +123,6 @@ import { computed } from 'vue';
 import { useSettingsStore, DEFAULT_VOICE_CONFIG } from '../stores/settingsStore';
 import { useTrainingStore } from '../stores/trainingStore';
 import { useUserStore } from '../stores/userStore';
-import { useRouter } from 'vue-router';
 import { useBreakpoint } from '../composables/useBreakpoint';
 import { useI18n } from 'vue-i18n';
 import Loader from '../components/Loader.vue';
@@ -126,7 +130,6 @@ import Loader from '../components/Loader.vue';
 const settingsStore = useSettingsStore();
 const trainingStore = useTrainingStore();
 const userStore = useUserStore();
-const router = useRouter();
 const { t } = useI18n();
 const { isDesktop } = useBreakpoint();
 
@@ -193,9 +196,6 @@ const formatVoiceName = (voice, index) => {
 };
 const togglePlayTest = () => {
   trainingStore.playProDemoVoice();
-};
-const goBack = () => {
-  router.back();
 };
 </script>
 

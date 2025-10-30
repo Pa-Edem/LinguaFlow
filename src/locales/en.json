@@ -52,7 +52,7 @@
     "continue": "Continue"
   },
   "welcome": {
-    "title": "European Languages with AI",
+    "title": "Lingua Flow",
     "subtitle": "Dialogues for Life",
     "text1": "Create personalized dialogues in any of the available European languages by specifying your level, topic, and keywords.",
     "text2": "The application is your personal tutor, offering unique training modes: from simple text familiarization to practicing pronunciation and translation skills.",
@@ -96,7 +96,7 @@
     "validUntil": "Valid until",
     "promoCode": "I have a promo code",
     "promoPlaceholder": "ХХХХХ",
-    "manageSubscr": "Renew",
+    "manageSubscr": "Subscription management",
     "accountMenag": "Account management",
     "logoutConfirmTitle": "Log out of account?",
     "logoutConfirmMsg": "Are you sure you want to log out?",

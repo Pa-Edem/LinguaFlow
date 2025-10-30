@@ -2,30 +2,30 @@
 <template>
   <div class="page in-view">
     <div class="page-container">
-      <div class="page-info">
-        <div class="page-info-subtitle subtitle">{{ $t('welcome.subtitle') }}</div>
-        <div class="page-info-title title">{{ $t('welcome.title') }}</div>
-        <div class="page-info-text">
-          {{ $t('welcome.text1') }}
-          <hr />
-          {{ $t('welcome.text2') }}
-          <hr />
-          {{ $t('welcome.text3') }}
+      <div class="page-info-title">
+        <div class="page-image">
+          <img class="image" src="../assets/logo.svg" />
         </div>
-        <div class="btn-container">
-          <select :class="isDesktop ? 'w-150 py12' : 'mobile w-100'" name="uiLanguage" v-model="uiLanguage">
-            <option v-for="lang in uiLanguages" :key="lang.code" :value="lang.code">
-              {{ lang.name }}
-            </option>
-          </select>
-          <router-link to="/auth" class="btn btn-menu oooo oolo" :class="isDesktop ? 'w-150' : 'mobile w-100'">
-            <span class="material-symbols-outlined">account_circle</span>
-            {{ $t('buttons.start') }}
-          </router-link>
+        <div class="page-info-header">
+          <div class="page-info-subtitle subtitle">{{ $t('welcome.subtitle') }}</div>
+          <div class="title">{{ $t('welcome.title') }}</div>
         </div>
       </div>
-      <div class="page-image">
-        <img class="image" src="../assets/logo.svg" />
+      <div class="page-info-text">
+        <p class="info-description">{{ $t('welcome.text1') }}</p>
+        <p class="info-description">{{ $t('welcome.text2') }}</p>
+        <p class="info-description">{{ $t('welcome.text3') }}</p>
+      </div>
+      <div class="btn-container">
+        <select :class="isDesktop ? 'w-150 py12' : 'mobile w-100'" name="uiLanguage" v-model="uiLanguage">
+          <option v-for="lang in uiLanguages" :key="lang.code" :value="lang.code">
+            {{ lang.name }}
+          </option>
+        </select>
+        <router-link to="/auth" class="btn btn-menu oooo oolo" :class="isDesktop ? 'w-150' : 'mobile w-100'">
+          <span class="material-symbols-outlined">account_circle</span>
+          {{ $t('buttons.start') }}
+        </router-link>
       </div>
     </div>
   </div>
@@ -68,26 +68,49 @@ const uiLanguage = computed({
   text-align: center;
   gap: 32px;
 }
+.page-info-header {
+  height: 120px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 .page-info-title {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+}
+.page-info-title .title {
+  text-align: left;
   font-size: var(--xxxl);
   line-height: 1;
-  margin: 20px 0;
   color: var(--text-head);
+  letter-spacing: 2px;
+}
+.page-image {
+  height: 120px;
+  width: auto;
+  margin: 0 auto;
+}
+.image {
+  height: 100%;
+  padding-right: 16px;
 }
 .page-info-subtitle {
   font-size: var(--lg);
   color: var(--text-title);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 2px;
   text-align: right;
 }
 .page-info-text {
   font-size: var(--sm);
   line-height: 1.6;
   color: var(--text-title);
-  margin-bottom: 32px;
   text-align: center;
+}
+.info-description {
+  margin: 16px 0;
 }
 .btn-container {
   width: 100%;
@@ -108,38 +131,21 @@ select {
 .py12 {
   padding: 11px 4px;
 }
-.page-image {
-  height: 120px;
-  width: auto;
-  margin: 0 auto;
-}
-.image {
-  height: 100%;
-}
+
 @media (min-width: 992px) {
   .page-container {
-    flex-direction: row;
-    align-items: center;
-    max-width: 1200px;
-    text-align: left;
+    max-width: 640px;
   }
-  .page-info {
-    width: 50%;
-    align-items: flex-start;
-  }
-  .btn-container {
-    justify-content: space-between;
+  .page-info-header {
+    height: 180px;
   }
   .page-image {
-    -webkit-box-flex: auto;
-    -ms-flex: auto;
-    flex: auto;
-    height: 100%;
-    margin: 16px;
+    height: 180px;
+    width: auto;
+    margin: 0 auto;
   }
   .image {
-    height: 400px;
-    margin: 16px;
+    height: 180px;
   }
 }
 </style>

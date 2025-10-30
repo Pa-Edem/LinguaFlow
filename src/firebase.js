@@ -1,6 +1,18 @@
 //src/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot } from 'firebase/firestore';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  addDoc,
+  onSnapshot,
+  getDocs,
+  query,
+  where,
+  limit,
+} from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import {
   getAuth,
@@ -33,11 +45,15 @@ export {
   createUserWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  getIdTokenResult,
   doc,
   getDoc,
   setDoc,
   collection,
   addDoc,
   onSnapshot,
-  getIdTokenResult,
+  getDocs,
+  query,
+  where,
+  limit,
 };

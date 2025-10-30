@@ -12,6 +12,11 @@ import {
   doc,
   getDoc,
   setDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  limit,
   getIdTokenResult,
 } from '../firebase.js';
 
@@ -20,22 +25,20 @@ export const useUserStore = defineStore('user', {
     user: null,
     isLoggedIn: false,
     isLoading: true,
+    isCreatingPortal: false,
     manualPro: false,
     stripeRole: null,
+    subscriptionExpires: null,
   }),
   getters: {
     isPro: (state) => {
       return state.manualPro === true || !!state.stripeRole;
     },
     subscriptionEndDate: (state) => {
-      // В будущем: получать дату из state.user.subscriptionData
-      if (state.isPro) {
-        // Возвращаем дату через год от сегодня (просто для примера)
-        const endDate = new Date();
-        endDate.setFullYear(endDate.getFullYear() + 1);
-        return endDate.toLocaleDateString(); // Форматируем в локальный формат ДД.ММ.ГГГГ
+      if (state.subscriptionExpires) {
+        return new Date(state.subscriptionExpires * 1000).toLocaleDateString();
       }
-      return null; // Для Free-пользователей возвращаем null
+      return null;
     },
   },
   actions: {
@@ -52,6 +55,7 @@ export const useUserStore = defineStore('user', {
             this.isLoggedIn = false;
             this.manualPro = false;
             this.stripeRole = null;
+            this.subscriptionExpires = null;
           }
           this.isLoading = false;
           resolve();
@@ -92,6 +96,37 @@ export const useUserStore = defineStore('user', {
       } catch (error) {
         console.error('Ошибка получения Custom Claims:', error);
         this.stripeRole = null;
+      }
+      // 3. ПОЛУЧАЕМ ДАТУ ОКОНЧАНИЯ ПОДПИСКИ
+      if (this.isPro && !this.manualPro) {
+        // Если пользователь PRO (и это не "ручной" PRO), ищем его подписку
+        await this.fetchSubscriptionEndDate(user.uid);
+      }
+    },
+    async fetchSubscriptionEndDate(uid) {
+      try {
+        // Ищем в 'customers/{uid}/subscriptions'
+        const subsRef = collection(db, 'customers', uid, 'subscriptions');
+        // Запрос: "дай мне одну (limit(1)) активную ('active') подписку"
+        const q = query(
+          subsRef,
+          where('status', 'in', ['trialing', 'active']), // Ищем активную или триальную
+          limit(1)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          // Подписка найдена
+          const subData = querySnapshot.docs[0].data();
+          // Сохраняем timestamp (e.g., 176... )
+          this.subscriptionExpires = subData.current_period_end.seconds;
+        } else {
+          this.subscriptionExpires = null;
+        }
+      } catch (error) {
+        console.error('Ошибка получения даты подписки:', error);
+        this.subscriptionExpires = null;
       }
     },
     async loginWithEmail(email, password) {
