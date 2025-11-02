@@ -26,6 +26,7 @@ export const useUserStore = defineStore('user', {
     isLoggedIn: false,
     isLoading: true,
     isCreatingPortal: false,
+    isCreatingCheckout: false,
     manualPro: false,
     stripeRole: null,
     subscriptionExpires: null,

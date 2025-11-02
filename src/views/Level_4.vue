@@ -1,7 +1,7 @@
 <!-- src\views\Level_4.vue -->
 
 <template>
-  <div v-if="isDesktop">
+  <div v-if="isDesktop" class="in-view">
     <DialogLayout>
       <template #sidebar-content>
         <TrainingSidebar :dialogId="props.id" :slogan="$t('level4.slogan')" :description="$t('level4.description')">
@@ -34,7 +34,7 @@
     </DialogLayout>
   </div>
 
-  <div v-else-if="dialog" class="page-container">
+  <div v-else-if="dialog" class="page-container in-view">
     <header class="header">
       <router-link to="/dialogs" class="header-btn">
         <span class="material-symbols-outlined i">arrow_back_ios</span>

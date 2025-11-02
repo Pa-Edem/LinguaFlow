@@ -1,7 +1,7 @@
 <!-- \\src\App.vue -->
 <template>
   <div class="app-wrapper">
-    <Loader v-if="isLoading"></Loader>
+    <Loader v-if="isLoading" class="in-view"></Loader>
 
     <main class="main">
       <router-view></router-view>
@@ -10,7 +10,7 @@
     <ToastContainer></ToastContainer>
 
     <Teleport to="body">
-      <Modal></Modal>
+      <Modal class="in-view"></Modal>
     </Teleport>
   </div>
 </template>

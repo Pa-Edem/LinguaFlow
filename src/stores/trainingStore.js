@@ -280,7 +280,6 @@ export const useTrainingStore = defineStore('training', {
         // Передаем понятные для createDialog данные
         const newDialogId = await dialogStore.createDialog(dataForDb, creationParams);
 
-        // ✨ ЛОГИКА СЧЁТЧИКА ПЕРЕЕХАЛА СЮДА
         // Увеличиваем счётчик ТОЛЬКО ПОСЛЕ УСПЕШНОГО создания
         if (newDialogId) {
           const settingsStore = useSettingsStore();

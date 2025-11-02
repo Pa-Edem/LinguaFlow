@@ -62,8 +62,6 @@
               @click="createPortalLink"
               :disabled="isCreatingPortal"
             >
-              <!-- <Spin v-if="isCreatingPortal" /> -->
-              <!-- <span v-else class="material-symbols-outlined">workspace_premium</span> -->
               <span class="material-symbols-outlined">workspace_premium</span>
               {{ $t('profile.manageSubscr') }}
             </button>
@@ -143,6 +141,7 @@ import { useBreakpoint } from '../composables/useBreakpoint.js';
 import { clearAllDialogCache } from '../utils/dataTransformer.js';
 import { db } from '../firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { addDoc, collection, onSnapshot } from 'firebase/firestore';
 import Spin from '../components/Spin.vue';
 
 const router = useRouter();
@@ -154,13 +153,12 @@ const { t } = useI18n();
 
 const user = computed(() => userStore.user);
 const isCreatingPortal = computed(() => userStore.isCreatingPortal);
+const isCreatingCheckout = computed(() => userStore.isCreatingCheckout);
 
 const { isDesktop } = useBreakpoint();
 const isMenuOpen = ref(false);
-
 const promoCode = ref('');
-const isCreatingCheckout = ref(false);
-// const isCreatingPortal = ref(false);
+let unsubscribe = null;
 
 const usage = computed(() => {
   return {
@@ -208,102 +206,129 @@ const createPortalLink = async () => {
     return;
   }
 
-  // isCreatingPortal.value = true;
   userStore.isCreatingPortal = true;
 
   try {
-    // 1. Получаем экземпляр Firebase Functions
     const functions = getFunctions(undefined, 'europe-west1');
-
-    // 2. Создаем "ссылку" на нашу облачную функцию по ее имени
     const createPortalLinkCallable = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
-
-    // 3. Вызываем функцию и ждем ответа (await)
-    // Мы передаем 'returnUrl' как аргумент, как в документации
     const { data } = await createPortalLinkCallable({
       returnUrl: window.location.origin + '/profile',
-      // locale: "auto", // (Опционально) можно добавить, если нужно
     });
 
-    // 4. Анализируем ответ
     if (data && data.url) {
-      // УСПЕХ! Нас перенаправляют
       window.location.assign(data.url);
     } else {
-      // Функция ответила, но URL не прислала
       console.error('Ошибка портала: получен неверный ответ от функции', data);
       uiStore.showToast('Не удалось получить ссылку на портал.', 'error');
     }
   } catch (error) {
-    // Ошибка при самом "звонке" (например, 'permission-denied')
     console.error('Ошибка вызова функции createPortalLink:', error);
 
-    // Показываем пользователю понятную ошибку
     if (error.code === 'permission-denied') {
       uiStore.showToast('Ошибка: у вас нет прав для этого действия.', 'error');
     } else {
-      uiStore.showToast(t('store.portalError'), 'error'); // Ваша старая ошибка 'запрос занял много времени'
+      uiStore.showToast(t('store.portalError'), 'error');
     }
   } finally {
-    // В любом случае (успех или провал) убираем спиннер
     userStore.isCreatingPortal = false;
-    // isCreatingPortal.value = false;
   }
 };
 const handleUpgrade = async () => {
+  // 1. ПРОВЕРКА: Залогинен ли пользователь?
   if (!user.value || !user.value.uid) {
     uiStore.showToast('Ошибка: пользователь не найден. Попробуйте перезагрузить.', 'error');
     return;
   }
 
-  isCreatingCheckout.value = true;
-  if (unsubscribe) unsubscribe();
+  // 2. НАЧИНАЕМ ПРОЦЕСС (показываем лоадер)
+  userStore.isCreatingCheckout = true;
 
-  // Таймаут на 10 секунд
+  // 3. ОЧИЩАЕМ ПРЕДЫДУЩУЮ ПОДПИСКУ (если была)
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
+  }
+
+  // 4. ТАЙМАУТ: Если через 10 секунд ничего не произошло — показываем ошибку
   const timeoutId = setTimeout(() => {
-    isCreatingCheckout.value = false;
-    uiStore.showToast(t('store.checkoutError'), 'error'); // "Ошибка: запрос занял слишком много времени"
-    if (unsubscribe) unsubscribe();
+    userStore.isCreatingCheckout = false;
+    uiStore.showToast(t('store.checkoutError'), 'error');
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
   }, 10000);
 
-  // ID ЦЕНЫ ИЗ STRIPE (Test mode)
-  const priceId = 'price_1SNAkc7sDoKjQqmA1uahnfAU';
+  // 5. ID ЦЕНЫ ИЗ STRIPE (замените на свой!)
+  const priceId = 'price_1SNAkc7sDoKjQqmA1uahnfAU'; // Test Mode Price ID
 
   try {
-    // Создаем документ "checkout_session" в Firestore
-    const sessionRef = await addDoc(collection(db, 'customers', user.value.uid, 'checkout_sessions'), {
+    // 6. СОЗДАЕМ ДОКУМЕНТ В FIRESTORE
+    // Stripe Extension будет слушать эту коллекцию и создаст Checkout Session
+    const checkoutSessionData = {
       price: priceId,
-      // Указываем URL для успеха и отмены
       success_url: window.location.origin + '/dialogs',
       cancel_url: window.location.origin + '/profile',
-      // ДОБАВЛЯЕМ ПРОМО-КОД
-      promotion_code: promoCode.value.trim() || null,
-    });
+    };
 
-    // Сохраняем функцию отписки
+    // 7. ДОБАВЛЯЕМ ПРОМОКОД (только если он введен)
+    if (promoCode.value.trim()) {
+      checkoutSessionData.promotion_code = promoCode.value.trim();
+    }
+
+    // 8. СОЗДАЕМ ДОКУМЕНТ
+    const sessionRef = await addDoc(
+      collection(db, 'customers', user.value.uid, 'checkout_sessions'),
+      checkoutSessionData
+    );
+
+    console.log('✅ Checkout session создан:', sessionRef.id);
+
+    // 9. СЛУШАЕМ ИЗМЕНЕНИЯ В ЭТОМ ДОКУМЕНТЕ
+    // Stripe Extension обновит документ, добавив поле "url" или "error"
     unsubscribe = onSnapshot(sessionRef, (snap) => {
       const data = snap.data();
-      if (data && data.url) {
-        clearTimeout(timeoutId); // Успех
-        if (unsubscribe) unsubscribe();
+
+      // 10. ЕСЛИ ЕСТЬ URL — ПЕРЕНАПРАВЛЯЕМ НА STRIPE CHECKOUT
+      if (data?.url) {
+        clearTimeout(timeoutId); // Отменяем таймаут (все ОК!)
+        if (unsubscribe) {
+          unsubscribe();
+          unsubscribe = null;
+        }
+        console.log('✅ Перенаправление на Stripe Checkout:', data.url);
         window.location.assign(data.url);
-      } else if (data && data.error) {
-        clearTimeout(timeoutId); // Ошибка
-        if (unsubscribe) unsubscribe();
-        console.error('Ошибка Stripe:', data.error.message);
+      }
+
+      // 11. ЕСЛИ ЕСТЬ ОШИБКА — ПОКАЗЫВАЕМ ЕЕ
+      else if (data?.error) {
+        clearTimeout(timeoutId);
+        if (unsubscribe) {
+          unsubscribe();
+          unsubscribe = null;
+        }
+        console.error('❌ Ошибка от Stripe:', data.error.message);
         uiStore.showToast(data.error.message, 'error');
-        isCreatingCheckout.value = false;
+        userStore.isCreatingCheckout = false;
       }
     });
   } catch (error) {
-    clearTimeout(timeoutId); // Ошибка
-    console.error('Ошибка создания сеанса Stripe:', error);
-    uiStore.showToast(t('store.checkoutError'), 'error'); // Добавьте 'store.checkoutError' в i18n
-    isCreatingCheckout.value = false;
+    // 12. ОБРАБОТКА ОШИБОК (проблемы с Firestore)
+    clearTimeout(timeoutId);
+    console.error('❌ Ошибка создания checkout session:', error);
+    uiStore.showToast(t('store.checkoutError'), 'error');
+    userStore.isCreatingCheckout = false;
+
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
   }
 };
 const handleDeleteAccount = async () => {
   isMenuOpen.value = false;
+
+  // 1. ПОКАЗЫВАЕМ МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ
   const confirmed = await uiStore.showConfirmation({
     title: t('profile.deleteConfirmTitle'),
     message: t('profile.deleteConfirmMsg'),
@@ -311,13 +336,28 @@ const handleDeleteAccount = async () => {
     cancelText: t('buttons.cancel'),
   });
 
-  if (confirmed) {
-    alert('Функция удаления аккаунта пока не реализована.');
-    // В БУДУЩЕМ ЗДЕСЬ БУДЕТ:
-    // 1. Вызов Firebase Function для удаления данных пользователя из Firestore.
-    // 2. Вызов функции Firebase Auth для удаления самого аккаунта.
-    // 3. Обработка ошибок.
-    // 4. Редирект на главную страницу.
+  // 2. ЕСЛИ ПОЛЬЗОВАТЕЛЬ ОТМЕНИЛ — НИЧЕГО НЕ ДЕЛАЕМ
+  if (!confirmed) return;
+
+  try {
+    userStore.isLoading = true;
+    // 3. ВЫЗЫВАЕМ CLOUD FUNCTION ДЛЯ УДАЛЕНИЯ АККАУНТА
+    const functions = getFunctions(undefined, 'europe-west1');
+    const deleteAccount = httpsCallable(functions, 'deleteUserAccount');
+    const result = await deleteAccount();
+
+    // 4. ЕСЛИ УСПЕШНО — ОЧИЩАЕМ КЕШ И ПЕРЕНАПРАВЛЯЕМ
+    if (result.data.success) {
+      clearAllDialogCache();
+      uiStore.showToast(t('profile.accountDeleted'), 'success');
+      router.push({ name: 'welcome' });
+    }
+  } catch (error) {
+    userStore.isLoading = false;
+    console.error('❌ Ошибка удаления аккаунта:', error);
+    uiStore.showToast('Не удалось удалить аккаунт', 'error');
+  } finally {
+    userStore.isLoading = false;
   }
 };
 </script>

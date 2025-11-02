@@ -1,11 +1,7 @@
 <template>
   <div class="toast-container">
     <TransitionGroup name="toast">
-      <div
-        v-for="toast in uiStore.toasts"
-        :key="toast.id"
-        :class="`toast toast--${toast.type}`"
-      >
+      <div v-for="toast in uiStore.toasts" :key="toast.id" :class="`toast toast--${toast.type}`">
         {{ toast.message }}
       </div>
     </TransitionGroup>
@@ -30,7 +26,7 @@ const uiStore = useUiStore();
 .toast {
   padding: 16px 24px;
   border-radius: 4px;
-  color: var(--text-head);
+  color: var(--text-toast);
   font-weight: 500;
   box-shadow: 0 4px 12px var(--shadow);
   transition: all 0.3s ease;

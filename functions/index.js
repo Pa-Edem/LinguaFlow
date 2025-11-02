@@ -1,16 +1,32 @@
 // LinguaFlow/functions/index.js
-import functions from 'firebase-functions';
+// ✅ V2 ИМПОРТЫ
+import { onRequest, onCall } from 'firebase-functions/v2/https';
+import { setGlobalOptions } from 'firebase-functions/v2';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
+import admin from 'firebase-admin';
 import cors from 'cors';
+
+// Инициализация
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+// ✅ ГЛОБАЛЬНЫЕ НАСТРОЙКИ (регион для всех функций)
+setGlobalOptions({
+  region: 'europe-west1',
+  maxInstances: 10, // Опционально: лимит инстансов
+});
 
 const corsHandler = cors({ origin: true });
 const ttsClient = new TextToSpeechClient();
 
-export const getSpeech = functions.https.onRequest((request, response) => {
+// ============================================
+// ФУНКЦИЯ 1: getSpeech
+// ============================================
+export const getSpeech = onRequest((request, response) => {
   corsHandler(request, response, async () => {
     const { text, langCode, voiceName, speechRate, pitch } = request.body.data;
 
-    // 2. Проверка данных
     if (!text || !langCode) {
       console.error('Нет текста или кода языка');
       return response.status(400).send({ error: 'Не предоставлен текст или код языка.' });
@@ -50,7 +66,10 @@ export const getSpeech = functions.https.onRequest((request, response) => {
   });
 });
 
-export const getAvailableVoices = functions.https.onRequest((request, response) => {
+// ============================================
+// ФУНКЦИЯ 2: getAvailableVoices
+// ============================================
+export const getAvailableVoices = onRequest((request, response) => {
   corsHandler(request, response, async () => {
     const { langCode } = request.body.data;
     if (!langCode) {
@@ -60,7 +79,7 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
     try {
       const [result] = await ttsClient.listVoices({ languageCode: langCode });
 
-      // 1. Разделяем все голоса по качеству И полу
+      // Разделяем все голоса по качеству И полу
       const premiumFemales = result.voices.filter(
         (v) => (v.name.includes('Wavenet') || v.name.includes('Neural2')) && v.ssmlGender === 'FEMALE'
       );
@@ -74,15 +93,11 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
         (v) => !v.name.includes('Wavenet') && !v.name.includes('Neural2') && v.ssmlGender === 'MALE'
       );
 
-      const curatedList = [];
       const MAX_VOICES = 10;
       const TARGET_PER_GENDER = 5;
 
-      // 2. ФОРМИРУЕМ СПИСОК (ПРИОРИТЕТ PREMIUM)
-
-      // --- Женские голоса ---
+      // Женские голоса
       let femaleVoices = [];
-      // Сначала пресеты из премиум-голосов (макс. 2 голоса, 4 пресета)
       for (const voice of premiumFemales.slice(0, 2)) {
         femaleVoices.push({
           isPremium: true,
@@ -95,7 +110,6 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
           config: { name: voice.name, pitch: -2.0 },
         });
       }
-      // "Добиваем" до 5 стандартными женскими
       const femalesNeeded = TARGET_PER_GENDER - femaleVoices.length;
       if (femalesNeeded > 0) {
         standardFemales.slice(0, femalesNeeded).forEach((voice) => {
@@ -107,9 +121,8 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
         });
       }
 
-      // --- Мужские голоса ---
+      // Мужские голоса
       let maleVoices = [];
-      // Сначала пресеты из премиум-голосов
       for (const voice of premiumMales.slice(0, 2)) {
         maleVoices.push({
           isPremium: true,
@@ -124,7 +137,6 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
           });
         }
       }
-      // "Добиваем" до 5 стандартными мужскими
       const malesNeeded = TARGET_PER_GENDER - maleVoices.length;
       if (malesNeeded > 0) {
         standardMales.slice(0, malesNeeded).forEach((voice) => {
@@ -136,14 +148,85 @@ export const getAvailableVoices = functions.https.onRequest((request, response) 
         });
       }
 
-      // 3. Собираем финальный список и обрезаем до 10
       const finalRawList = [...femaleVoices, ...maleVoices].slice(0, MAX_VOICES);
 
-      // 4. Отправляем "сырые" данные
       response.send({ data: { voices: finalRawList } });
     } catch (error) {
       console.error('Ошибка получения списка голосов:', error);
       response.status(500).send({ error: 'Не удалось получить список голосов.' });
     }
   });
+});
+
+// ============================================
+// ФУНКЦИЯ 3: deleteUserAccount
+// ============================================
+export const deleteUserAccount = onCall(async (request) => {
+  // ✅ В v2: request.auth вместо context.auth
+  if (!request.auth) {
+    throw new Error('Необходима авторизация');
+  }
+
+  const userId = request.auth.uid;
+  console.log(`🗑️ Начинаем удаление аккаунта: ${userId}`);
+
+  try {
+    const db = admin.firestore();
+
+    // 1. Удаляем все диалоги пользователя
+    const dialogsSnapshot = await db.collection('dialogs').where('userId', '==', userId).get();
+
+    if (!dialogsSnapshot.empty) {
+      const batch = db.batch();
+      dialogsSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      console.log(`✅ Удалено ${dialogsSnapshot.size} диалогов`);
+    }
+
+    // 2. Удаляем документ пользователя
+    await db.collection('users').doc(userId).delete();
+    console.log('✅ Документ пользователя удален');
+
+    // 3. Удаляем usage данные
+    const usageRef = db.collection('users').doc(userId).collection('usage').doc('daily');
+
+    const usageDoc = await usageRef.get();
+    if (usageDoc.exists) {
+      await usageRef.delete();
+      console.log('✅ Usage данные удалены');
+    }
+
+    // 4. Удаляем данные Stripe Extension (customers)
+    const customerRef = db.collection('customers').doc(userId);
+    const customerSnapshot = await customerRef.get();
+
+    if (customerSnapshot.exists) {
+      // Удаляем подколлекции
+      const subcollections = ['subscriptions', 'checkout_sessions', 'payments'];
+
+      for (const subcollection of subcollections) {
+        const subcollectionSnapshot = await customerRef.collection(subcollection).get();
+
+        if (!subcollectionSnapshot.empty) {
+          const batch = db.batch();
+          subcollectionSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+          await batch.commit();
+          console.log(`✅ Удалена подколлекция ${subcollection}`);
+        }
+      }
+
+      // Удаляем основной документ
+      await customerRef.delete();
+      console.log('✅ Документ customers удален');
+    }
+
+    // 5. Удаляем Firebase Auth аккаунт (последним!)
+    await admin.auth().deleteUser(userId);
+    console.log('✅ Firebase Auth аккаунт удален');
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Ошибка удаления аккаунта:', error);
+    throw new Error('Не удалось удалить аккаунт');
+  }
 });

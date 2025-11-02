@@ -1,6 +1,6 @@
 <!-- \\src\views\ViewDialog.vue -->
 <template>
-  <div v-if="dialog && !uiStore.loading">
+  <div v-if="dialog && !uiStore.loading" class="in-view">
     <!-- VIEW NOTE -->
     <div v-if="!hasSeenNote && dialog.culturalNote" class="note-container fade-in">
       <div class="note">

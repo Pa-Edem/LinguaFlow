@@ -28,7 +28,6 @@ userStore.initUser().then(() => {
   app.mount('#app');
 });
 
-// ОБРАБОТЧИК ЗАКРЫТИЯ ВКЛАДКИ
 window.addEventListener('beforeunload', () => {
   clearAllDialogCache();
 });
