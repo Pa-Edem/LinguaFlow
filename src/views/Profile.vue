@@ -107,8 +107,7 @@
             />
           </div>
           <button class="btn btn-action oooo oolo" :class="isDesktop ? 'w-250' : 'mobile'" @click="handleUpgrade">
-            <Spin v-if="isCreatingCheckout" />
-            <span v-else class="material-symbols-outlined">rocket_launch</span>
+            <span class="material-symbols-outlined">rocket_launch</span>
             {{ $t('buttons.startFree') }}
           </button>
         </div>
@@ -142,7 +141,6 @@ import { clearAllDialogCache } from '../utils/dataTransformer.js';
 import { db } from '../firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { addDoc, collection, onSnapshot } from 'firebase/firestore';
-import Spin from '../components/Spin.vue';
 
 const router = useRouter();
 const uiStore = useUiStore();
@@ -297,7 +295,10 @@ const handleUpgrade = async () => {
           unsubscribe = null;
         }
         console.log('✅ Перенаправление на Stripe Checkout:', data.url);
-        window.location.assign(data.url);
+        uiStore.showToast('Перенаправление на страницу оплаты...', 'info');
+        setTimeout(() => {
+          window.location.assign(data.url);
+        }, 500);
       }
 
       // 11. ЕСЛИ ЕСТЬ ОШИБКА — ПОКАЗЫВАЕМ ЕЕ
@@ -323,6 +324,8 @@ const handleUpgrade = async () => {
       unsubscribe();
       unsubscribe = null;
     }
+  } finally {
+    userStore.isCreatingCheckout = false;
   }
 };
 const handleDeleteAccount = async () => {

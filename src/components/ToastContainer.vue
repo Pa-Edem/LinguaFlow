@@ -1,5 +1,5 @@
 <template>
-  <div class="toast-container">
+  <div class="toast-container in-view">
     <TransitionGroup name="toast">
       <div v-for="toast in uiStore.toasts" :key="toast.id" :class="`toast toast--${toast.type}`">
         {{ toast.message }}

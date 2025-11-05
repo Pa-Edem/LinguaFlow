@@ -12,6 +12,7 @@ import {
   query,
   where,
   limit,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import {
@@ -56,4 +57,5 @@ export {
   query,
   where,
   limit,
+  serverTimestamp,
 };

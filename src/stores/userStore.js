@@ -18,6 +18,7 @@ import {
   where,
   limit,
   getIdTokenResult,
+  serverTimestamp,
 } from '../firebase.js';
 
 export const useUserStore = defineStore('user', {
@@ -64,43 +65,52 @@ export const useUserStore = defineStore('user', {
       });
     },
     async getOrCreateUserProfile(user) {
-      // 1. Проверяем Firestore (для "ручного" PRO)
+      console.log('🔍 Проверка профиля для:', user.uid);
+
       const userDocRef = doc(db, 'users', user.uid);
+
       try {
+        // 1. ПРОВЕРЯЕМ, существует ли профиль
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
-          // --- Пользователь существует ---
+          // ✅ Профиль существует — просто читаем
           const userData = userDoc.data();
           this.manualPro = userData.manualProOverride === true;
+          console.log('✅ Профиль загружен, PRO:', this.manualPro);
         } else {
-          // --- Пользователь НЕ существует ---
+          // ✅ Профиля нет — создаём с merge: true
+          console.log('📝 Создаём профиль...');
+
           const newUserProfile = {
             email: user.email,
             displayName: user.displayName || 'Anonymous',
-            createdAt: new Date(),
+            createdAt: serverTimestamp(),
             manualProOverride: false,
           };
-          await setDoc(userDocRef, newUserProfile);
+
+          // ⚠️ ВАЖНО: merge: true защищает от повторного создания
+          await setDoc(userDocRef, newUserProfile, { merge: true });
+
           this.manualPro = false;
+          console.log('✅ Профиль создан');
         }
       } catch (error) {
-        console.error('Ошибка получения/создания профиля:', error);
+        console.error('❌ Ошибка профиля:', error.code, error.message);
         this.manualPro = false;
       }
-      // 2. ПРОВЕРЯЕМ "МЕТКИ" (Custom Claims) ОТ STRIPE
+
+      // 2. Проверяем Custom Claims от Stripe
       try {
-        // Принудительно обновляем токен, чтобы получить свежие данные от Stripe
         const idTokenResult = await getIdTokenResult(user, true);
-        // Расширение Stripe записывает роль в 'stripeRole'
         this.stripeRole = idTokenResult.claims.stripeRole || null;
       } catch (error) {
-        console.error('Ошибка получения Custom Claims:', error);
+        console.error('❌ Ошибка Custom Claims:', error.code);
         this.stripeRole = null;
       }
-      // 3. ПОЛУЧАЕМ ДАТУ ОКОНЧАНИЯ ПОДПИСКИ
+
+      // 3. Получаем дату подписки
       if (this.isPro && !this.manualPro) {
-        // Если пользователь PRO (и это не "ручной" PRO), ищем его подписку
         await this.fetchSubscriptionEndDate(user.uid);
       }
     },

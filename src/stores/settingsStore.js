@@ -129,7 +129,7 @@ export const useSettingsStore = defineStore('settings', {
     initSettings() {
       // ЗАГРУЗКИ ТЕМЫ
       const savedTheme = localStorage.getItem('app-theme');
-      this.setTheme(savedTheme || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+      this.setTheme(savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark'));
       // ЗАГРУЗКИ ЯЗЫКОВ
       const savedUiLang = localStorage.getItem('app-ui-language');
       if (savedUiLang) {

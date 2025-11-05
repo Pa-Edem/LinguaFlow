@@ -13,10 +13,8 @@
           <input type="email" v-model="email" :placeholder="$t('auth.email')" required />
           <input type="password" v-model="password" :placeholder="$t('auth.pass')" required />
         </div>
-        <button type="submit" class="btn btn-common oooo oloo" :disabled="isLoading">
-          <span v-if="!isLoading" class="material-symbols-outlined">{{
-            isLoginMode ? 'login' : 'account_circle'
-          }}</span>
+        <button type="submit" class="btn btn-common oooo oloo">
+          <span class="material-symbols-outlined">{{ isLoginMode ? 'login' : 'account_circle' }}</span>
           {{ isLoginMode ? $t('auth.in') : $t('auth.up') }}
         </button>
       </form>
@@ -24,7 +22,7 @@
       <div class="divider">
         <span>{{ $t('auth.or') }}</span>
       </div>
-      <button @click="handleGoogleSignIn" class="btn btn-common oooo looo" :disabled="isLoading">
+      <button @click="handleGoogleSignIn" class="btn btn-common oooo looo">
         <img class="icon" src="../assets/google.svg" alt="Google icon" />
         Google
       </button>
@@ -50,14 +48,12 @@ const router = useRouter();
 const email = ref('');
 const password = ref('');
 const mode = ref('login');
-
-const isLoading = ref(false);
 const errorMessage = ref('');
 
 const isLoginMode = computed(() => mode.value === 'login');
 
 const handleSubmit = async () => {
-  isLoading.value = true;
+  userStore.isLoading = true;
   errorMessage.value = '';
   try {
     if (isLoginMode.value) {
@@ -67,21 +63,23 @@ const handleSubmit = async () => {
     }
     router.push({ name: 'all-dialogs' });
   } catch (error) {
+    userStore.isLoading = false;
     errorMessage.value = getFriendlyErrorMessage(error.code);
   } finally {
-    isLoading.value = false;
+    userStore.isLoading = false;
   }
 };
 const handleGoogleSignIn = async () => {
-  isLoading.value = true;
+  userStore.isLoading = true;
   errorMessage.value = '';
   try {
     await userStore.loginWithGoogle();
     router.push({ name: 'all-dialogs' });
   } catch (error) {
+    userStore.isLoading = false;
     errorMessage.value = getFriendlyErrorMessage(error.code);
   } finally {
-    isLoading.value = false;
+    userStore.isLoading = false;
   }
 };
 const toggleMode = () => {
