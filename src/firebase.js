@@ -14,7 +14,7 @@ import {
   limit,
   serverTimestamp,
 } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -58,4 +58,6 @@ export {
   where,
   limit,
   serverTimestamp,
+  getFunctions,
+  httpsCallable,
 };

@@ -1,8 +1,8 @@
 // src/stores/settingsStore.js
 import { defineStore } from 'pinia';
 import i18n from '../i18n';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../firebase';
+import { useUserStore } from './userStore';
+import { functions, httpsCallable } from '../firebase';
 import { getLangCode } from '../utils/languageUtils';
 
 export const DEFAULT_VOICE_CONFIG = { name: 'default', pitch: 0.0 };
@@ -13,6 +13,7 @@ export const useSettingsStore = defineStore('settings', {
     uiLanguage: 'en',
     learningLanguage: 'Suomi',
     speechRate: 1.0,
+    ton: 0,
     selectedVoiceConfig: DEFAULT_VOICE_CONFIG,
     preferBrowserTTS: false,
     availableVoices: [],
@@ -43,11 +44,19 @@ export const useSettingsStore = defineStore('settings', {
       localStorage.setItem('app-learning-language', lang);
 
       this.setSelectedVoiceConfig(DEFAULT_VOICE_CONFIG);
-      this.fetchAvailableVoices();
+      // this.fetchAvailableVoices();
+      // ✅ ДОБАВЬТЕ ПРОВЕРКУ: Загружаем голоса только если залогинены
+      const userStore = useUserStore();
+      if (userStore.isLoggedIn) {
+        this.fetchAvailableVoices();
+      }
     },
     setSpeechRate(rate) {
       this.speechRate = parseFloat(rate);
       localStorage.setItem('app-speech-rate', this.speechRate);
+    },
+    setTon(ton) {
+      this.ton = parseInt(ton);
     },
     setSelectedVoiceConfig(config) {
       this.selectedVoiceConfig = config;
@@ -62,6 +71,7 @@ export const useSettingsStore = defineStore('settings', {
       this.availableVoices = [];
       try {
         const langCode = getLangCode(this.learningLanguage);
+
         const getVoices = httpsCallable(functions, 'getAvailableVoices');
         const response = await getVoices({ langCode: langCode });
 
@@ -146,7 +156,12 @@ export const useSettingsStore = defineStore('settings', {
       if (savedVoiceConfig) {
         this.selectedVoiceConfig = JSON.parse(savedVoiceConfig);
       }
-      this.fetchAvailableVoices();
+      // this.fetchAvailableVoices();
+      // ✅ ВМЕСТО НЕЁ: Загружаем голоса только если залогинены
+      const userStore = useUserStore();
+      if (userStore.isLoggedIn) {
+        this.fetchAvailableVoices();
+      }
       const savedPreferBrowserTTS = localStorage.getItem('app-prefer-browser-tts');
       if (savedPreferBrowserTTS) {
         this.preferBrowserTTS = JSON.parse(savedPreferBrowserTTS);

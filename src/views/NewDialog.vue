@@ -23,6 +23,21 @@
       </div>
 
       <div class="form-group">
+        <div class="ton-info">
+          <label for="ton-slider">{{ $t('new.tone') }}</label>
+          <label for="ton-slider">{{ $t('new.neutral') }}</label>
+          <label>{{ ton }}</label>
+        </div>
+        <div class="slider-container">
+          <input id="ton-slider" type="range" min="-5" max="5" step="1" v-model="ton" />
+        </div>
+        <div class="ton-info">
+          <span for="ton-slider">{{ $t('new.casual') }}</span>
+          <span for="ton-slider">{{ $t('new.formal') }}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
         <label for="replicas">{{ $t('new.lines') }}</label>
         <input id="replicas" v-model.number="form.replicas" type="number" min="6" max="20" required />
       </div>
@@ -76,6 +91,10 @@ const form = ref({
 const errorMessage = ref('');
 const levels = ['A1', 'A2.1', 'A2.2', 'B1.1', 'B1.2', 'B2.1', 'B2.2', 'C1.1', 'C1.2', 'C2'];
 const isFormValid = computed(() => form.value.topic.trim() !== '');
+const ton = computed({
+  get: () => settingsStore.ton,
+  set: (value) => settingsStore.setTon(value),
+});
 
 const saveDialog = async () => {
   // 1. Проверяем, можем ли мы ВООБЩЕ генерировать
@@ -176,5 +195,53 @@ textarea:focus::placeholder {
   color: var(--r3);
   margin-bottom: 16px;
   text-align: center;
+}
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.ton-info {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ton-info span {
+  font-family: 'Roboto Condensed', sans-serif;
+  margin: 4px 0 8px 0;
+  font-size: var(--sm);
+  color: var(--text-title);
+}
+.slider-container span {
+  font-size: var(--xs);
+  color: var(--text-base);
+}
+.slider-container input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  padding: 0;
+  height: 8px;
+  background: var(--bg-group);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.slider-container input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--g3);
+  cursor: pointer;
+  border-radius: 50%;
+}
+.slider-container input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--g3);
+  cursor: pointer;
+  border-radius: 50%;
 }
 </style>

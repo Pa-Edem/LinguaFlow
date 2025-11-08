@@ -1,5 +1,6 @@
 //src/stores/userStore.js
 import { defineStore } from 'pinia';
+import { useSettingsStore } from './settingsStore';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
   auth,
@@ -52,6 +53,11 @@ export const useUserStore = defineStore('user', {
             this.isLoggedIn = true;
 
             await this.getOrCreateUserProfile(user);
+
+            const settingsStore = useSettingsStore();
+            if (this.isPro) {
+              settingsStore.fetchAvailableVoices();
+            }
           } else {
             this.user = null;
             this.isLoggedIn = false;
@@ -65,8 +71,6 @@ export const useUserStore = defineStore('user', {
       });
     },
     async getOrCreateUserProfile(user) {
-      console.log('🔍 Проверка профиля для:', user.uid);
-
       const userDocRef = doc(db, 'users', user.uid);
 
       try {
@@ -77,7 +81,6 @@ export const useUserStore = defineStore('user', {
           // ✅ Профиль существует — просто читаем
           const userData = userDoc.data();
           this.manualPro = userData.manualProOverride === true;
-          console.log('✅ Профиль загружен, PRO:', this.manualPro);
         } else {
           // ✅ Профиля нет — создаём с merge: true
           console.log('📝 Создаём профиль...');

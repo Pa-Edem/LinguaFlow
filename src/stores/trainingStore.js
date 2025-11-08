@@ -9,8 +9,7 @@ import { useUserStore } from './userStore';
 import { compareAndFormatTexts } from '../utils/compareTexts';
 import { fetchGeminiResponse } from '../services/geminiService';
 import { getLangCode, getDemoPhrase } from '../utils/languageUtils';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../firebase';
+import { functions, httpsCallable } from '../firebase';
 
 function getUiLanguageName(langCode) {
   const names = {
@@ -129,10 +128,11 @@ export const useTrainingStore = defineStore('training', {
 
       // Проверяем, нужно ли использовать PRO-голос
       if (useProVoice) {
-        // === ЛОГИКА ДЛЯ PRO (Google Cloud TTS) ===
+        // === PRO (Google Cloud TTS) ===
         this.isVoiceOver = true;
         try {
           const getSpeech = httpsCallable(functions, 'getSpeech');
+
           const response = await getSpeech({
             text: text,
             langCode: langCode,
@@ -152,13 +152,13 @@ export const useTrainingStore = defineStore('training', {
             this.currentAudio = null;
           };
         } catch (error) {
-          console.error('Ошибка вызова Cloud TTS:', error);
+          console.error('❌ Ошибка TTS:', error);
           uiStore.showToast(i18n.global.t('store.ttsError'), 'error');
           this.isVoiceOver = false;
           this.currentAudio = null;
         }
       } else {
-        // === ЛОГИКА ДЛЯ FREE (Браузерная озвучка) ===
+        // === FREE (Браузерная озвучка) ===
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = langCode;
         utterance.rate = rate;
@@ -327,6 +327,7 @@ export const useTrainingStore = defineStore('training', {
       const settingsStore = useSettingsStore();
       const learningLanguage = settingsStore.learningLanguage; // e.g., "Finnish"
       const uiLanguage = settingsStore.uiLanguage; // e.g., "ru"
+      const ton = settingsStore.ton;
 
       const { topic, level, replicas, words } = params;
 
@@ -335,6 +336,7 @@ Create a coherent short dialogue in ${learningLanguage} on the topic of "${topic
 
 The dialogue MUST be realistic, practical, and reflect modern, everyday life situations.
 The ${learningLanguage} dialogue should be at the language proficiency level ${level}, using vocabulary appropriate for that level.
+The dialogue should use a level of formality corresponding to the parameter ${ton} (default "0" for neutral tone), where "-5" is very casual (everyday tone) and "5" is very formal (official tone).
 The dialogue must naturally include common idioms and expressions currently used by native speakers.
 
 IMPORTANT: If the proficiency level is B1.1 or higher, the dialogue MUST also include:

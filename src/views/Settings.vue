@@ -180,17 +180,24 @@ const preferBrowserTTS = computed({
   get: () => settingsStore.preferBrowserTTS,
   set: (value) => settingsStore.setPreferBrowserTTS(value),
 });
+
 const formatVoiceName = (voice, index) => {
   if (!voice || !voice.config) return '...';
 
+  // ✅ НОВОЕ: Используем displayName если есть
+  if (voice.displayName) {
+    const premium = voice.isPremium ? ' 👑' : '';
+    return `${voice.displayName}${premium}`;
+  }
+
+  // Fallback на старую логику (если displayName нет)
   const genderMap = {
     FEMALE: t('settings.female'),
     MALE: t('settings.male'),
     NEUTRAL: t('settings.neutral'),
   };
   const gender = genderMap[voice.ssmlGender] || '';
-
-  const displayName = `${t('settings.voice')} ${index + 1} ${gender} ${voice.isPremium ? '👑 ' : ''}`;
+  const displayName = `${t('settings.voice')} ${index + 1} ${gender} ${voice.isPremium ? '👑' : ''}`;
 
   return displayName;
 };

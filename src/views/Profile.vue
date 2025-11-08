@@ -512,7 +512,7 @@ const handleDeleteAccount = async () => {
   background: var(--gradient-pro);
   padding: 12px 16px;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
   display: flex;
   flex-direction: column;
 }
@@ -579,7 +579,7 @@ const handleDeleteAccount = async () => {
 }
 .promo-code-wrapper {
   width: 100%;
-  margin: 16px 0;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   justify-content: center;
