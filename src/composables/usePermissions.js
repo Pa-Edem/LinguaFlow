@@ -13,8 +13,7 @@ export function usePermissions() {
     if (userStore.isPro) {
       return true;
     } else {
-      const dailyCount = settingsStore.dailyGenerationCount;
-      return dailyCount <= settingsStore.limit.dailyGenerations;
+      return settingsStore.dailyGenerationCount <= settingsStore.limit.dailyGenerations;
     }
   };
 
@@ -23,8 +22,7 @@ export function usePermissions() {
     if (userStore.isPro) {
       return true;
     } else {
-      const totalCount = dialogStore.allDialogs.length;
-      return totalCount <= settingsStore.limit.totalDialogs;
+      return dialogStore.allDialogs.length <= settingsStore.limit.totalDialogs;
     }
   };
 
@@ -37,7 +35,7 @@ export function usePermissions() {
     }
   };
 
-  // для блокировки кнопок VIEW
+  // для блокировки PRO-кнопок
   const canView = () => {
     if (userStore.isPro) {
       return true;

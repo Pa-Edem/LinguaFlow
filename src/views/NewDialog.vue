@@ -58,7 +58,7 @@
       </div>
     </form>
 
-    <p v-if="errorMessage" class="message error">
+    <p v-if="errorMessage" class="error">
       {{ errorMessage }}
     </p>
   </div>
@@ -191,9 +191,12 @@ textarea:focus::placeholder {
   margin-top: 16px;
   gap: 16px;
 }
-.error-message {
+.error {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
   color: var(--r3);
-  margin-bottom: 16px;
+  margin-top: 16px;
+  padding: 0 16px;
   text-align: center;
 }
 .slider-container {

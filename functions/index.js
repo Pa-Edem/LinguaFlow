@@ -1,10 +1,14 @@
 // LinguaFlow/functions/index.js
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
+import { defineSecret } from 'firebase-functions/params';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // Инициализация
 initializeApp();
@@ -391,5 +395,198 @@ export const deleteUserAccount = onCall(async (request) => {
   } catch (error) {
     console.error('❌ Ошибка удаления аккаунта:', error);
     throw new Error('Не удалось удалить аккаунт');
+  }
+});
+
+/* ============================================
+// ФУНКЦИЯ 4: callGemini
+// ==========================================*/
+export const callGemini = onCall(
+  {
+    secrets: [geminiApiKey],
+  },
+  async (request) => {
+    const userId = request.auth?.uid;
+    if (!userId) {
+      throw new HttpsError('unauthenticated', 'Необходима авторизация');
+    }
+
+    const { prompt, operationType } = request.data;
+    if (!prompt) {
+      throw new HttpsError('invalid-argument', 'Промпт не предоставлен');
+    }
+    console.log(`🤖 Gemini запрос от ${userId}, тип: ${operationType}`);
+
+    try {
+      // ✅ ЧИТАЕМ ЛИМИТЫ ИЗ FIRESTORE
+      const limitsDoc = await db.collection('config').doc('limits').get();
+
+      if (!limitsDoc.exists) {
+        throw new Error('Лимиты не настроены в Firestore');
+      }
+
+      const limitsData = limitsDoc.data();
+      const FREE_LIMITS = limitsData.free;
+
+      // Проверяем PRO-статус
+      const userDoc = await db.collection('users').doc(userId).get();
+      const userData = userDoc.data();
+      const isPro = userData?.manualProOverride || request.auth.token?.stripeRole;
+
+      let usageData = {
+        date: null,
+        dailyGenerationCount: 0,
+        dailyPreviewCount: 0,
+      };
+
+      // ✅ ПРОВЕРКА ЛИМИТОВ ДЛЯ FREE-ПОЛЬЗОВАТЕЛЕЙ
+      if (!isPro) {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const usageRef = db.collection('usage').doc(userId);
+        const usageDoc = await usageRef.get();
+
+        if (usageDoc.exists) {
+          const data = usageDoc.data();
+          if (data.date === today) {
+            usageData = data;
+          } else {
+            usageData.date = today;
+          }
+        } else {
+          usageData.date = today;
+        }
+
+        // === ПРОВЕРКА 1: Генерация диалогов ===
+        if (operationType === 'generateDialog') {
+          // Дневной лимит генераций
+          if (usageData.dailyGenerationCount >= FREE_LIMITS.dailyGenerations) {
+            throw new HttpsError(
+              'resource-exhausted',
+              `Достигнут дневной лимит генераций (${FREE_LIMITS.dailyGenerations}/день). Обновитесь до PRO.`
+            );
+          }
+
+          // Общий лимит диалогов
+          const dialogsSnapshot = await db.collection('dialogs').where('userId', '==', userId).get();
+
+          if (dialogsSnapshot.size >= FREE_LIMITS.totalDialogs) {
+            throw new HttpsError(
+              'resource-exhausted',
+              `Достигнут лимит сохранённых диалогов (${FREE_LIMITS.totalDialogs} максимум). Обновитесь до PRO или удалите старые.`
+            );
+          }
+
+          console.log(
+            `📊 Free: gen ${usageData.dailyGenerationCount}/${FREE_LIMITS.dailyGenerations}, dialogs ${dialogsSnapshot.size}/${FREE_LIMITS.totalDialogs}`
+          );
+        }
+      }
+
+      // === ПРОВЕРКА 2: PRO-функции (Анализ, Говорить, Переводить) ===
+      if (operationType === 'analysis' || operationType === 'translation') {
+        if (usageData.dailyPreviewCount >= FREE_LIMITS.dailyPreview) {
+          throw new HttpsError(
+            'resource-exhausted',
+            `Достигнут дневной лимит PRO-функций (${FREE_LIMITS.dailyPreview}/день). Обновитесь до PRO для безлимитного доступа.`
+          );
+        }
+        console.log(`📊 Free: preview ${usageData.dailyPreviewCount}/${FREE_LIMITS.dailyPreview}`);
+      } else {
+        console.log(`👑 PRO: безлимитный доступ`);
+      }
+
+      // === ВЫЗОВ GEMINI API ===
+      const apiKey = geminiApiKey.value();
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      console.log(`✅ Gemini ответил (${text.length} символов)`);
+
+      // === УВЕЛИЧИВАЕМ СЧЁТЧИКИ ПОСЛЕ УСПЕХА ===
+      if (!isPro) {
+        const usageRef = db.collection('usage').doc(userId);
+
+        // Увеличиваем нужный счётчик
+        if (operationType === 'generateDialog') {
+          usageData.dailyGenerationCount++;
+          console.log(`✅ Счётчик gen: ${usageData.dailyGenerationCount}/${FREE_LIMITS.dailyGenerations}`);
+        } else if (operationType === 'analysis' || operationType === 'translation') {
+          usageData.dailyPreviewCount++;
+          console.log(`✅ Счётчик preview: ${usageData.dailyPreviewCount}/${FREE_LIMITS.dailyPreview}`);
+        }
+        await usageRef.set(usageData, { merge: true });
+      }
+      return { text: text };
+    } catch (error) {
+      console.error('❌ Ошибка Gemini:', error);
+
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+
+      throw new HttpsError('internal', 'Не удалось получить ответ от Gemini');
+    }
+  }
+);
+
+/* ============================================
+// ФУНКЦИЯ 5: getUsageStats
+// ==========================================*/
+export const getUsageStats = onCall(async (request) => {
+  const userId = request.auth?.uid;
+
+  if (!userId) {
+    throw new HttpsError('unauthenticated', 'Необходима авторизация');
+  }
+
+  try {
+    // ✅ ЧИТАЕМ ЛИМИТЫ ИЗ FIRESTORE
+    const limitsDoc = await db.collection('config').doc('limits').get();
+
+    if (!limitsDoc.exists) {
+      throw new Error('Лимиты не настроены в Firestore');
+    }
+
+    const limitsData = limitsDoc.data();
+    const FREE_LIMITS = limitsData.free;
+
+    const today = new Date().toISOString().split('T')[0];
+    const usageRef = db.collection('usage').doc(userId);
+    const usageDoc = await usageRef.get();
+
+    let dailyGenerationCount = 0;
+    let dailyPreviewCount = 0;
+
+    if (usageDoc.exists) {
+      const usageData = usageDoc.data();
+      if (usageData.date === today) {
+        dailyGenerationCount = usageData.dailyGenerationCount || 0;
+        dailyPreviewCount = usageData.dailyPreviewCount || 0;
+      }
+    }
+
+    const dialogsSnapshot = await db.collection('dialogs').where('userId', '==', userId).get();
+
+    const totalDialogs = dialogsSnapshot.size;
+
+    console.log(
+      `📊 Статистика ${userId}: gen=${dailyGenerationCount}/${FREE_LIMITS.dailyGenerations}, preview=${dailyPreviewCount}/${FREE_LIMITS.dailyPreview}, total=${totalDialogs}/${FREE_LIMITS.totalDialogs}`
+    );
+
+    return {
+      dailyGenerationCount,
+      dailyPreviewCount,
+      totalDialogs,
+      date: today,
+      limits: FREE_LIMITS, // ✅ ВОЗВРАЩАЕМ ЛИМИТЫ
+    };
+  } catch (error) {
+    console.error('❌ Ошибка получения статистики:', error);
+    throw new HttpsError('internal', 'Не удалось получить статистику использования');
   }
 });

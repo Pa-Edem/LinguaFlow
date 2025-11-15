@@ -13,6 +13,8 @@ export const useUiStore = defineStore('ui', {
     toasts: [],
     toastIdCounter: 0,
     viewCounter: 0,
+    viewCounterTotal: 0,
+    viewCounterDate: null,
   }),
   getters: {
     loading() {
@@ -29,6 +31,16 @@ export const useUiStore = defineStore('ui', {
     },
   },
   actions: {
+    checkAndResetViewCounter() {
+      const today = new Date().toISOString().split('T')[0];
+
+      if (this.viewCounterDate !== today) {
+        // Новый день — сбрасываем счётчик
+        this.viewCounter = 0;
+        this.viewCounterTotal = 0;
+        this.viewCounterDate = today;
+      }
+    },
     showModal(content = 'default') {
       this.modalProps = {};
       this.modalContent = content;

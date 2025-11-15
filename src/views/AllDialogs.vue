@@ -108,7 +108,7 @@ const { isDesktop } = useBreakpoint();
 
 const levels = ['A1', 'A2.1', 'A2.2', 'B1.1', 'B1.2', 'B2.1', 'B2.2', 'C1.1', 'C1.2', 'C2'];
 const dialogs = computed(() => dialogStore.allDialogs);
-const { canNew, canGenerate } = usePermissions();
+const { canGenerate } = usePermissions();
 
 const usage = computed(() => {
   return {
@@ -123,7 +123,8 @@ const usage = computed(() => {
   };
 });
 
-const viewToast = computed(() => uiStore.viewCounter);
+const viewToastGen = computed(() => uiStore.viewCounter);
+const viewToastTotal = computed(() => uiStore.viewCounterTotal);
 
 const groupedDialogs = computed(() => {
   const groups = {};
@@ -133,36 +134,62 @@ const groupedDialogs = computed(() => {
   return groups;
 });
 
-onMounted(() => {
+onMounted(async () => {
+  // Загружаем диалоги
   if (dialogStore.allDialogs.length === 0) {
-    dialogStore.fetchAllDialogs();
+    await dialogStore.fetchAllDialogs();
   }
-  if (!userStore.isPro && usage.value.total.count >= usage.value.total.limit) {
-    if (viewToast.value < 2) {
-      uiStore.viewCounter++;
-      uiStore.showToast(`Достигнут лимит диалогов (${settingsStore.limit.totalDialogs}).`, 'warning');
+
+  // ✅ Загружаем актуальные счётчики с сервера
+  if (!userStore.isPro) {
+    await settingsStore.loadUsageStats();
+
+    // Показываем предупреждения
+    uiStore.checkAndResetViewCounter();
+    const totalDialogs = dialogStore.allDialogs.length;
+    const dailyGen = settingsStore.dailyGenerationCount;
+    const dailyGenLimit = settingsStore.limit.dailyGenerations;
+    const totalLimit = settingsStore.limit.totalDialogs;
+
+    if (viewToastGen.value < 2 || viewToastTotal.value < 2) {
+      if (totalDialogs >= totalLimit) {
+        uiStore.showToast(`Достигнут лимит диалогов (${totalLimit} максимум).`, 'warning');
+        uiStore.viewCounterTotal++;
+      }
+      if (dailyGen === dailyGenLimit - 1) {
+        uiStore.showToast(`У вас осталась 1 генерация на сегодня.`, 'info');
+        uiStore.viewCounter++;
+      }
+      if (dailyGen >= dailyGenLimit) {
+        uiStore.showToast(`Дневной лимит генераций исчерпан (${dailyGenLimit}/день).`, 'warning');
+        uiStore.viewCounter++;
+      }
     }
   }
 });
 
-const goToCreateDialog = () => {
-  // для про можно всегда
+const goToCreateDialog = async () => {
+  // PRO-пользователь — всегда разрешено
   if (userStore.isPro) {
     router.push({ name: 'new-dialog' });
+    return;
   }
-  // если нельзя генерировать
-  else if (usage.value.daily.count === usage.value.daily.limit || usage.value.total.count === usage.value.total.limit) {
-    // делаем инкремент и показываем модалку
-    settingsStore.incrementCount('new');
-    uiStore.showUpgradeModal();
-  }
-  // для бесплатных проверяем оба лимита и жестко проверяем общий лимит
-  else if (canGenerate()) {
+
+  // ✅ НОВОЕ: Сначала обновляем счётчики с сервера
+  await settingsStore.loadUsageStats();
+
+  // Проверяем актуальные лимиты
+  const dailyCount = settingsStore.dailyGenerationCount;
+  const dailyLimit = settingsStore.limit.dailyGenerations;
+  const totalCount = dialogStore.allDialogs.length;
+  const totalLimit = settingsStore.limit.totalDialogs;
+
+  // Если можно генерировать — переходим
+  if (dailyCount < dailyLimit && totalCount < totalLimit) {
     router.push({ name: 'new-dialog' });
   }
-  // если достигнут общий лимит диалогов
+  // Если лимит достигнут — показываем модалку
   else {
-    settingsStore.incrementCount('total');
     uiStore.showUpgradeModal();
   }
 };

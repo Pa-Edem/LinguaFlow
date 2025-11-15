@@ -195,7 +195,10 @@ const trainingLevels = [
 const btnClasses = ['oool', 'looo', 'oolo', 'oloo'];
 const btnClassesDesktop = ['oloo', 'looo', 'oolo', 'oool'];
 
-onMounted(() => {
+onMounted(async () => {
+  if (!userStore.isPro) {
+    await settingsStore.loadUsageStats();
+  }
   hasSeenNote.value = settingsStore.skippedNoteIDs.includes(props.id);
   if (!dialogStore.currentDialog || dialogStore.currentDialog.id !== props.id) {
     dialogStore.fetchDialogById(props.id);
@@ -224,13 +227,25 @@ const toggleListening = () => {
   if (!dialog.value) return;
   trainingStore.togglePlayStop(dialog.value.fin.join('. '));
 };
-const handleProClick = (action) => {
+const handleProClick = async (action) => {
   if (userStore.isPro) {
     action();
     return;
   }
-  if (settingsStore.dailyPreviewCount < settingsStore.limit.useProMode) {
-    settingsStore.incrementCount('view');
+  await settingsStore.loadUsageStats();
+
+  const previewCount = settingsStore.dailyPreviewCount;
+  const previewLimit = settingsStore.limit.useProMode;
+
+  // Если ещё можно использовать
+  if (previewCount < previewLimit) {
+    // Выполняем действие (внутри увеличится счётчик на сервере)
+    await action();
+
+    // ✅ Перезагружаем счётчики после действия
+    await settingsStore.loadUsageStats();
+
+    // Показываем тост с количеством оставшихся
     const previewsLeft = settingsStore.limit.useProMode - settingsStore.dailyPreviewCount;
     const message = t('view.usePro');
     let toastMessage = `${message}${previewsLeft}.`;
@@ -238,21 +253,21 @@ const handleProClick = (action) => {
       toastMessage = t('view.endPro');
     }
     uiStore.showToast(toastMessage, 'warning');
-    action();
-  } else {
-    settingsStore.incrementCount('view');
+  }
+  // Если лимит достигнут
+  else {
     uiStore.showUpgradeModal();
   }
 };
 const getInfo = async () => {
-  handleProClick(async () => {
+  await handleProClick(async () => {
     await trainingStore.fetchDialogAnalysis();
     uiStore.showModal('analysis');
   });
 };
-const goToTraining = (level) => {
+const goToTraining = async (level) => {
   if (level.isPro) {
-    handleProClick(() => {
+    await handleProClick(() => {
       router.push({ name: level.name, params: { id: props.id } });
     });
   } else {

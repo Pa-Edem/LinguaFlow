@@ -19,9 +19,9 @@ export const useSettingsStore = defineStore('settings', {
     availableVoices: [],
     isLoadingVoices: false,
     limit: {
-      useProMode: 2,
-      dailyGenerations: 2,
-      totalDialogs: 10,
+      useProMode: 0,
+      dailyGenerations: 0,
+      totalDialogs: 0,
     },
     dailyPreviewCount: 0,
     dailyGenerationCount: 0,
@@ -85,6 +85,32 @@ export const useSettingsStore = defineStore('settings', {
         this.isLoadingVoices = false;
       }
     },
+    async loadUsageStats() {
+      try {
+        const getUsageStats = httpsCallable(functions, 'getUsageStats');
+        const response = await getUsageStats();
+
+        if (response.data) {
+          // ✅ Обновляем счётчики из Firestore
+          this.dailyGenerationCount = response.data.dailyGenerationCount || 0;
+          this.dailyPreviewCount = response.data.dailyPreviewCount || 0;
+          this.date = response.data.date;
+
+          // ✅ Обновляем лимиты из Firestore
+          if (response.data.limits) {
+            this.limit.dailyGenerations = response.data.limits.dailyGenerations;
+            this.limit.useProMode = response.data.limits.dailyPreview;
+            this.limit.totalDialogs = response.data.limits.totalDialogs;
+          }
+
+          console.log(
+            `📊 Счётчики загружены: gen=${this.dailyGenerationCount}/${this.limit.dailyGenerations}, preview=${this.dailyPreviewCount}/${this.limit.useProMode}`
+          );
+        }
+      } catch (error) {
+        console.error('❌ Ошибка загрузки счётчиков:', error);
+      }
+    },
     skipCulturalNoteToday(dialogId) {
       if (!this.skippedNoteIDs.includes(dialogId)) {
         this.skippedNoteIDs.push(dialogId);
@@ -94,8 +120,6 @@ export const useSettingsStore = defineStore('settings', {
       let usage = usageJSON
         ? JSON.parse(usageJSON)
         : {
-            countView: this.dailyPreviewCount,
-            countNew: this.dailyGenerationCount,
             date: this.date,
             skippedNoteIDs: [],
           };
@@ -103,38 +127,6 @@ export const useSettingsStore = defineStore('settings', {
       usage.skippedNoteIDs = this.skippedNoteIDs;
       usage.date = this.date;
       localStorage.setItem('usage', JSON.stringify(usage));
-    },
-    incrementCount(type) {
-      const usageJSON = localStorage.getItem('usage');
-      let usage;
-
-      if (usageJSON) {
-        usage = JSON.parse(usageJSON);
-      } else {
-        usage = {
-          countView: 0,
-          countNew: 0,
-          date: null,
-          skippedNoteIDs: [],
-        };
-      }
-
-      usage.date = new Date().toDateString();
-      if (type === 'view') {
-        this.dailyPreviewCount++;
-        usage.countView = this.dailyPreviewCount;
-      }
-      if (type === 'new') {
-        this.dailyGenerationCount++;
-        usage.countNew = this.dailyGenerationCount;
-      }
-      if (type === 'total') {
-        this.dailyGenerationCount = this.limit.dailyGenerations + 1;
-        usage.countNew = this.dailyGenerationCount;
-      }
-      const updatedUsageJSON = JSON.stringify(usage);
-
-      localStorage.setItem('usage', updatedUsageJSON);
     },
     initSettings() {
       // ЗАГРУЗКИ ТЕМЫ
@@ -156,8 +148,7 @@ export const useSettingsStore = defineStore('settings', {
       if (savedVoiceConfig) {
         this.selectedVoiceConfig = JSON.parse(savedVoiceConfig);
       }
-      // this.fetchAvailableVoices();
-      // ✅ ВМЕСТО НЕЁ: Загружаем голоса только если залогинены
+
       const userStore = useUserStore();
       if (userStore.isLoggedIn) {
         this.fetchAvailableVoices();
@@ -167,6 +158,7 @@ export const useSettingsStore = defineStore('settings', {
         this.preferBrowserTTS = JSON.parse(savedPreferBrowserTTS);
       }
       // ЛОГИКА ЗАГРУЗКИ СЧЁТЧИКОВ
+      /*
       const savedUsage = JSON.parse(localStorage.getItem('usage'));
       if (savedUsage && savedUsage.date === new Date().toDateString()) {
         // Если есть запись за сегодня, загружаем счётчики
@@ -180,6 +172,11 @@ export const useSettingsStore = defineStore('settings', {
         this.skippedNoteIDs = [];
         this.date = new Date().toDateString();
         localStorage.removeItem('usage');
+      }
+      */
+      // Загружаем счётчики с сервера (если залогинены)
+      if (userStore.isLoggedIn) {
+        this.loadUsageStats();
       }
     },
   },

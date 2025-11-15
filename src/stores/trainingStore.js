@@ -1,4 +1,4 @@
-// src/stores/trainingStore.js
+//src/stores/trainingStore.js
 import { defineStore } from 'pinia';
 import i18n from '../i18n';
 import { marked } from 'marked';
@@ -7,7 +7,6 @@ import { useSettingsStore } from './settingsStore';
 import { useUiStore } from './uiStore';
 import { useUserStore } from './userStore';
 import { compareAndFormatTexts } from '../utils/compareTexts';
-import { fetchGeminiResponse } from '../services/geminiService';
 import { getLangCode, getDemoPhrase } from '../utils/languageUtils';
 import { functions, httpsCallable } from '../firebase';
 
@@ -263,7 +262,14 @@ export const useTrainingStore = defineStore('training', {
       this.isLoading = true;
       try {
         const prompt = this.getPromptForNewDialog(creationParams);
-        const responseText = await fetchGeminiResponse(prompt);
+
+        // Вызываем Cloud Function
+        const callGemini = httpsCallable(functions, 'callGemini');
+        const response = await callGemini({
+          prompt: prompt,
+          operationType: 'generateDialog',
+        });
+        const responseText = response.data.text;
 
         const cleanJsonString = responseText.trim().replace(/```json|```/g, '');
         const dialogData = JSON.parse(cleanJsonString);
@@ -280,15 +286,24 @@ export const useTrainingStore = defineStore('training', {
         // Передаем понятные для createDialog данные
         const newDialogId = await dialogStore.createDialog(dataForDb, creationParams);
 
-        // Увеличиваем счётчик ТОЛЬКО ПОСЛЕ УСПЕШНОГО создания
+        // ✅ Перезагружаем счётчики после успешного создания
         if (newDialogId) {
           const settingsStore = useSettingsStore();
-          settingsStore.incrementCount('new');
+          await settingsStore.loadUsageStats();
         }
 
         return newDialogId;
       } catch (error) {
-        console.error('Full cycle of dialogue generation and creation failed:', error);
+        console.error('Ошибка генерации диалога:', error);
+
+        // Показываем понятное сообщение об ошибке
+        const uiStore = useUiStore();
+        if (error.message && error.message.includes('лимит')) {
+          uiStore.showToast(error.message, 'error');
+        } else {
+          uiStore.showToast('Не удалось сгенерировать диалог', 'error');
+        }
+
         return null;
       } finally {
         this.isLoading = false;
@@ -309,13 +324,24 @@ export const useTrainingStore = defineStore('training', {
       try {
         const fullDialogText = dialog.fin.join('\n');
         const prompt = this.getPromptInfo(fullDialogText, dialog.level);
-        const rawResult = await fetchGeminiResponse(prompt);
+
+        // Вызываем Cloud Function
+        const callGemini = httpsCallable(functions, 'callGemini');
+        const response = await callGemini({
+          prompt: prompt,
+          operationType: 'analysis',
+        });
+        const rawResult = response.data.text;
 
         const formattedResult = marked.parse(rawResult);
         this.geminiResult = formattedResult;
         await dialogStore.updateDialogAnalysis(dialog.id, formattedResult);
+
+        // ✅ Перезагружаем счётчики
+        const settingsStore = useSettingsStore();
+        await settingsStore.loadUsageStats();
       } catch (error) {
-        console.error('Error getting dialogue analysis:', error);
+        console.error('Ошибка анализа диалога:', error);
         const errorMessage = i18n.global.t('store.resultError');
         this.geminiResult = `<p>${errorMessage}</p>`;
       } finally {
@@ -439,8 +465,21 @@ ${fullDialogText}
       this.geminiResult = '';
       try {
         const prompt = this.getPromptForTranslation(rusText, finText, level);
-        this.geminiResult = await fetchGeminiResponse(prompt);
+
+        // Вызываем Cloud Function
+        const callGemini = httpsCallable(functions, 'callGemini');
+        const response = await callGemini({
+          prompt: prompt,
+          operationType: 'translation',
+        });
+
+        this.geminiResult = response.data.text;
+
+        // ✅ Перезагружаем счётчики
+        const settingsStore = useSettingsStore();
+        await settingsStore.loadUsageStats();
       } catch (error) {
+        console.error('Ошибка проверки перевода:', error);
         const errorMessage = i18n.global.t('store.trError');
         this.geminiResult = `<p>${errorMessage}</p>`;
       } finally {
