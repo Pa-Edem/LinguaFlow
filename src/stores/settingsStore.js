@@ -19,14 +19,13 @@ export const useSettingsStore = defineStore('settings', {
     availableVoices: [],
     isLoadingVoices: false,
     limit: {
-      useProMode: 0,
-      dailyGenerations: 0,
-      totalDialogs: 0,
+      useProMode: 2,
+      dailyGenerations: 2,
+      totalDialogs: 10,
     },
     dailyPreviewCount: 0,
     dailyGenerationCount: 0,
     date: new Date().toDateString(),
-    skippedNoteIDs: [],
   }),
   actions: {
     setTheme(newTheme) {
@@ -111,23 +110,6 @@ export const useSettingsStore = defineStore('settings', {
         console.error('❌ Ошибка загрузки счётчиков:', error);
       }
     },
-    skipCulturalNoteToday(dialogId) {
-      if (!this.skippedNoteIDs.includes(dialogId)) {
-        this.skippedNoteIDs.push(dialogId);
-      }
-
-      const usageJSON = localStorage.getItem('usage');
-      let usage = usageJSON
-        ? JSON.parse(usageJSON)
-        : {
-            date: this.date,
-            skippedNoteIDs: [],
-          };
-
-      usage.skippedNoteIDs = this.skippedNoteIDs;
-      usage.date = this.date;
-      localStorage.setItem('usage', JSON.stringify(usage));
-    },
     initSettings() {
       // ЗАГРУЗКИ ТЕМЫ
       const savedTheme = localStorage.getItem('app-theme');
@@ -157,23 +139,7 @@ export const useSettingsStore = defineStore('settings', {
       if (savedPreferBrowserTTS) {
         this.preferBrowserTTS = JSON.parse(savedPreferBrowserTTS);
       }
-      // ЛОГИКА ЗАГРУЗКИ СЧЁТЧИКОВ
-      /*
-      const savedUsage = JSON.parse(localStorage.getItem('usage'));
-      if (savedUsage && savedUsage.date === new Date().toDateString()) {
-        // Если есть запись за сегодня, загружаем счётчики
-        this.dailyPreviewCount = savedUsage.countView || 0;
-        this.dailyGenerationCount = savedUsage.countNew || 0;
-        this.skippedNoteIDs = savedUsage.skippedNoteIDs || [];
-      } else {
-        // Если новый день или нет записи, счётчик равен 0
-        this.dailyPreviewCount = 0;
-        this.dailyGenerationCount = 0;
-        this.skippedNoteIDs = [];
-        this.date = new Date().toDateString();
-        localStorage.removeItem('usage');
-      }
-      */
+
       // Загружаем счётчики с сервера (если залогинены)
       if (userStore.isLoggedIn) {
         this.loadUsageStats();

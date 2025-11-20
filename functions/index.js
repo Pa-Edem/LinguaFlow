@@ -456,6 +456,27 @@ export const callGemini = onCall(
           usageData.date = today;
         }
 
+        if (operationType === 'training') {
+          // Специальная операция: только увеличить счётчик, без вызова Gemini
+          if (!isPro) {
+            if (usageData.dailyPreviewCount >= FREE_LIMITS.dailyPreview) {
+              throw new HttpsError(
+                'resource-exhausted',
+                `Достигнут дневной лимит PRO-функций (${FREE_LIMITS.dailyPreview}/день).`
+              );
+            }
+
+            usageData.dailyPreviewCount++;
+            console.log(`✅ Счётчик training: ${usageData.dailyPreviewCount}/${FREE_LIMITS.dailyPreview}`);
+
+            const usageRef = db.collection('usage').doc(userId);
+            await usageRef.set(usageData, { merge: true });
+          }
+
+          // Возвращаем успех без вызова Gemini
+          return { text: 'counter_incremented' };
+        }
+
         // === ПРОВЕРКА 1: Генерация диалогов ===
         if (operationType === 'generateDialog') {
           // Дневной лимит генераций

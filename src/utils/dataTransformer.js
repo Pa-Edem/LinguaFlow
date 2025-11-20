@@ -86,12 +86,42 @@ export function getDialogFromCache(id) {
 export function clearAllDialogCache() {
   try {
     Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('dialog_') || key === DIALOG_LIST_KEY) {
+      if ((key.startsWith('dialog_') && !key.endsWith('_noteSkipped')) || key === DIALOG_LIST_KEY) {
         localStorage.removeItem(key);
       }
     });
   } catch (e) {
     console.error('Error clearing cache:', e);
+  }
+}
+
+export function clearDialogNoteFlag(dialogId) {
+  try {
+    const key = `dialog_${dialogId}_noteSkipped`;
+    localStorage.removeItem(key);
+  } catch (e) {
+    console.error('Error clearing note flag:', e);
+  }
+}
+
+export function clearOldNoteFlags() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    Object.keys(localStorage).forEach((key) => {
+      if (key.endsWith('_noteSkipped')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          if (data.date && data.date !== today) {
+            localStorage.removeItem(key);
+          }
+        } catch (e) {
+          localStorage.removeItem(key);
+        }
+      }
+    });
+  } catch (e) {
+    console.error('Error clearing old note flags:', e);
   }
 }
 

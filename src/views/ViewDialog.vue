@@ -28,7 +28,7 @@
             <span class="dialog-info-level">{{ dialog?.level }}</span>
           </div>
           <!-- кнопка анализ диалога -->
-          <button class="btn btn-menu oooo oloo" @click="getInfo" :disabled="!canView()">
+          <button class="btn btn-menu oooo oloo" @click="getInfo" :disabled="!canUseAnalysis">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysis') }}
             <span class="material-symbols-outlined pro">crown</span>
@@ -45,7 +45,10 @@
             :key="level.name"
             class="btn btn-menu oooo"
             :class="btnClassesDesktop[index]"
-            :disabled="level.isPro && !canView()"
+            :disabled="
+              level.isPro &&
+              (level.name === 'level-2' ? !canUseLevel2 : level.name === 'level-3' ? !canUseLevel3 : !canView())
+            "
             @click="goToTraining(level)"
           >
             <span class="material-symbols-outlined">{{ level.icon }}</span>
@@ -106,7 +109,7 @@
       </main>
       <footer class="actions-footer">
         <div class="actions-grid">
-          <button class="btn btn-menu mobile w-100p oooo oloo" @click="getInfo" :disabled="!canView()">
+          <button class="btn btn-menu mobile w-100p oooo oloo" @click="getInfo" :disabled="!canUseAnalysis">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysisM') }}
             <span class="material-symbols-outlined pro">crown</span>
@@ -122,7 +125,10 @@
             :key="level.name"
             class="btn btn-menu mobile oooo w-100p"
             :class="btnClasses[index]"
-            :disabled="level.isPro && !canView()"
+            :disabled="
+              level.isPro &&
+              (level.name === 'level-2' ? !canUseLevel2 : level.name === 'level-3' ? !canUseLevel3 : !canView())
+            "
             @click="goToTraining(level)"
           >
             <span class="material-symbols-outlined">{{ level.icon }}</span>
@@ -146,6 +152,8 @@ import { useUiStore } from '../stores/uiStore';
 import { useUserStore } from '../stores/userStore';
 import { useBreakpoint } from '../composables/useBreakpoint';
 import { usePermissions } from '../composables/usePermissions';
+import { clearDialogNoteFlag } from '../utils/dataTransformer';
+import { functions, httpsCallable } from '../firebase';
 import DialogLayout from '../components/DialogLayout.vue';
 
 const { t } = useI18n();
@@ -161,13 +169,67 @@ const { isDesktop } = useBreakpoint();
 
 const isMenuOpen = ref(false);
 const notView = ref(false);
-const hasSeenNote = ref(settingsStore.skippedNoteIDs.includes(props.id));
+const noteMarkedAsSeen = ref(false);
+
+// Реактивные флаги для триггера пересчёта
+const upgradeShownFlags = ref({
+  analysis: sessionStorage.getItem('upgradeShown_analysis') === 'true',
+  level2: sessionStorage.getItem('upgradeShown_level2') === 'true',
+  level3: sessionStorage.getItem('upgradeShown_level3') === 'true',
+});
+
+// Computed для блокировки каждой кнопки отдельно
+const canUseAnalysis = computed(() => {
+  if (userStore.isPro) return true;
+  if (upgradeShownFlags.value.analysis) return false;
+  return canView();
+});
+const canUseLevel2 = computed(() => {
+  if (userStore.isPro) return true;
+  if (upgradeShownFlags.value.level2) return false;
+  return canView();
+});
+const canUseLevel3 = computed(() => {
+  if (userStore.isPro) return true;
+  if (upgradeShownFlags.value.level3) return false;
+  return canView();
+});
+
+const hasSeenNote = computed(() => {
+  if (noteMarkedAsSeen.value) return true;
+
+  const key = `dialog_${props.id}_noteSkipped`;
+  const savedData = localStorage.getItem(key);
+
+  if (!savedData) return false;
+
+  try {
+    const data = JSON.parse(savedData);
+    const today = new Date().toISOString().split('T')[0];
+
+    if (data.date === today && data.skipped === true) {
+      return true;
+    }
+
+    localStorage.removeItem(key);
+    return false;
+  } catch (e) {
+    localStorage.removeItem(key);
+    return false;
+  }
+});
 
 const markNoteAsSeen = () => {
   if (notView.value) {
-    settingsStore.skipCulturalNoteToday(props.id);
+    const key = `dialog_${props.id}_noteSkipped`;
+    const today = new Date().toISOString().split('T')[0];
+    const data = {
+      skipped: true,
+      date: today,
+    };
+    localStorage.setItem(key, JSON.stringify(data));
   }
-  hasSeenNote.value = true;
+  noteMarkedAsSeen.value = true;
 };
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -199,7 +261,14 @@ onMounted(async () => {
   if (!userStore.isPro) {
     await settingsStore.loadUsageStats();
   }
-  hasSeenNote.value = settingsStore.skippedNoteIDs.includes(props.id);
+
+  // Синхронизируем флаги из sessionStorage
+  upgradeShownFlags.value = {
+    analysis: sessionStorage.getItem('upgradeShown_analysis') === 'true',
+    level2: sessionStorage.getItem('upgradeShown_level2') === 'true',
+    level3: sessionStorage.getItem('upgradeShown_level3') === 'true',
+  };
+
   if (!dialogStore.currentDialog || dialogStore.currentDialog.id !== props.id) {
     dialogStore.fetchDialogById(props.id);
   }
@@ -218,6 +287,7 @@ const handleDelete = async () => {
   // Если подтвердил, вызываем action из стора
   const success = await dialogStore.deleteDialog(props.id);
   if (success) {
+    clearDialogNoteFlag(props.id);
     router.push({ name: 'all-dialogs' });
   } else {
     uiStore.showToast(t('store.delDialogError'), 'error');
@@ -227,7 +297,7 @@ const toggleListening = () => {
   if (!dialog.value) return;
   trainingStore.togglePlayStop(dialog.value.fin.join('. '));
 };
-const handleProClick = async (action) => {
+const handleProClick = async (action, buttonType) => {
   if (userStore.isPro) {
     action();
     return;
@@ -239,13 +309,9 @@ const handleProClick = async (action) => {
 
   // Если ещё можно использовать
   if (previewCount < previewLimit) {
-    // Выполняем действие (внутри увеличится счётчик на сервере)
     await action();
-
-    // ✅ Перезагружаем счётчики после действия
     await settingsStore.loadUsageStats();
 
-    // Показываем тост с количеством оставшихся
     const previewsLeft = settingsStore.limit.useProMode - settingsStore.dailyPreviewCount;
     const message = t('view.usePro');
     let toastMessage = `${message}${previewsLeft}.`;
@@ -257,21 +323,70 @@ const handleProClick = async (action) => {
   // Если лимит достигнут
   else {
     uiStore.showUpgradeModal();
+    if (buttonType) {
+      sessionStorage.setItem(`upgradeShown_${buttonType}`, 'true');
+      upgradeShownFlags.value[buttonType] = true;
+    }
   }
 };
 const getInfo = async () => {
   await handleProClick(async () => {
     await trainingStore.fetchDialogAnalysis();
     uiStore.showModal('analysis');
-  });
+  }, 'analysis');
 };
 const goToTraining = async (level) => {
-  if (level.isPro) {
-    await handleProClick(() => {
-      router.push({ name: level.name, params: { id: props.id } });
-    });
-  } else {
+  if (!level.isPro) {
+    // Бесплатная тренировка — просто переходим
     router.push({ name: level.name, params: { id: props.id } });
+    return;
+  }
+
+  // PRO-тренировка (level-2 или level-3)
+  if (userStore.isPro) {
+    router.push({ name: level.name, params: { id: props.id } });
+    return;
+  }
+
+  // Free-пользователь → проверяем лимит
+  await settingsStore.loadUsageStats();
+
+  const previewCount = settingsStore.dailyPreviewCount;
+  const previewLimit = settingsStore.limit.useProMode;
+
+  if (previewCount < previewLimit) {
+    // ✅ Увеличиваем счётчик на сервере
+    try {
+      const callGemini = httpsCallable(functions, 'callGemini');
+      await callGemini({
+        prompt: 'increment_preview_count', // Специальный промпт
+        operationType: 'training',
+      });
+
+      // Перезагружаем счётчики
+      await settingsStore.loadUsageStats();
+
+      // Показываем тост
+      const previewsLeft = settingsStore.limit.useProMode - settingsStore.dailyPreviewCount;
+      const message = t('view.usePro');
+      let toastMessage = `${message}${previewsLeft}.`;
+      if (previewsLeft === 0) {
+        toastMessage = t('view.endPro');
+      }
+      uiStore.showToast(toastMessage, 'warning');
+
+      // Переходим на тренировку
+      router.push({ name: level.name, params: { id: props.id } });
+    } catch (error) {
+      console.error('Ошибка увеличения счётчика:', error);
+      uiStore.showToast('Произошла ошибка', 'error');
+    }
+  } else {
+    // Лимит достигнут → модалка и блокировка
+    uiStore.showUpgradeModal();
+    const buttonType = level.name === 'level-2' ? 'level2' : 'level3';
+    sessionStorage.setItem(`upgradeShown_${buttonType}`, 'true');
+    upgradeShownFlags.value[buttonType] = true;
   }
 };
 </script>

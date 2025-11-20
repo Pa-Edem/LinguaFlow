@@ -10,7 +10,7 @@
         v-if="dialogs.length > 0"
         @click="goToCreateDialog"
         class="btn btn-action oooo looo"
-        :disabled="!canGenerate()"
+        :disabled="!canCreateDialog"
       >
         <span class="material-symbols-outlined">add</span>
         {{ $t('all.createNew') }}
@@ -34,7 +34,7 @@
       <button
         v-if="dialogs.length > 0"
         @click="goToCreateDialog"
-        :disabled="!canGenerate()"
+        :disabled="!canCreateDialog"
         class="btn btn-action btn--icon-only"
       >
         <span class="material-symbols-outlined">add</span>
@@ -88,7 +88,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDialogStore } from '../stores/dialogStore';
 import { useUserStore } from '../stores/userStore';
@@ -97,6 +97,7 @@ import { useUiStore } from '../stores/uiStore';
 import DialogCard from '../components/DialogCard.vue';
 import { useBreakpoint } from '../composables/useBreakpoint';
 import { usePermissions } from '../composables/usePermissions';
+import { clearOldNoteFlags } from '../utils/dataTransformer';
 
 const router = useRouter();
 const dialogStore = useDialogStore();
@@ -109,6 +110,16 @@ const { isDesktop } = useBreakpoint();
 const levels = ['A1', 'A2.1', 'A2.2', 'B1.1', 'B1.2', 'B2.1', 'B2.2', 'C1.1', 'C1.2', 'C2'];
 const dialogs = computed(() => dialogStore.allDialogs);
 const { canGenerate } = usePermissions();
+
+// Реактивный флаг для триггера пересчёта
+const upgradeShownForCreate = ref(sessionStorage.getItem('upgradeShown_create') === 'true');
+
+// Computed для блокировки кнопки "Создать диалог"
+const canCreateDialog = computed(() => {
+  if (userStore.isPro) return true;
+  if (upgradeShownForCreate.value) return false;
+  return canGenerate();
+});
 
 const usage = computed(() => {
   return {
@@ -135,17 +146,23 @@ const groupedDialogs = computed(() => {
 });
 
 onMounted(async () => {
-  // Загружаем диалоги
-  if (dialogStore.allDialogs.length === 0) {
-    await dialogStore.fetchAllDialogs();
+  clearOldNoteFlags();
+  if (!userStore.isPro) {
+    await Promise.all([
+      dialogStore.allDialogs.length === 0 ? dialogStore.fetchAllDialogs() : Promise.resolve(),
+      settingsStore.loadUsageStats(),
+    ]);
+  } else {
+    if (dialogStore.allDialogs.length === 0) {
+      await dialogStore.fetchAllDialogs();
+    }
   }
 
-  // ✅ Загружаем актуальные счётчики с сервера
-  if (!userStore.isPro) {
-    await settingsStore.loadUsageStats();
+  upgradeShownForCreate.value = sessionStorage.getItem('upgradeShown_create') === 'true';
 
-    // Показываем предупреждения
+  if (!userStore.isPro) {
     uiStore.checkAndResetViewCounter();
+
     const totalDialogs = dialogStore.allDialogs.length;
     const dailyGen = settingsStore.dailyGenerationCount;
     const dailyGenLimit = settingsStore.limit.dailyGenerations;
@@ -155,12 +172,10 @@ onMounted(async () => {
       if (totalDialogs >= totalLimit) {
         uiStore.showToast(`Достигнут лимит диалогов (${totalLimit} максимум).`, 'warning');
         uiStore.viewCounterTotal++;
-      }
-      if (dailyGen === dailyGenLimit - 1) {
+      } else if (dailyGen === dailyGenLimit - 1) {
         uiStore.showToast(`У вас осталась 1 генерация на сегодня.`, 'info');
         uiStore.viewCounter++;
-      }
-      if (dailyGen >= dailyGenLimit) {
+      } else if (dailyGen >= dailyGenLimit) {
         uiStore.showToast(`Дневной лимит генераций исчерпан (${dailyGenLimit}/день).`, 'warning');
         uiStore.viewCounter++;
       }
@@ -169,13 +184,12 @@ onMounted(async () => {
 });
 
 const goToCreateDialog = async () => {
-  // PRO-пользователь — всегда разрешено
   if (userStore.isPro) {
     router.push({ name: 'new-dialog' });
     return;
   }
 
-  // ✅ НОВОЕ: Сначала обновляем счётчики с сервера
+  // Сначала обновляем счётчики с сервера
   await settingsStore.loadUsageStats();
 
   // Проверяем актуальные лимиты
@@ -188,9 +202,11 @@ const goToCreateDialog = async () => {
   if (dailyCount < dailyLimit && totalCount < totalLimit) {
     router.push({ name: 'new-dialog' });
   }
-  // Если лимит достигнут — показываем модалку
+  // Если лимит достигнут — показываем модалку и блокируем кнопку
   else {
     uiStore.showUpgradeModal();
+    sessionStorage.setItem('upgradeShown_create', 'true');
+    upgradeShownForCreate.value = true;
   }
 };
 </script>
