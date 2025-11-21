@@ -134,9 +134,6 @@ const usage = computed(() => {
   };
 });
 
-const viewToastGen = computed(() => uiStore.viewCounter);
-const viewToastTotal = computed(() => uiStore.viewCounterTotal);
-
 const groupedDialogs = computed(() => {
   const groups = {};
   levels.forEach((level) => {
@@ -161,24 +158,37 @@ onMounted(async () => {
   upgradeShownForCreate.value = sessionStorage.getItem('upgradeShown_create') === 'true';
 
   if (!userStore.isPro) {
-    uiStore.checkAndResetViewCounter();
+    // uiStore.checkAndResetViewCounter();
 
     const totalDialogs = dialogStore.allDialogs.length;
     const dailyGen = settingsStore.dailyGenerationCount;
     const dailyGenLimit = settingsStore.limit.dailyGenerations;
     const totalLimit = settingsStore.limit.totalDialogs;
 
-    if (viewToastGen.value < 2 || viewToastTotal.value < 2) {
-      if (totalDialogs >= totalLimit) {
-        uiStore.showToast(`Достигнут лимит диалогов (${totalLimit} максимум).`, 'warning');
-        uiStore.viewCounterTotal++;
-      } else if (dailyGen === dailyGenLimit - 1) {
+    // ✅ Проверяем последнее показанное значение
+    const lastDailyCount = sessionStorage.getItem('toast_last_daily_count');
+    const totalLimitToastShown = sessionStorage.getItem('toast_total_limit_shown') === 'true';
+
+    // Toast для общего лимита (показать 1 раз)
+    if (totalDialogs >= totalLimit && !totalLimitToastShown) {
+      uiStore.showToast(`Достигнут лимит диалогов (${totalLimit} максимум).`, 'warning');
+      sessionStorage.setItem('toast_total_limit_shown', 'true');
+    }
+
+    // ✅ Toast для дневных генераций (ТОЛЬКО последнее предупреждение + лимит)
+    if (lastDailyCount !== String(dailyGen)) {
+      const remaining = dailyGenLimit - dailyGen;
+
+      if (remaining === 1) {
+        // Последнее предупреждение перед лимитом
         uiStore.showToast(`У вас осталась 1 генерация на сегодня.`, 'info');
-        uiStore.viewCounter++;
-      } else if (dailyGen >= dailyGenLimit) {
+        sessionStorage.setItem('toast_last_daily_count', String(dailyGen));
+      } else if (remaining === 0) {
+        // Лимит исчерпан
         uiStore.showToast(`Дневной лимит генераций исчерпан (${dailyGenLimit}/день).`, 'warning');
-        uiStore.viewCounter++;
+        sessionStorage.setItem('toast_last_daily_count', String(dailyGen));
       }
+      // ✅ Для remaining > 1 → ничего не показываем
     }
   }
 });
