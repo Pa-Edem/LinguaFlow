@@ -1,5 +1,8 @@
 <!-- src\views\AllDialogs.vue -->
 <template>
+  <!-- ✅ Модалка trial при первом визите -->
+  <TrialModal v-model="showTrialModal" @activated="handleTrialActivated" @declined="handleTrialDeclined" />
+
   <div v-if="dialogs && !uiStore.loading" class="page-wrapper in-view">
     <aside class="desktop-sidebar">
       <div class="sidebar-title">
@@ -43,8 +46,11 @@
 
     <main class="content">
       <div v-if="dialogs.length > 0" class="dialogs-grid">
-        <!-- ✅ НОВЫЙ компактный индикатор лимитов -->
-        <div v-if="!userStore.isPro" class="limits-compact" :class="!isDesktop ? '' : 'p16'">
+        <!-- ✅ Trial баннер (для FREE пользователей) -->
+        <TrialBanner />
+
+        <!-- ✅ НОВЫЙ компактный индикатор лимитов только для FREE и PRO -->
+        <div v-if="!userStore.isPremium" class="limits-compact" :class="!isDesktop ? '' : 'p16'">
           <div class="limits-progress">
             <!-- Генерация -->
             <div class="limit-row">
@@ -130,13 +136,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDialogStore } from '../stores/dialogStore';
 import { useUserStore } from '../stores/userStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useUiStore } from '../stores/uiStore';
 import DialogCard from '../components/DialogCard.vue';
+import TrialModal from '../components/TrialModal.vue';
+import TrialBanner from '../components/TrialBanner.vue';
 import { useBreakpoint } from '../composables/useBreakpoint';
 import { usePermissions } from '../composables/usePermissions';
 import { clearOldNoteFlags } from '../utils/dataTransformer';
@@ -153,12 +161,17 @@ const levels = ['A1', 'A2.1', 'A2.2', 'B1.1', 'B1.2', 'B2.1', 'B2.2', 'C1.1', 'C
 const dialogs = computed(() => dialogStore.allDialogs);
 const { canGenerate } = usePermissions();
 
+// ✅ Показывать ли модалку trial
+const showTrialModal = ref(false);
+
 // Реактивный флаг для триггера пересчёта
 const upgradeShownForCreate = ref(sessionStorage.getItem('upgradeShown_create') === 'true');
 
-// Computed для блокировки кнопки "Создать диалог"
+// ✅ Computed для блокировки кнопки "Создать диалог"
 const canCreateDialog = computed(() => {
-  if (userStore.isPro) return true;
+  // ✅ PREMIUM — всегда можно
+  if (userStore.isPremium) return true;
+  // ✅ PRO/FREE — проверяем лимиты
   if (upgradeShownForCreate.value) return false;
   return canGenerate();
 });
@@ -176,7 +189,7 @@ const usage = computed(() => {
   };
 });
 
-// ✅ НОВОЕ: Прогресс хранилища
+// ✅ Прогресс хранилища
 const storageProgress = computed(() => {
   const max = settingsStore.limit.totalDialogs;
   if (max === 0) return 0;
@@ -193,12 +206,14 @@ const groupedDialogs = computed(() => {
 
 onMounted(async () => {
   clearOldNoteFlags();
-  if (!userStore.isPro) {
+  // ✅ Для FREE и PRO загружаем лимиты
+  if (!userStore.isPremium) {
     await Promise.all([
       dialogStore.allDialogs.length === 0 ? dialogStore.fetchAllDialogs() : Promise.resolve(),
       settingsStore.loadUsageStats(),
     ]);
   } else {
+    // ✅ Для PREMIUM просто загружаем диалоги (лимитов нет)
     if (dialogStore.allDialogs.length === 0) {
       await dialogStore.fetchAllDialogs();
     }
@@ -206,7 +221,37 @@ onMounted(async () => {
 
   upgradeShownForCreate.value = sessionStorage.getItem('upgradeShown_create') === 'true';
 
-  if (!userStore.isPro) {
+  // ✅ Показываем модалку trial при первом визите
+  if (!userStore.trialUsed && userStore.tier === 'free') {
+    const trialModalShown = localStorage.getItem('trial_modal_shown');
+    if (!trialModalShown) {
+      console.log('✅ Showing Trial Modal in 1 second...');
+      // Первый визит → показываем модалку
+      setTimeout(() => {
+        console.log('🎉 Trial Modal opened!');
+        showTrialModal.value = true;
+      }, 1000); // Задержка 1 секунда для плавности
+
+      localStorage.setItem('trial_modal_shown', 'true');
+    } else {
+      console.log('❌ Trial Modal already shown');
+    }
+  } else {
+    console.log('❌ Trial Modal conditions not met:', {
+      reason: userStore.trialUsed ? 'trial already used' : 'not free tier',
+    });
+  }
+
+  // ✅ Проверяем, закончился ли trial (показываем toast 1 раз)
+  const trialExpiredShown = sessionStorage.getItem('trial_expired_shown') === 'true';
+  if (userStore.trialUsed && !userStore.trialActive && !trialExpiredShown && userStore.tier === 'free') {
+    // Trial закончился — показываем toast с предложением апгрейда
+    uiStore.showToast('⏰ Ваш PRO trial закончился. Обновитесь до PRO для полного доступа!', 'info');
+    sessionStorage.setItem('trial_expired_shown', 'true');
+  }
+
+  // ✅ Toast'ы только для FREE и PRO
+  if (!userStore.isPremium) {
     const totalDialogs = dialogStore.allDialogs.length;
     const dailyGen = settingsStore.dailyGenerationCount;
     const dailyGenLimit = settingsStore.limit.dailyGenerations;
@@ -241,11 +286,13 @@ onMounted(async () => {
 });
 
 const goToCreateDialog = async () => {
-  if (userStore.isPro) {
+  // ✅ PREMIUM — всегда можно создавать
+  if (userStore.isPremium) {
     router.push({ name: 'new-dialog' });
     return;
   }
 
+  // ✅ PRO/FREE — проверяем лимиты
   // Сначала обновляем счётчики с сервера
   await settingsStore.loadUsageStats();
 
@@ -265,6 +312,17 @@ const goToCreateDialog = async () => {
     sessionStorage.setItem('upgradeShown_create', 'true');
     upgradeShownForCreate.value = true;
   }
+};
+
+// ✅ Обработчик активации trial из модалки
+const handleTrialActivated = () => {
+  // Модалка уже закрыта, toast показан в TrialModal
+  console.log('✅ Trial activated from modal');
+};
+
+// ✅ Обработчик отказа от trial
+const handleTrialDeclined = () => {
+  console.log('ℹ️ User declined trial');
 };
 </script>
 
