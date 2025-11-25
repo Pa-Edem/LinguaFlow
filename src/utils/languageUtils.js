@@ -19,6 +19,7 @@ const languageMap = {
   Română: 'ro-RO',
   Hrvatski: 'hr-HR',
   Slovenčina: 'sk-SK',
+  Српски: 'sr-RS',
 };
 
 const demoPhrases = {
@@ -41,6 +42,7 @@ const demoPhrases = {
   Română: 'Așa sună vocea în versiunea PRO. Mult mai bine, nu-i așa?',
   Hrvatski: 'Tako zvuči glas u PRO verziji. Mnogo bolje, zar ne?',
   Slovenčina: 'Tak znie hlas v PRO verzii. Oveľa lepšie, však?',
+  Српски: 'Овако глас звучи у PRO верзији. Много боље, зар не?',
 };
 
 export function getLangCode(languageName) {

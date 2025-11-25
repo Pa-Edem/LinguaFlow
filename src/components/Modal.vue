@@ -20,6 +20,17 @@
           <h3 v-else-if="uiStore.modalContent === 'confirm'" class="title">
             {{ uiStore.modalProps.title }}
           </h3>
+          <!-- v-if="uiStore.modalContent === 'limits'" -->
+          <h3 v-else-if="uiStore.modalContent === 'limits'" class="title">📊 Ваши лимиты</h3>
+          <!-- v-if="uiStore.modalContent === 'plan'" -->
+          <div v-else-if="uiStore.modalContent === 'plan'" class="header-title">
+            <span
+              class="material-symbols-outlined plan-icon"
+              :class="planIcon === 'crown' ? 'pro-icon' : planIcon === 'star' ? 'starter-icon' : ''"
+              >{{ planIcon }}</span
+            >
+            <h3 class="title">{{ planTitle }}</h3>
+          </div>
         </div>
 
         <div class="modal-body">
@@ -43,6 +54,10 @@
           <div v-else-if="uiStore.modalContent === 'confirm'" class="confirm-message">
             {{ uiStore.modalProps.message }}
           </div>
+          <!-- v-if="uiStore.modalContent === 'limits'" -->
+          <LimitsModal v-else-if="uiStore.modalContent === 'limits'" />
+          <!-- v-if="uiStore.modalContent === 'plan'" -->
+          <PlanModal v-else-if="uiStore.modalContent === 'plan'" :plan="selectedPlan" />
         </div>
 
         <div class="modal-footer">
@@ -101,6 +116,26 @@
               {{ uiStore.modalProps.confirmText || $t('buttons.ok') }}
             </button>
           </div>
+          <!-- v-if="uiStore.modalContent === 'limits'" -->
+          <button
+            v-else-if="uiStore.modalContent === 'limits'"
+            class="btn btn-common oooo oloo"
+            :class="isDesktop ? 'w-150' : 'mobile w-100'"
+            @click="uiStore.hideModal()"
+          >
+            <span class="material-symbols-outlined">close</span>
+            {{ $t('buttons.close') }}
+          </button>
+          <!-- v-if="uiStore.modalContent === 'plan'" -->
+          <button
+            v-else-if="uiStore.modalContent === 'plan'"
+            class="btn btn-common oooo oloo"
+            :class="isDesktop ? 'w-150' : 'mobile w-100'"
+            @click="uiStore.hideModal()"
+          >
+            <span class="material-symbols-outlined">close</span>
+            {{ $t('buttons.close') }}
+          </button>
         </div>
       </div>
     </div>
@@ -112,7 +147,10 @@ import { computed } from 'vue';
 import { useUiStore } from '../stores/uiStore';
 import { useTrainingStore } from '../stores/trainingStore';
 import ProBenefitItem from './ProBenefitItem.vue';
+import LimitsModal from './LimitsModal.vue';
+import PlanModal from './PlanModal.vue';
 import { useBreakpoint } from '../composables/useBreakpoint';
+import { getPlanInfo } from '../config/stripeConfig';
 
 const uiStore = useUiStore();
 const trainingStore = useTrainingStore();
@@ -124,8 +162,35 @@ const containerClass = computed(() => {
     upgrade: uiStore.modalContent === 'upgrade',
     confirm: uiStore.modalContent === 'confirm',
     endOfLevel: uiStore.modalContent === 'endOfLevel',
+    limits: uiStore.modalContent === 'limits',
+    plan: uiStore.modalContent === 'plan',
     default: uiStore.modalContent === 'default',
   };
+});
+
+// Получить информацию о выбранном плане
+const selectedPlan = computed(() => {
+  if (uiStore.modalContent !== 'plan' || !uiStore.modalProps.tier) {
+    return null;
+  }
+  return getPlanInfo(uiStore.modalProps.tier);
+});
+
+// Иконка для модалки плана
+const planIcon = computed(() => {
+  if (!selectedPlan.value) return '';
+  if (selectedPlan.value.name === 'PRO') {
+    return 'crown';
+  }
+  if (selectedPlan.value.name === 'STARTER') {
+    return 'star';
+  }
+  return 'lock';
+});
+// Заголовок для модалки плана
+const planTitle = computed(() => {
+  if (!selectedPlan.value) return '';
+  return `${selectedPlan.value.name} План`;
 });
 </script>
 
@@ -174,9 +239,35 @@ const containerClass = computed(() => {
   max-width: 640px;
   background: var(--gradient-pro);
 }
+/* Стиль для limits модалки */
+.modal-container.limits {
+  max-width: 720px;
+  background: var(--bg-main);
+}
+.modal-container.plan {
+  max-width: 600px;
+  background: var(--bg-main);
+}
 .modal-header {
   padding-top: 16px;
   flex-shrink: 0;
+}
+.header-title {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+}
+.modal-header .plan-icon {
+  font-size: var(--xxxl);
+  margin-right: 8px;
+  color: var(--text-head);
+}
+.modal-header .starter-icon {
+  color: var(--g3);
+}
+.modal-header .pro-icon {
+  color: var(--bg-pro);
 }
 .modal-header .title {
   font-size: var(--xl);

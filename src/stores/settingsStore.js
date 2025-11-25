@@ -19,14 +19,67 @@ export const useSettingsStore = defineStore('settings', {
     availableVoices: [],
     isLoadingVoices: false,
     limit: {
-      useProMode: 2,
       dailyGenerations: 2,
-      totalDialogs: 10,
+      weeklyGenerationsCap: 10,
+      dailyGenerationsMax: 4,
+      dailyPreview: 2,
+      weeklyPreviewCap: 20,
+      dailyPreviewMax: 8,
+      totalDialogs: 15,
+      unlimitedAnalysis: false,
     },
+    // ✅ СТАРЫЕ счётчики (для совместимости)
     dailyPreviewCount: 0,
     dailyGenerationCount: 0,
     date: new Date().toDateString(),
+
+    // ✅ НОВЫЕ счётчики с накоплением
+    accumulatedGenerations: 0,
+    accumulatedPreview: 0,
+    dailyUsageToday: 0,
+    dailyPreviewToday: 0,
+    weekStartDate: null,
+
+    // ✅ Тариф пользователя
+    userTier: 'free',
   }),
+  getters: {
+    // ✅ НОВОЕ: Вычисляем оставшиеся генерации
+    remainingGenerations: (state) => {
+      return Math.max(0, state.accumulatedGenerations);
+    },
+    // ✅ НОВОЕ: Вычисляем оставшиеся PRO-функции
+    remainingPreview: (state) => {
+      return Math.max(0, state.accumulatedPreview);
+    },
+    // ✅ НОВОЕ: Сколько можно использовать сегодня (генерации)
+    canUseToday: (state) => {
+      const remaining = state.accumulatedGenerations;
+      const usedToday = state.dailyUsageToday;
+      const dailyMax = state.limit.dailyGenerationsMax;
+
+      return Math.min(remaining, dailyMax - usedToday);
+    },
+    // ✅ НОВОЕ: Сколько можно использовать сегодня (PRO-функции)
+    canUsePreviewToday: (state) => {
+      const remaining = state.accumulatedPreview;
+      const usedToday = state.dailyPreviewToday;
+      const dailyMax = state.limit.dailyPreviewMax;
+
+      return Math.min(remaining, dailyMax - usedToday);
+    },
+    // ✅ НОВОЕ: Прогресс в процентах (для progress bar)
+    generationsProgress: (state) => {
+      const cap = state.limit.weeklyGenerationsCap;
+      if (cap === 0) return 0;
+      return Math.round((state.accumulatedGenerations / cap) * 100);
+    },
+    previewProgress: (state) => {
+      const cap = state.limit.weeklyPreviewCap;
+      if (cap === 0) return 0;
+      return Math.round((state.accumulatedPreview / cap) * 100);
+    },
+  },
   actions: {
     setTheme(newTheme) {
       this.theme = newTheme;
@@ -43,8 +96,6 @@ export const useSettingsStore = defineStore('settings', {
       localStorage.setItem('app-learning-language', lang);
 
       this.setSelectedVoiceConfig(DEFAULT_VOICE_CONFIG);
-      // this.fetchAvailableVoices();
-      // ✅ ДОБАВЬТЕ ПРОВЕРКУ: Загружаем голоса только если залогинены
       const userStore = useUserStore();
       if (userStore.isLoggedIn) {
         this.fetchAvailableVoices();
@@ -90,20 +141,39 @@ export const useSettingsStore = defineStore('settings', {
         const response = await getUsageStats();
 
         if (response.data) {
-          // ✅ Обновляем счётчики из Firestore
+          // ✅ Старые счётчики (для совместимости)
           this.dailyGenerationCount = response.data.dailyGenerationCount || 0;
           this.dailyPreviewCount = response.data.dailyPreviewCount || 0;
           this.date = response.data.date;
+          // ✅ НОВЫЕ счётчики с накоплением
+          this.accumulatedGenerations = response.data.accumulatedGenerations || 0;
+          this.accumulatedPreview = response.data.accumulatedPreview || 0;
+          this.dailyUsageToday = response.data.dailyUsageToday || 0;
+          this.dailyPreviewToday = response.data.dailyPreviewToday || 0;
+          this.weekStartDate = response.data.weekStartDate;
 
           // ✅ Обновляем лимиты из Firestore
           if (response.data.limits) {
-            this.limit.dailyGenerations = response.data.limits.dailyGenerations;
-            this.limit.useProMode = response.data.limits.dailyPreview;
-            this.limit.totalDialogs = response.data.limits.totalDialogs;
+            this.limit = {
+              dailyGenerations: response.data.limits.dailyGenerations || 2,
+              weeklyGenerationsCap: response.data.limits.weeklyGenerationsCap || 10,
+              dailyGenerationsMax: response.data.limits.dailyGenerationsMax || 4,
+              dailyPreview: response.data.limits.dailyPreview || 2,
+              weeklyPreviewCap: response.data.limits.weeklyPreviewCap || 20,
+              dailyPreviewMax: response.data.limits.dailyPreviewMax || 8,
+              totalDialogs: response.data.limits.totalDialogs || 15,
+              unlimitedAnalysis: response.data.limits.unlimitedAnalysis || false,
+            };
           }
 
+          // ✅ Сохраняем тариф
+          this.userTier = response.data.tier || 'free';
+
           console.log(
-            `📊 Счётчики загружены: gen=${this.dailyGenerationCount}/${this.limit.dailyGenerations}, preview=${this.dailyPreviewCount}/${this.limit.useProMode}`
+            `📊 Счётчики загружены (${this.userTier}): 
+        accumulated gen=${this.accumulatedGenerations}/${this.limit.weeklyGenerationsCap}, 
+        today=${this.dailyUsageToday}/${this.limit.dailyGenerationsMax},
+        accumulated preview=${this.accumulatedPreview}/${this.limit.weeklyPreviewCap}`
           );
         }
       } catch (error) {

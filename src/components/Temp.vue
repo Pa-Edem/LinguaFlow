@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <!-- PREMIUM план - сообщение -->
+        <!-- PREMIUM план - сообщение о безлимите -->
         <div v-else class="pro-message">
           <span class="material-symbols-outlined">check_circle</span>
           <span>Безлимитный доступ ко всем функциям!</span>
@@ -121,28 +121,32 @@ const planIcon = computed(() => {
       return 'crown';
     case 'pro':
       return 'star';
+    case 'starter':
+      return 'star';
     case 'free':
     default:
       return 'lock';
   }
 });
 
-// ✅ CSS класс для иконки
+// ✅ НОВОЕ: CSS класс для иконки
 const planIconClass = computed(() => {
   switch (currentPlanInfo.value?.id) {
     case 'premium':
       return 'premium-icon';
     case 'pro':
       return 'pro-icon';
+    case 'starter':
+      return 'star';
     case 'free':
     default:
       return 'free-icon';
   }
 });
 
-// ✅ Все доступные планы (FREE, PRO, PREMIUM)
+// ✅ ОБНОВЛЕНО: Все доступные планы (FREE, PRO, PREMIUM)
 const availablePlans = computed(() => {
-  // Показываем только активные планы
+  // Показываем только активные планы (без STARTER для новых пользователей)
   return [PLANS.free, PLANS.pro, PLANS.premium];
 });
 
@@ -158,7 +162,7 @@ const goBack = () => {
 
 // При монтировании загружаем данные
 onMounted(async () => {
-  // ✅ Для FREE и PRO загружаем лимиты
+  // ✅ ОБНОВЛЕНО: Для FREE и PRO загружаем лимиты
   if (!userStore.isPremium) {
     await Promise.all([
       dialogStore.allDialogs.length === 0 ? dialogStore.fetchAllDialogs() : Promise.resolve(),
@@ -172,201 +176,3 @@ onMounted(async () => {
   }
 });
 </script>
-
-<style scoped>
-.profile-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 16px;
-}
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px;
-  background: var(--bg-side);
-  border-radius: 12px;
-  margin-bottom: 32px;
-  border: 1px solid var(--border);
-}
-.user-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 2rem;
-}
-.user-info {
-  flex: 1;
-}
-.user-name {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--lg);
-  font-weight: 700;
-  color: var(--text-head);
-  margin-bottom: 4px;
-}
-.user-email {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
-  color: var(--text-base);
-}
-.subscription-section {
-  margin-bottom: 32px;
-}
-.section-title {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--md);
-  font-weight: 700;
-  color: var(--text-title);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 16px;
-  padding-left: 8px;
-  border-left: 4px solid #667eea;
-}
-.current-subscription {
-  background: var(--bg-side);
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
-}
-.subscription-header {
-  margin-bottom: 8px;
-}
-.tier-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.tier-info .tier-badge {
-  font-size: var(--lg);
-}
-.tier-info .free-icon {
-  color: var(--text-head);
-}
-.tier-info .pro-icon {
-  color: var(--g3);
-}
-.tier-info .premium-icon {
-  color: var(--bg-pro);
-}
-.tier-name {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--lg);
-  font-weight: 700;
-  color: var(--text-head);
-  text-transform: uppercase;
-}
-.limits-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding: 16px;
-  background: var(--bg-main);
-  border-radius: 8px;
-}
-.limit-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
-  color: var(--text-base);
-}
-.limit-icon {
-  font-size: 1.25rem;
-}
-.limit-label {
-  font-weight: 600;
-}
-.limit-value {
-  font-weight: 700;
-  color: var(--text-head);
-}
-.limit-detail {
-  color: var(--text-title);
-  font-size: 0.9em;
-}
-.pro-message {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #48bb7815 0%, #38a16915 100%);
-  border: 2px solid #48bb78;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
-  font-weight: 600;
-  color: var(--text-head);
-}
-.pro-message .material-symbols-outlined {
-  color: #48bb78;
-  font-size: 1.5rem;
-}
-.limits-details-btn {
-  width: 100%;
-  padding: 12px;
-  background: var(--bg-main);
-  color: var(--text-head);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.limits-details-btn:hover {
-  background: var(--border);
-  transform: translateY(-1px);
-}
-.limits-details-btn:active {
-  transform: translateY(0);
-}
-.plans-section {
-  margin-bottom: 32px;
-}
-.plans-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-.profile-actions {
-  display: flex;
-  justify-content: center;
-  padding: 24px 0;
-}
-@media (min-width: 768px) {
-  .profile-page {
-    padding: 32px 24px;
-  }
-  .plans-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .limits-summary {
-    padding: 20px;
-  }
-}
-@media (min-width: 1024px) {
-  .profile-page {
-    padding: 48px 32px;
-  }
-  .subscription-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-}
-</style>

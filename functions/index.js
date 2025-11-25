@@ -25,6 +25,128 @@ setGlobalOptions({
 const ttsClient = new TextToSpeechClient();
 
 /* ============================================
+// ✨ УТИЛИТА: Получение понедельника недели
+// ==========================================*/
+function getMondayOfWeek(date = new Date()) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Корректировка на понедельник
+  const monday = new Date(d.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+/* ============================================
+// ✨ УТИЛИТА: Определение тарифа пользователя
+// ==========================================*/
+async function getUserTier(userId, authToken) {
+  try {
+    const userDoc = await db.collection('users').doc(userId).get();
+    const userData = userDoc.data();
+    // Manual PRO override
+    if (userData?.manualProOverride) {
+      return 'pro';
+    }
+
+    // Stripe role
+    const stripeRole = authToken?.stripeRole;
+    if (stripeRole === 'pro') {
+      return 'pro';
+    }
+    if (stripeRole === 'starter') {
+      return 'starter';
+    }
+
+    return 'free';
+  } catch (error) {
+    console.error('❌ Ошибка определения тарифа:', error);
+    return 'free';
+  }
+}
+
+/* ============================================
+// ✨ НОВАЯ УТИЛИТА: Получение и обновление лимитов с накоплением
+// ==========================================*/
+async function getOrUpdateUsage(userId, tier, limits) {
+  const today = new Date().toISOString().split('T')[0];
+  const weekStart = getMondayOfWeek();
+  const usageRef = db.collection('usage').doc(userId);
+  const usageDoc = await usageRef.get();
+  let usageData = {
+    date: today,
+    weekStartDate: weekStart,
+    lastResetDate: weekStart,
+    // Накопленные
+    accumulatedGenerations: 0,
+    accumulatedPreview: 0,
+
+    // Использовано сегодня
+    dailyUsageToday: 0,
+    dailyPreviewToday: 0,
+
+    // Устаревшие (для совместимости)
+    dailyGenerationCount: 0,
+    dailyPreviewCount: 0,
+  };
+  if (usageDoc.exists) {
+    const existing = usageDoc.data();
+    // Проверяем, новая ли неделя
+    if (existing.weekStartDate !== weekStart) {
+      console.log(`🔄 Новая неделя! Сброс накоплений для ${userId}`);
+
+      // Сброс к базовым значениям
+      usageData.accumulatedGenerations = limits.dailyGenerations;
+      usageData.accumulatedPreview = limits.dailyPreview;
+      usageData.dailyUsageToday = 0;
+      usageData.dailyPreviewToday = 0;
+      usageData.weekStartDate = weekStart;
+      usageData.lastResetDate = weekStart;
+    } else if (existing.date !== today) {
+      // Новый день (но та же неделя)
+      console.log(`📅 Новый день для ${userId}`);
+
+      // Добавляем дневные к накопленным (с учётом cap)
+      const tierLimits = tier === 'free' ? limits : tier === 'starter' ? limits : null;
+
+      if (tierLimits) {
+        const newGenAccumulated = Math.min(
+          (existing.accumulatedGenerations || 0) + tierLimits.dailyGenerations,
+          tierLimits.weeklyGenerationsCap
+        );
+        const newPreviewAccumulated = Math.min(
+          (existing.accumulatedPreview || 0) + tierLimits.dailyPreview,
+          tierLimits.weeklyPreviewCap
+        );
+
+        usageData.accumulatedGenerations = newGenAccumulated;
+        usageData.accumulatedPreview = newPreviewAccumulated;
+      } else {
+        // PRO - копируем старые значения
+        usageData.accumulatedGenerations = existing.accumulatedGenerations || 0;
+        usageData.accumulatedPreview = existing.accumulatedPreview || 0;
+      }
+
+      usageData.dailyUsageToday = 0;
+      usageData.dailyPreviewToday = 0;
+      usageData.weekStartDate = existing.weekStartDate;
+      usageData.lastResetDate = existing.lastResetDate;
+    } else {
+      // Тот же день - копируем всё
+      usageData = { ...existing };
+    }
+  } else {
+    // Первый запуск - устанавливаем базовые значения
+    if (tier === 'free' || tier === 'starter') {
+      usageData.accumulatedGenerations = limits.dailyGenerations;
+      usageData.accumulatedPreview = limits.dailyPreview;
+    }
+  }
+  // Сохраняем обновлённые данные
+  await usageRef.set(usageData, { merge: true });
+  return usageData;
+}
+
+/* ============================================
 // ФУНКЦИЯ 1: getSpeech (✅ ИСПРАВЛЕНА)
 // ==========================================*/
 export const getSpeech = onCall(async (request) => {
@@ -322,6 +444,11 @@ function generateTraditionalNames(langCode) {
       female: ['Sofia', 'Eliška', 'Viktória', 'Nina', 'Natália'],
       male: ['Jakub', 'Adam', 'Michal', 'Samuel', 'Tomáš'],
     },
+    // Сербский
+    'sr-RS': {
+      female: ['Ana', 'Jelena', 'Marija', 'Sofija', 'Milena'],
+      male: ['Nikola', 'Marko', 'Stefan', 'Milan', 'Luka'],
+    },
   };
 
   // Возвращаем имена для языка или дефолтные английские
@@ -418,7 +545,7 @@ export const callGemini = onCall(
     console.log(`🤖 Gemini запрос от ${userId}, тип: ${operationType}`);
 
     try {
-      // ✅ ЧИТАЕМ ЛИМИТЫ ИЗ FIRESTORE
+      // ✅ Читаем лимиты из Firestore
       const limitsDoc = await db.collection('config').doc('limits').get();
 
       if (!limitsDoc.exists) {
@@ -426,99 +553,137 @@ export const callGemini = onCall(
       }
 
       const limitsData = limitsDoc.data();
-      const FREE_LIMITS = limitsData.free;
 
-      // Проверяем PRO-статус
-      const userDoc = await db.collection('users').doc(userId).get();
-      const userData = userDoc.data();
-      const isPro = userData?.manualProOverride || request.auth.token?.stripeRole;
+      // ✅ Определяем тариф пользователя
+      const tier = await getUserTier(userId, request.auth.token);
+      console.log(`👤 Пользователь ${userId} на тарифе: ${tier}`);
 
-      let usageData = {
-        date: null,
-        dailyGenerationCount: 0,
-        dailyPreviewCount: 0,
-      };
+      // ✅ PRO = безлимит
+      if (tier === 'pro') {
+        console.log(`👑 PRO: безлимитный доступ`);
 
-      // ✅ ПРОВЕРКА ЛИМИТОВ ДЛЯ FREE-ПОЛЬЗОВАТЕЛЕЙ
-      if (!isPro) {
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-        const usageRef = db.collection('usage').doc(userId);
-        const usageDoc = await usageRef.get();
-
-        if (usageDoc.exists) {
-          const data = usageDoc.data();
-          if (data.date === today) {
-            usageData = data;
-          } else {
-            usageData.date = today;
-          }
-        } else {
-          usageData.date = today;
-        }
-
+        // Специальная операция: только увеличить счётчик
         if (operationType === 'training') {
-          // Специальная операция: только увеличить счётчик, без вызова Gemini
-          if (!isPro) {
-            if (usageData.dailyPreviewCount >= FREE_LIMITS.dailyPreview) {
-              throw new HttpsError(
-                'resource-exhausted',
-                `Достигнут дневной лимит PRO-функций (${FREE_LIMITS.dailyPreview}/день).`
-              );
-            }
-
-            usageData.dailyPreviewCount++;
-            console.log(`✅ Счётчик training: ${usageData.dailyPreviewCount}/${FREE_LIMITS.dailyPreview}`);
-
-            const usageRef = db.collection('usage').doc(userId);
-            await usageRef.set(usageData, { merge: true });
-          }
-
-          // Возвращаем успех без вызова Gemini
           return { text: 'counter_incremented' };
         }
 
-        // === ПРОВЕРКА 1: Генерация диалогов ===
-        if (operationType === 'generateDialog') {
-          // Дневной лимит генераций
-          if (usageData.dailyGenerationCount >= FREE_LIMITS.dailyGenerations) {
-            throw new HttpsError(
-              'resource-exhausted',
-              `Достигнут дневной лимит генераций (${FREE_LIMITS.dailyGenerations}/день). Обновитесь до PRO.`
-            );
+        // Вызов Gemini без проверок
+        const apiKey = geminiApiKey.value();
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        console.log(`✅ Gemini ответил (${text.length} символов)`);
+        return { text: text };
+      }
+
+      // ✅ FREE или STARTER - проверяем лимиты
+      const tierLimits = tier === 'free' ? limitsData.free : limitsData.starter;
+
+      // ✅ Получаем или обновляем usage с накоплением
+      const usageData = await getOrUpdateUsage(userId, tier, tierLimits);
+
+      console.log(`📊 ${tier.toUpperCase()}: 
+        accumulated gen=${usageData.accumulatedGenerations}/${tierLimits.weeklyGenerationsCap}, 
+        today=${usageData.dailyUsageToday}/${tierLimits.dailyGenerationsMax},
+        accumulated preview=${usageData.accumulatedPreview}/${tierLimits.weeklyPreviewCap}`);
+
+      // ✅ Специальная операция: только увеличить счётчик тренировки
+      if (operationType === 'training') {
+        // Проверка лимитов PRO-тренировок
+        if (usageData.accumulatedPreview <= 0) {
+          throw new HttpsError('resource-exhausted', `Достигнут лимит PRO-функций. Накоплено: 0.`);
+        }
+
+        if (usageData.dailyPreviewToday >= tierLimits.dailyPreviewMax) {
+          throw new HttpsError(
+            'resource-exhausted',
+            `Достигнут дневной лимит использования (${tierLimits.dailyPreviewMax}/день).`
+          );
+        }
+
+        // Уменьшаем accumulated и увеличиваем daily
+        usageData.accumulatedPreview--;
+        usageData.dailyPreviewToday++;
+        usageData.dailyPreviewCount++; // Для совместимости
+
+        console.log(
+          `✅ Счётчик training: accumulated=${usageData.accumulatedPreview}, today=${usageData.dailyPreviewToday}`
+        );
+
+        const usageRef = db.collection('usage').doc(userId);
+        await usageRef.set(usageData, { merge: true });
+
+        return { text: 'counter_incremented' };
+      }
+
+      // ✅ Проверка лимитов для генерации диалогов
+      if (operationType === 'generateDialog') {
+        // Проверка накопленных
+        if (usageData.accumulatedGenerations <= 0) {
+          throw new HttpsError(
+            'resource-exhausted',
+            `Достигнут недельный лимит генераций. Накоплено: 0. Сброс: понедельник.`
+          );
+        }
+
+        // Проверка дневного максимума
+        if (usageData.dailyUsageToday >= tierLimits.dailyGenerationsMax) {
+          throw new HttpsError(
+            'resource-exhausted',
+            `Достигнут дневной лимит использования (${tierLimits.dailyGenerationsMax}/день). Накоплено: ${usageData.accumulatedGenerations}.`
+          );
+        }
+
+        // Проверка общего лимита диалогов
+        const dialogsSnapshot = await db.collection('dialogs').where('userId', '==', userId).get();
+
+        if (dialogsSnapshot.size >= tierLimits.totalDialogs) {
+          throw new HttpsError(
+            'resource-exhausted',
+            `Достигнут лимит сохранённых диалогов (${tierLimits.totalDialogs} максимум). Обновитесь или удалите старые.`
+          );
+        }
+
+        console.log(
+          `📊 ${tier.toUpperCase()}: gen accumulated ${usageData.accumulatedGenerations}, today ${
+            usageData.dailyUsageToday
+          }, dialogs ${dialogsSnapshot.size}/${tierLimits.totalDialogs}`
+        );
+      }
+
+      // ✅ Проверка лимитов для PRO-функций (Анализ, Переводить)
+      if (operationType === 'analysis' || operationType === 'translation') {
+        // STARTER имеет безлимитный анализ
+        if (tier === 'starter' && operationType === 'analysis' && tierLimits.unlimitedAnalysis) {
+          console.log(`⭐ STARTER: безлимитный анализ`);
+          // Пропускаем проверки для анализа
+        } else {
+          // FREE или STARTER для translation
+          if (usageData.accumulatedPreview <= 0) {
+            throw new HttpsError('resource-exhausted', `Достигнут недельный лимит PRO-функций. Накоплено: 0.`);
           }
 
-          // Общий лимит диалогов
-          const dialogsSnapshot = await db.collection('dialogs').where('userId', '==', userId).get();
-
-          if (dialogsSnapshot.size >= FREE_LIMITS.totalDialogs) {
+          if (usageData.dailyPreviewToday >= tierLimits.dailyPreviewMax) {
             throw new HttpsError(
               'resource-exhausted',
-              `Достигнут лимит сохранённых диалогов (${FREE_LIMITS.totalDialogs} максимум). Обновитесь до PRO или удалите старые.`
+              `Достигнут дневной лимит использования (${tierLimits.dailyPreviewMax}/день).`
             );
           }
 
           console.log(
-            `📊 Free: gen ${usageData.dailyGenerationCount}/${FREE_LIMITS.dailyGenerations}, dialogs ${dialogsSnapshot.size}/${FREE_LIMITS.totalDialogs}`
+            `📊 ${tier.toUpperCase()}: preview accumulated ${usageData.accumulatedPreview}, today ${
+              usageData.dailyPreviewToday
+            }`
           );
         }
       }
 
-      // === ПРОВЕРКА 2: PRO-функции (Анализ, Говорить, Переводить) ===
-      if (operationType === 'analysis' || operationType === 'translation') {
-        if (usageData.dailyPreviewCount >= FREE_LIMITS.dailyPreview) {
-          throw new HttpsError(
-            'resource-exhausted',
-            `Достигнут дневной лимит PRO-функций (${FREE_LIMITS.dailyPreview}/день). Обновитесь до PRO для безлимитного доступа.`
-          );
-        }
-        console.log(`📊 Free: preview ${usageData.dailyPreviewCount}/${FREE_LIMITS.dailyPreview}`);
-      } else {
-        console.log(`👑 PRO: безлимитный доступ`);
-      }
-
-      // === ВЫЗОВ GEMINI API ===
+      // ✅ Вызов Gemini API
       const apiKey = geminiApiKey.value();
-
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
@@ -528,20 +693,30 @@ export const callGemini = onCall(
 
       console.log(`✅ Gemini ответил (${text.length} символов)`);
 
-      // === УВЕЛИЧИВАЕМ СЧЁТЧИКИ ПОСЛЕ УСПЕХА ===
-      if (!isPro) {
-        const usageRef = db.collection('usage').doc(userId);
+      // ✅ Увеличиваем счётчики после успеха
+      const usageRef = db.collection('usage').doc(userId);
 
-        // Увеличиваем нужный счётчик
-        if (operationType === 'generateDialog') {
-          usageData.dailyGenerationCount++;
-          console.log(`✅ Счётчик gen: ${usageData.dailyGenerationCount}/${FREE_LIMITS.dailyGenerations}`);
-        } else if (operationType === 'analysis' || operationType === 'translation') {
-          usageData.dailyPreviewCount++;
-          console.log(`✅ Счётчик preview: ${usageData.dailyPreviewCount}/${FREE_LIMITS.dailyPreview}`);
+      if (operationType === 'generateDialog') {
+        usageData.accumulatedGenerations--;
+        usageData.dailyUsageToday++;
+        usageData.dailyGenerationCount++; // Для совместимости
+        console.log(
+          `✅ Счётчик gen: accumulated=${usageData.accumulatedGenerations}, today=${usageData.dailyUsageToday}`
+        );
+      } else if (operationType === 'analysis' || operationType === 'translation') {
+        // Для STARTER analysis безлимитный, не трогаем счётчики
+        if (!(tier === 'starter' && operationType === 'analysis' && tierLimits.unlimitedAnalysis)) {
+          usageData.accumulatedPreview--;
+          usageData.dailyPreviewToday++;
+          usageData.dailyPreviewCount++; // Для совместимости
+          console.log(
+            `✅ Счётчик preview: accumulated=${usageData.accumulatedPreview}, today=${usageData.dailyPreviewToday}`
+          );
         }
-        await usageRef.set(usageData, { merge: true });
       }
+
+      await usageRef.set(usageData, { merge: true });
+
       return { text: text };
     } catch (error) {
       console.error('❌ Ошибка Gemini:', error);
@@ -574,37 +749,42 @@ export const getUsageStats = onCall(async (request) => {
     }
 
     const limitsData = limitsDoc.data();
-    const FREE_LIMITS = limitsData.free;
 
-    const today = new Date().toISOString().split('T')[0];
-    const usageRef = db.collection('usage').doc(userId);
-    const usageDoc = await usageRef.get();
+    // ✅ Определяем тариф пользователя
+    const tier = await getUserTier(userId, request.auth.token);
+    const tierLimits = tier === 'free' ? limitsData.free : tier === 'starter' ? limitsData.starter : limitsData.pro;
 
-    let dailyGenerationCount = 0;
-    let dailyPreviewCount = 0;
+    // ✅ Получаем usage с обновлением (если новый день/неделя)
+    const usageData = await getOrUpdateUsage(userId, tier, tierLimits);
 
-    if (usageDoc.exists) {
-      const usageData = usageDoc.data();
-      if (usageData.date === today) {
-        dailyGenerationCount = usageData.dailyGenerationCount || 0;
-        dailyPreviewCount = usageData.dailyPreviewCount || 0;
-      }
-    }
-
+    // Подсчёт диалогов
     const dialogsSnapshot = await db.collection('dialogs').where('userId', '==', userId).get();
-
     const totalDialogs = dialogsSnapshot.size;
 
     console.log(
-      `📊 Статистика ${userId}: gen=${dailyGenerationCount}/${FREE_LIMITS.dailyGenerations}, preview=${dailyPreviewCount}/${FREE_LIMITS.dailyPreview}, total=${totalDialogs}/${FREE_LIMITS.totalDialogs}`
+      `📊 Статистика ${userId} (${tier}): 
+        accumulated gen=${usageData.accumulatedGenerations}, today=${usageData.dailyUsageToday},
+        accumulated preview=${usageData.accumulatedPreview}, today=${usageData.dailyPreviewToday},
+        total dialogs=${totalDialogs}`
     );
 
     return {
-      dailyGenerationCount,
-      dailyPreviewCount,
+      // ✅ Для обратной совместимости (старый формат)
+      dailyGenerationCount: usageData.dailyGenerationCount || 0,
+      dailyPreviewCount: usageData.dailyPreviewCount || 0,
       totalDialogs,
-      date: today,
-      limits: FREE_LIMITS, // ✅ ВОЗВРАЩАЕМ ЛИМИТЫ
+      date: usageData.date,
+
+      // ✅ НОВЫЕ поля с накоплением
+      accumulatedGenerations: usageData.accumulatedGenerations || 0,
+      accumulatedPreview: usageData.accumulatedPreview || 0,
+      dailyUsageToday: usageData.dailyUsageToday || 0,
+      dailyPreviewToday: usageData.dailyPreviewToday || 0,
+      weekStartDate: usageData.weekStartDate,
+
+      // ✅ Возвращаем лимиты и тариф
+      limits: tierLimits,
+      tier: tier,
     };
   } catch (error) {
     console.error('❌ Ошибка получения статистики:', error);

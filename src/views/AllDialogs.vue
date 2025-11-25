@@ -35,7 +35,7 @@
         v-if="dialogs.length > 0"
         @click="goToCreateDialog"
         :disabled="!canCreateDialog"
-        class="btn btn-action btn--icon-only"
+        class="btn btn-action btn--icon-only oolo"
       >
         <span class="material-symbols-outlined">add</span>
       </button>
@@ -43,13 +43,55 @@
 
     <main class="content">
       <div v-if="dialogs.length > 0" class="dialogs-grid">
-        <div v-if="!userStore.isPro" class="usage-indicator">
-          <div class="usage-text">
-            <span>{{ $t('all.savedDialogs') }}</span>
-            <span>{{ usage.total.count }} / {{ usage.total.limit }}</span>
+        <!-- ✅ НОВЫЙ компактный индикатор лимитов -->
+        <div v-if="!userStore.isPro" class="limits-compact" :class="!isDesktop ? '' : 'p16'">
+          <div class="limits-progress">
+            <!-- Генерация -->
+            <div class="limit-row">
+              <div class="limit-info">
+                <span class="limit-label">Генерация:</span>
+                <span class="limit-value">{{ settingsStore.canUseToday }} сегодня</span>
+                <span class="limit-accumulated"
+                  >({{ settingsStore.accumulatedGenerations }}/{{ settingsStore.limit.weeklyGenerationsCap }})</span
+                >
+              </div>
+              <div class="limit-progress-bar">
+                <div class="progress-fill generation" :style="{ width: `${settingsStore.generationsProgress}%` }"></div>
+              </div>
+            </div>
+            <!-- PRO-тренировки -->
+            <div class="limit-row">
+              <div class="limit-info">
+                <span class="limit-label">PRO-тренировки:</span>
+                <span class="limit-value">{{ settingsStore.canUsePreviewToday }} сегодня</span>
+                <span class="limit-accumulated"
+                  >({{ settingsStore.accumulatedPreview }}/{{ settingsStore.limit.weeklyPreviewCap }})</span
+                >
+              </div>
+              <div class="limit-progress-bar">
+                <div class="progress-fill preview" :style="{ width: `${settingsStore.previewProgress}%` }"></div>
+              </div>
+            </div>
+            <!-- Диалоги -->
+            <div class="limit-row">
+              <div class="limit-info">
+                <span class="limit-label">{{ $t('all.savedDialogs') }}:</span>
+                <span class="limit-value">{{ usage.total.count }} / {{ usage.total.limit }}</span>
+              </div>
+              <div class="limit-progress-bar">
+                <div class="progress-fill storage" :style="{ width: `${storageProgress}%` }"></div>
+              </div>
+            </div>
           </div>
-          <progress class="usage-progress" :value="usage.total.count" :max="usage.total.limit"></progress>
+
+          <!-- Кнопка "Подробнее" -->
+          <div class="btn-wrap">
+            <button class="btn btn-menu btn--icon-only looo" @click="uiStore.showLimitsModal()">
+              <span class="material-symbols-outlined">info_i</span>
+            </button>
+          </div>
         </div>
+
         <template v-for="level in levels" :key="level">
           <div v-if="groupedDialogs[level].length > 0">
             <div class="level-title">{{ level }}</div>
@@ -134,6 +176,13 @@ const usage = computed(() => {
   };
 });
 
+// ✅ НОВОЕ: Прогресс хранилища
+const storageProgress = computed(() => {
+  const max = settingsStore.limit.totalDialogs;
+  if (max === 0) return 0;
+  return Math.round((usage.value.total.count / max) * 100);
+});
+
 const groupedDialogs = computed(() => {
   const groups = {};
   levels.forEach((level) => {
@@ -158,8 +207,6 @@ onMounted(async () => {
   upgradeShownForCreate.value = sessionStorage.getItem('upgradeShown_create') === 'true';
 
   if (!userStore.isPro) {
-    // uiStore.checkAndResetViewCounter();
-
     const totalDialogs = dialogStore.allDialogs.length;
     const dailyGen = settingsStore.dailyGenerationCount;
     const dailyGenLimit = settingsStore.limit.dailyGenerations;
@@ -260,7 +307,7 @@ const goToCreateDialog = async () => {
   min-width: 40px;
   height: 40px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: 20px;
 }
 main.content {
   flex: 1;
@@ -317,30 +364,81 @@ main.content {
   color: var(--text-head);
   margin-bottom: 32px;
 }
-.usage-indicator {
+/* ✅ НОВЫЕ СТИЛИ для компактного индикатора */
+.limits-compact {
+  display: flex;
+  flex-wrap: nowrap;
+  background: var(--bg-side);
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid var(--border);
+}
+.p16 {
+  padding: 16px 8px;
+}
+.limits-progress {
+  flex-grow: 1;
+  padding: 0 8px;
+}
+
+.limit-row {
   margin-bottom: 8px;
 }
-.usage-text {
+
+.limit-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.limit-info {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--xxs);
+  color: var(--text-base);
+}
+
+.limit-label {
+  font-weight: 400;
+}
+
+.limit-value {
+  font-weight: 500;
+  color: var(--text-head);
+}
+
+.limit-accumulated {
   color: var(--text-title);
-  margin-bottom: -8px;
 }
-.usage-progress {
-  width: 100%;
-  height: 8px;
-  -webkit-appearance: none;
-  appearance: none;
+
+.limit-progress-bar {
+  height: 6px;
+  background: var(--y3);
+  border-radius: 3px;
+  overflow: hidden;
 }
-.usage-progress::-webkit-progress-bar {
-  background-color: var(--y3);
-  border-radius: 4px;
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
 }
-.usage-progress::-webkit-progress-value {
-  background-color: var(--bb);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+
+.progress-fill.generation {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.progress-fill.preview {
+  background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+}
+
+.progress-fill.storage {
+  background: linear-gradient(90deg, #ed8936 0%, #dd6b20 100%);
+}
+.btn-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 /* ============================================= */
 /* 2. СТИЛИ ДЛЯ ПЛАНШЕТОВ И ДЕСКТОПОВ */

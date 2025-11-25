@@ -16,10 +16,14 @@
       <div class="form-group">
         <label for="level">{{ $t('new.level') }}</label>
         <select id="level" v-model="form.level" required>
-          <option v-for="level in levels" :key="level" :value="level">
+          <option v-for="level in availableLevels" :key="level" :value="level">
             {{ level }}
           </option>
+          <!-- ✅ Показываем заблокированные уровни (только для FREE) -->
+          <option v-for="level in lockedLevels" :key="level" :value="level" disabled>{{ level }} 🔒 PRO</option>
         </select>
+        <!-- ✅ Подсказка для FREE пользователей -->
+        <small v-if="lockedLevels.length > 0" class="upgrade-hint"> 💡 Уровни B2.1 - C2 доступны в PRO/PREMIUM </small>
       </div>
 
       <div class="form-group">
@@ -79,7 +83,7 @@ const router = useRouter();
 const settingsStore = useSettingsStore();
 const trainingStore = useTrainingStore();
 const uiStore = useUiStore();
-const { canNew, canTotal, canGenerate } = usePermissions();
+const { canNew, canTotal, canGenerate, getAvailableLevels } = usePermissions();
 const { isDesktop } = useBreakpoint();
 
 const form = ref({
@@ -89,7 +93,21 @@ const form = ref({
   replicas: 10,
 });
 const errorMessage = ref('');
-const levels = ['A1', 'A2.1', 'A2.2', 'B1.1', 'B1.2', 'B2.1', 'B2.2', 'C1.1', 'C1.2', 'C2'];
+
+// ✅ Все уровни
+const allLevels = ['A1', 'A2.1', 'A2.2', 'B1.1', 'B1.2', 'B2.1', 'B2.2', 'C1.1', 'C1.2', 'C2'];
+
+// ✅ Доступные уровни для текущего тарифа
+const availableLevels = computed(() => {
+  return getAvailableLevels();
+});
+
+// ✅ Заблокированные уровни (для FREE)
+const lockedLevels = computed(() => {
+  const available = availableLevels.value;
+  return allLevels.filter((level) => !available.includes(level));
+});
+
 const isFormValid = computed(() => form.value.topic.trim() !== '');
 const ton = computed({
   get: () => settingsStore.ton,
@@ -148,7 +166,7 @@ const saveDialog = async () => {
 }
 .form-group {
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: 32px;
 }
 label {
   display: block;
@@ -163,6 +181,16 @@ select {
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: var(--sm);
+}
+.upgrade-hint {
+  display: block;
+  margin-top: 0.5rem;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
+  color: var(--text-title);
+}
+select option:disabled {
+  color: #999;
 }
 textarea {
   width: 100%;
