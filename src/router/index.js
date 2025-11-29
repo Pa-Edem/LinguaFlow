@@ -9,6 +9,7 @@ import Profile from '../views/Profile.vue';
 import Settings from '../views/Settings.vue';
 import NewDialog from '../views/NewDialog.vue';
 import ViewDialog from '../views/ViewDialog.vue';
+import PricingView from '../views/PricingView.vue';
 import Level_1 from '../views/Level_1.vue';
 import Level_2 from '../views/Level_2.vue';
 import Level_3 from '../views/Level_3.vue';
@@ -34,6 +35,12 @@ const routes = [
   { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
   { path: '/settings', name: 'settings', component: Settings, meta: { requiresAuth: true } },
   {
+    path: '/pricing',
+    name: 'pricing',
+    component: PricingView,
+    meta: { requiresAuth: false },
+  },
+  {
     path: '/new',
     name: 'new-dialog',
     component: NewDialog,
@@ -58,14 +65,14 @@ const routes = [
     name: 'level-2',
     component: Level_2,
     props: true,
-    meta: { requiresAuth: true, requiresPro: true },
+    meta: { requiresAuth: true, requiresPaid: true },
   },
   {
     path: '/training/level-3/:id',
     name: 'level-3',
     component: Level_3,
     props: true,
-    meta: { requiresAuth: true, requiresPro: true },
+    meta: { requiresAuth: true, requiresPaid: true },
   },
   {
     path: '/training/level-4/:id',
@@ -107,8 +114,8 @@ router.beforeEach(async (to, from, next) => {
     return next({ name: 'all-dialogs' }); // Отправляем его обратно
   }
 
-  // --- Проверка №4: Требуется ли PRO? ---
-  if (to.meta.requiresPro && !canView()) {
+  // --- Проверка №4: Требуется ли PRO/PREMIUM? ---
+  if (to.meta.requiresPaid && !canView()) {
     // Если пользователь пытается зайти на /level-2 или /level-3
     // (canView() вернет false, если он Free и потратил "пробные клики")
     return next({ name: 'view-dialog', params: to.params });

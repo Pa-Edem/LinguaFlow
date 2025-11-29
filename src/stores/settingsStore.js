@@ -141,6 +141,9 @@ export const useSettingsStore = defineStore('settings', {
         const response = await getUsageStats();
 
         if (response.data) {
+          console.log('📊 getUsageStats response:', response.data);
+          console.log('🎫 Tier from server:', response.data.tier);
+          console.log('📋 Limits from server:', response.data.limits);
           // ✅ Старые счётчики (для совместимости)
           this.dailyGenerationCount = response.data.dailyGenerationCount || 0;
           this.dailyPreviewCount = response.data.dailyPreviewCount || 0;
@@ -168,13 +171,6 @@ export const useSettingsStore = defineStore('settings', {
 
           // ✅ Сохраняем тариф
           this.userTier = response.data.tier || 'free';
-
-          console.log(
-            `📊 Счётчики загружены (${this.userTier}): 
-        accumulated gen=${this.accumulatedGenerations}/${this.limit.weeklyGenerationsCap}, 
-        today=${this.dailyUsageToday}/${this.limit.dailyGenerationsMax},
-        accumulated preview=${this.accumulatedPreview}/${this.limit.weeklyPreviewCap}`
-          );
         }
       } catch (error) {
         console.error('❌ Ошибка загрузки счётчиков:', error);

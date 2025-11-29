@@ -9,22 +9,17 @@
         <img class="image" src="../assets/logo.svg" />
         <h1 class="header-title">Lingua Flow</h1>
       </div>
-      <button
-        v-if="dialogs.length > 0"
-        @click="goToCreateDialog"
-        class="btn btn-action oooo looo"
-        :disabled="!canCreateDialog"
-      >
+      <button v-if="dialogs.length > 0" @click="goToCreateDialog" class="btn btn-action" :disabled="!canCreateDialog">
         <span class="material-symbols-outlined">add</span>
         {{ $t('all.createNew') }}
       </button>
       <div class="grow"></div>
       <div class="user-profile">
-        <router-link to="/profile" class="btn btn-common oooo oool">
+        <router-link to="/profile" class="btn btn-menu">
           <span class="material-symbols-outlined">person</span>
           <span>{{ $t('all.profile') }}</span>
         </router-link>
-        <router-link to="/settings" class="btn btn-common oooo oloo">
+        <router-link to="/settings" class="btn btn-menu">
           <span class="material-symbols-outlined">settings</span>
           <span>{{ $t('all.settings') }}</span>
         </router-link>
@@ -38,7 +33,7 @@
         v-if="dialogs.length > 0"
         @click="goToCreateDialog"
         :disabled="!canCreateDialog"
-        class="btn btn-action btn--icon-only oolo"
+        class="btn btn-action btn--icon-only"
       >
         <span class="material-symbols-outlined">add</span>
       </button>
@@ -46,9 +41,6 @@
 
     <main class="content">
       <div v-if="dialogs.length > 0" class="dialogs-grid">
-        <!-- ✅ Trial баннер (для FREE пользователей) -->
-        <TrialBanner />
-
         <!-- ✅ НОВЫЙ компактный индикатор лимитов только для FREE и PRO -->
         <div v-if="!userStore.isPremium" class="limits-compact" :class="!isDesktop ? '' : 'p16'">
           <div class="limits-progress">
@@ -56,7 +48,7 @@
             <div class="limit-row">
               <div class="limit-info">
                 <span class="limit-label">Генерация:</span>
-                <span class="limit-value">{{ settingsStore.canUseToday }} сегодня</span>
+                <span class="limit-value">{{ settingsStore.canUseToday }} доступно сегодня</span>
                 <span class="limit-accumulated"
                   >({{ settingsStore.accumulatedGenerations }}/{{ settingsStore.limit.weeklyGenerationsCap }})</span
                 >
@@ -69,7 +61,7 @@
             <div class="limit-row">
               <div class="limit-info">
                 <span class="limit-label">PRO-тренировки:</span>
-                <span class="limit-value">{{ settingsStore.canUsePreviewToday }} сегодня</span>
+                <span class="limit-value">{{ settingsStore.canUsePreviewToday }} доступно сегодня</span>
                 <span class="limit-accumulated"
                   >({{ settingsStore.accumulatedPreview }}/{{ settingsStore.limit.weeklyPreviewCap }})</span
                 >
@@ -92,7 +84,7 @@
 
           <!-- Кнопка "Подробнее" -->
           <div class="btn-wrap">
-            <button class="btn btn-menu btn--icon-only looo" @click="uiStore.showLimitsModal()">
+            <button class="btn btn-menu btn--icon-only" @click="uiStore.showLimitsModal()">
               <span class="material-symbols-outlined">info_i</span>
             </button>
           </div>
@@ -109,11 +101,7 @@
       </div>
       <div v-else class="message-container">
         <p class="message-text">{{ $t('all.notDialogs') }}</p>
-        <router-link
-          :to="{ name: 'new-dialog' }"
-          class="btn btn-action oooo looo"
-          :class="!isDesktop ? 'mobile' : 'w-250'"
-        >
+        <router-link :to="{ name: 'new-dialog' }" class="btn btn-action" :class="!isDesktop ? 'mobile' : 'w-250'">
           <span class="material-symbols-outlined">add</span>
           {{ $t('all.createFirst') }}
         </router-link>
@@ -136,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDialogStore } from '../stores/dialogStore';
 import { useUserStore } from '../stores/userStore';
@@ -144,7 +132,6 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useUiStore } from '../stores/uiStore';
 import DialogCard from '../components/DialogCard.vue';
 import TrialModal from '../components/TrialModal.vue';
-import TrialBanner from '../components/TrialBanner.vue';
 import { useBreakpoint } from '../composables/useBreakpoint';
 import { usePermissions } from '../composables/usePermissions';
 import { clearOldNoteFlags } from '../utils/dataTransformer';

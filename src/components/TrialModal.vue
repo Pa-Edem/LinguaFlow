@@ -14,10 +14,7 @@
           <div class="modal-icon">🎁</div>
 
           <!-- Заголовок -->
-          <h2 class="modal-title">Добро пожаловать в LinguaFlow!</h2>
-
-          <!-- Описание -->
-          <p class="modal-description">Хотите попробовать все PRO функции бесплатно?</p>
+          <h2 class="modal-title">Хотите попробовать все PRO функции бесплатно?</h2>
 
           <!-- Преимущества trial -->
           <div class="modal-features">
@@ -45,15 +42,15 @@
 
           <!-- Кнопки -->
           <div class="modal-actions">
-            <button class="modal-btn primary" @click="activateTrial" :disabled="isLoading">
+            <button class="btn btn-primary" @click="activateTrial" :disabled="isLoading">
               <span v-if="!isLoading">🚀 Активировать trial</span>
               <span v-else>Активация...</span>
             </button>
-            <button class="modal-btn secondary" @click="decline">Может быть позже</button>
+            <button class="btn btn-menu" @click="decline">Может быть позже</button>
           </div>
 
           <!-- Подсказка -->
-          <p class="modal-hint">Без автоматического продления. Можете активировать в любой момент!</p>
+          <p class="modal-hint">Без автоматического продления.<br />Можете активировать в любой момент!</p>
         </div>
       </div>
     </div>
@@ -82,11 +79,10 @@ const uiStore = useUiStore();
 const isVisible = ref(props.modelValue);
 const isLoading = ref(false);
 
-// ✅ НОВОЕ: Синхронизируем isVisible с modelValue
+// ✅ Синхронизируем isVisible с modelValue
 watch(
   () => props.modelValue,
   (newValue) => {
-    console.log('🔄 TrialModal modelValue changed:', newValue);
     isVisible.value = newValue;
   }
 );
@@ -220,19 +216,10 @@ const handleOverlayClick = () => {
 /* Заголовок */
 .modal-title {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xl);
+  font-size: var(--lg);
   font-weight: 700;
   color: var(--text-head);
   margin-bottom: 12px;
-}
-
-/* Описание */
-.modal-description {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--md);
-  color: var(--text-base);
-  margin-bottom: 24px;
-  line-height: 1.6;
 }
 
 /* Список преимуществ */
@@ -248,7 +235,7 @@ const handleOverlayClick = () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .feature-item:last-child {
@@ -275,47 +262,6 @@ const handleOverlayClick = () => {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
-}
-
-.modal-btn {
-  width: 100%;
-  padding: 14px 24px;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-btn.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.modal-btn.primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.modal-btn.primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.modal-btn.secondary {
-  background: transparent;
-  color: var(--text-base);
-  border: 1px solid var(--border);
-}
-
-.modal-btn.secondary:hover {
-  background: var(--bg-main);
-}
-
-.modal-btn:active:not(:disabled) {
-  transform: translateY(0);
 }
 
 /* Подсказка */

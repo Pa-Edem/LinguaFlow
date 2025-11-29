@@ -2,12 +2,7 @@
 <template>
   <div class="dialog-layout" v-if="dialog">
     <aside class="sidebar">
-      <router-link
-        @click="trainingStore.stopSpeech()"
-        to="/dialogs"
-        name="all-dialogs"
-        class="btn btn-common oooo oloo back-link"
-      >
+      <router-link @click="trainingStore.stopSpeech()" to="/dialogs" name="all-dialogs" class="btn btn-menu back-link">
         <span class="material-symbols-outlined">arrow_back_ios</span>
         {{ $t('buttons.dialogList') }}
       </router-link>

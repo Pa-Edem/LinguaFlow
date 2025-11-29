@@ -92,11 +92,7 @@
 
         <div class="setting-item test">
           <label>{{ $t('settings.preListening') }}</label>
-          <button
-            class="btn btn-common oooo oolo"
-            :class="isDesktop ? 'w-250' : 'mobile w-100'"
-            @click="togglePlayTest"
-          >
+          <button class="btn btn-action" :class="isDesktop ? 'w-150' : 'mobile w-100'" @click="togglePlayTest">
             <span class="material-symbols-outlined">play_circle</span>
             {{ $t('settings.test') }}
           </button>
@@ -105,12 +101,7 @@
     </main>
 
     <footer class="page-footer">
-      <router-link
-        to="/dialogs"
-        name="all-dialogs"
-        class="btn btn-action oooo looo"
-        :class="isDesktop ? 'w-250' : 'mobile'"
-      >
+      <router-link to="/dialogs" name="all-dialogs" class="btn btn-menu" :class="isDesktop ? 'w-250' : 'mobile'">
         <span class="material-symbols-outlined">check</span>
         {{ $t('buttons.done') }}
       </router-link>
@@ -251,7 +242,7 @@ const togglePlayTest = () => {
 }
 .group-title .pro {
   font-size: var(--xs);
-  color: var(--bg-pro);
+  color: var(--gold-4);
   vertical-align: middle;
   margin-left: 8px;
 }

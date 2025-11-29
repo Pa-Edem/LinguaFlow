@@ -6,7 +6,7 @@
       <div class="note">
         <span class="material-symbols-outlined icon">tips_and_updates</span>
         <p class="note-text">{{ dialog.culturalNote }}</p>
-        <button @click="markNoteAsSeen" class="btn btn-action oooo oool" :class="isDesktop ? 'w-250' : 'mobile'">
+        <button @click="markNoteAsSeen" class="btn btn-action" :class="isDesktop ? 'w-250' : 'mobile'">
           <span class="material-symbols-outlined"> chevron_forward</span>
 
           {{ $t('buttons.continue') }}
@@ -28,13 +28,13 @@
             <span class="dialog-info-level">{{ dialog?.level }}</span>
           </div>
           <!-- кнопка анализ диалога -->
-          <button class="btn btn-menu oooo oloo" @click="getInfo" :disabled="!canUseAnalysis">
+          <button class="btn btn-menu" @click="getInfo" :disabled="!canUseAnalysis">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysis') }}
             <span class="material-symbols-outlined pro">crown</span>
           </button>
           <!-- кнопка прослушать диалог -->
-          <button class="btn btn-menu oooo oool" @click="toggleListening">
+          <button class="btn btn-menu" @click="toggleListening">
             <span class="material-symbols-outlined">volume_up</span>
             {{ $t('buttons.listen') }}
           </button>
@@ -43,8 +43,7 @@
           <button
             v-for="(level, index) in trainingLevels"
             :key="level.name"
-            class="btn btn-menu oooo"
-            :class="btnClassesDesktop[index]"
+            class="btn btn-menu"
             :disabled="
               level.isPro &&
               (level.name === 'level-2' ? !canUseLevel2 : level.name === 'level-3' ? !canUseLevel3 : !canView())
@@ -57,7 +56,7 @@
           </button>
           <div class="grow"></div>
           <!-- кнопка удалить диалог -->
-          <button class="btn btn-danger oooo looo" @click="handleDelete">
+          <button class="btn btn-danger" @click="handleDelete">
             <span class="material-symbols-outlined">delete</span>
             {{ $t('buttons.delDialog') }}
           </button>
@@ -109,12 +108,12 @@
       </main>
       <footer class="actions-footer">
         <div class="actions-grid">
-          <button class="btn btn-menu mobile w-100p oooo oloo" @click="getInfo" :disabled="!canUseAnalysis">
+          <button class="btn btn-menu mobile w-100p" @click="getInfo" :disabled="!canUseAnalysis">
             <span class="material-symbols-outlined">analytics</span>
             {{ $t('buttons.analysisM') }}
             <span class="material-symbols-outlined pro">crown</span>
           </button>
-          <button class="btn btn-menu mobile w-100p oooo oolo" @click="toggleListening">
+          <button class="btn btn-menu mobile w-100p" @click="toggleListening">
             <span class="material-symbols-outlined">volume_up</span>
             {{ $t('buttons.listenM') }}
           </button>
@@ -123,8 +122,7 @@
           <button
             v-for="(level, index) in trainingLevels"
             :key="level.name"
-            class="btn btn-menu mobile oooo w-100p"
-            :class="btnClasses[index]"
+            class="btn btn-menu mobile w-100p"
             :disabled="
               level.isPro &&
               (level.name === 'level-2' ? !canUseLevel2 : level.name === 'level-3' ? !canUseLevel3 : !canView())
@@ -254,8 +252,6 @@ const trainingLevels = [
   },
   { name: 'level-3', icon: 'translate', text: t('buttons.translation'), isPro: true, feature: 'useAdvancedTraining' },
 ];
-const btnClasses = ['oool', 'looo', 'oolo', 'oloo'];
-const btnClassesDesktop = ['oloo', 'looo', 'oolo', 'oool'];
 
 onMounted(async () => {
   if (!userStore.isPro) {
@@ -506,7 +502,7 @@ const goToTraining = async (level) => {
   margin-top: 8px;
   margin-right: 8px;
   font-size: var(--xs);
-  color: var(--bg-pro);
+  color: var(--gold-4);
   background: none;
 }
 .title {
@@ -595,6 +591,7 @@ const goToTraining = async (level) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 .header-btn .i {
   font-size: 40px;
@@ -626,11 +623,10 @@ const goToTraining = async (level) => {
 }
 .dropdown-menu {
   position: absolute;
-  top: 60px;
+  top: 48px;
   right: 24px;
   z-index: 100;
   border-radius: 24px;
-  border-top-right-radius: 2px;
   border: 1px solid var(--r3);
   box-shadow: 0 4px 12px var(--shadow);
   overflow: hidden;

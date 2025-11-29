@@ -1,0 +1,154 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // ДИАЛОГИ
+    // ==========================================
+    match /dialogs/{dialogId} {
+      // Читать, изменять, удалять ТОЛЬКО свои диалоги
+      allow read, update, delete: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      // Создавать ТОЛЬКО со своим userId
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // ==========================================
+    // ПОЛЬЗОВАТЕЛИ
+    // ==========================================
+    match /users/{userId} {
+      // Создать документ при регистрации
+      allow create: if request.auth != null 
+        && request.auth.uid == userId;
+      
+      // Читать ТОЛЬКО свой документ
+      allow read: if request.auth != null 
+        && request.auth.uid == userId;
+      
+      // ✅ ОБНОВЛЕНИЕ с защитой Trial
+      allow update: if request.auth != null 
+        && request.auth.uid == userId
+        && (
+          // ========================================
+          // ПРАВИЛО 1: Защита trialUsed
+          // ========================================
+          // Можно изменить с false → true (первая активация)
+          (
+            !resource.data.trialUsed 
+            && request.resource.data.trialUsed == true
+          )
+          ||
+          // Если trialUsed уже true, НЕЛЬЗЯ изменить обратно на false
+          (
+            resource.data.trialUsed == true 
+            && request.resource.data.trialUsed == true
+          )
+          ||
+          // Если trialUsed не меняется, разрешить обновление других полей
+          (
+            request.resource.data.trialUsed == resource.data.trialUsed
+          )
+        )
+        && (
+          // ========================================
+          // ПРАВИЛО 2: Защита trialStartDate
+          // ========================================
+          // Можно установить ТОЛЬКО ОДИН РАЗ
+          (
+            !('trialStartDate' in resource.data) 
+            && 'trialStartDate' in request.resource.data
+          )
+          ||
+          // Если уже установлено, НЕЛЬЗЯ изменить
+          (
+            'trialStartDate' in resource.data 
+            && request.resource.data.trialStartDate == resource.data.trialStartDate
+          )
+          ||
+          // Если не меняется, разрешить
+          (
+            !('trialStartDate' in request.resource.data)
+          )
+        )
+        && (
+          // ========================================
+          // ПРАВИЛО 3: Защита trialEndDate
+          // ========================================
+          // Можно установить ТОЛЬКО ОДИН РАЗ
+          (
+            !('trialEndDate' in resource.data) 
+            && 'trialEndDate' in request.resource.data
+          )
+          ||
+          // Если уже установлено, НЕЛЬЗЯ изменить
+          (
+            'trialEndDate' in resource.data 
+            && request.resource.data.trialEndDate == resource.data.trialEndDate
+          )
+          ||
+          // Если не меняется, разрешить
+          (
+            !('trialEndDate' in request.resource.data)
+          )
+        );
+      
+      // Удалять НЕЛЬЗЯ (используем Cloud Function)
+      allow delete: if false;
+    }
+    
+    // ==========================================
+    // ИСПОЛЬЗОВАНИЕ (USAGE)
+    // ==========================================
+    match /usage/{userId} {
+      allow read: if request.auth != null 
+        && request.auth.uid == userId;
+      
+      // Создание и обновление через Cloud Functions
+      allow write: if false;
+    }
+    
+    // ==========================================
+    // STRIPE (CUSTOMERS)
+    // ==========================================
+    match /customers/{uid} {
+      // Читать свой customer документ
+      allow read: if request.auth != null 
+        && request.auth.uid == uid;
+      
+      // Создание через Extension
+      allow create: if request.auth != null 
+        && request.auth.uid == uid;
+      
+      // Checkout Sessions
+      match /checkout_sessions/{sessionId} {
+        allow create: if request.auth != null 
+          && request.auth.uid == uid;
+        allow read: if request.auth != null 
+          && request.auth.uid == uid;
+      }
+      
+      // Portal Links
+      match /portal_links/{portalId} {
+        allow create: if request.auth != null 
+          && request.auth.uid == uid;
+        allow read: if request.auth != null 
+          && request.auth.uid == uid;
+      }
+      
+      // Subscriptions (только чтение)
+      match /subscriptions/{subId} {
+        allow read: if request.auth != null 
+          && request.auth.uid == uid;
+      }
+    }
+    
+    // ==========================================
+    // БЛОКИРОВКА ВСЕГО ОСТАЛЬНОГО
+    // ==========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

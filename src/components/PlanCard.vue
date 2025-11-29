@@ -73,7 +73,7 @@ const planIcon = computed(() => {
       return 'star';
     case 'free':
     default:
-      return 'lock';
+      return 'school';
   }
 });
 
@@ -211,7 +211,7 @@ const handleClick = () => {
 /* Цена */
 .plan-price {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
   min-height: 60px;
 }
 
@@ -243,14 +243,13 @@ const handleClick = () => {
 /* Фичи */
 .plan-features {
   flex: 1;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .feature-item {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-bottom: 12px;
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--sm);
   color: var(--text-base);
@@ -330,6 +329,17 @@ const handleClick = () => {
 @media (max-width: 768px) {
   .plan-card {
     min-height: auto;
+  }
+}
+/* Mobile optimizations */
+@media (max-width: 480px) {
+  .plan-card {
+    padding: 12px;
+    min-height: auto;
+  }
+  .plan-icon {
+    font-size: 2.5rem;
+    margin: 0;
   }
 }
 </style>

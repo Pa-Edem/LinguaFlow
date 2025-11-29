@@ -1,5 +1,5 @@
 /* src/styles/colors.css */
-:root {
+/* :root {
   --shadow: rgba(0, 0, 0, 0.25);
   --gradient-pro: linear-gradient(hsl(40, 60%, 60%) 0%, hsl(40, 60%, 85%) 100%);
   --radial-15: rgba(242, 238, 233, 0.75);
@@ -42,9 +42,9 @@
   --text-base: var(--y8);
   --text-accent: var(--y0);
   --border: var(--y10);
-}
+} */
 
-html[data-theme='dark'] {
+/* html[data-theme='dark'] {
   --shadow: rgba(180, 180, 180, 0.2);
   --gradient-pro: linear-gradient(hsl(20, 50%, 25%) 0%, hsl(40, 80%, 30%) 100%);
   --t-pro: hsl(200, 90%, 60%);
@@ -61,7 +61,7 @@ html[data-theme='dark'] {
   --r3: hsl(5, 50%, 85%);
   --y0: hsl(210, 20%, 15%);
   --y1: hsl(200, 12%, 18%);
-  --y2: rgb(50, 58, 62);
+  --y2: hsl(200, 11%, 22%);
   --y3: hsl(200, 8%, 26%);
   --y5: hsl(220, 10%, 50%);
   --y6: hsl(220, 8%, 24%);
@@ -70,4 +70,271 @@ html[data-theme='dark'] {
   --y9: hsl(200, 10%, 40%);
   --y10: hsl(220, 10%, 35%);
   --bb: hsl(210, 10%, 55%);
+} */
+
+/* 
+ * ОБНОВЛЁННАЯ ПАЛИТРА 2024-2025
+ * Сохраняем базу, добавляем современные акценты
+ */
+:root {
+  /* ========================================= */
+  /* БАЗОВЫЕ ЦВЕТА (Твоя тёплая палитра) */
+  /* ========================================= */
+
+  /* Нейтральные бежево-коричневые (Y-палитра) */
+  --y0: hsl(30, 20%, 98%); /* Почти белый бежевый */
+  --y1: hsl(36, 33%, 97%); /* Светло-бежевый (bg-main) */
+  --y2: hsl(33, 26%, 93%); /* Бежевый (bg-card) */
+  --y3: hsl(32, 25%, 88%); /* Средний бежевый (bg-side) */
+  --y5: hsl(37, 10%, 45%); /* Серо-коричневый */
+  --y6: hsl(37, 25%, 90%); /* Светло-бежевый (bg-group) */
+  --y7: hsl(32, 19%, 15%); /* Тёмно-коричневый (text-head) */
+  --y8: hsl(34, 16%, 30%); /* Коричневый (text-base) */
+  --y9: hsl(29, 10%, 55%); /* Средний коричневый */
+  --y10: hsl(36, 20%, 80%); /* Светлый для borders */
+  --y11: hsl(30, 20%, 70%); /* Светлый для borders */
+  /* Границы */
+  --bb: hsl(30, 10%, 40%); /* Основная граница */
+
+  /* Белые/светлые для чатов */
+  --w3: hsl(200, 75%, 95%); /* Голубоватый белый */
+  --w4: hsl(60, 85%, 95%); /* Желтоватый белый */
+
+  /* ========================================= */
+  /* АКЦЕНТНЫЕ ЦВЕТА */
+  /* ========================================= */
+
+  /* Зелёные (Action, Success, FREE) */
+  --g0: hsl(130, 40%, 81%); /* Светло-зелёный */
+  --g1: hsl(131, 77%, 81%); /* Мятный зелёный */
+  --g2: hsl(130, 70%, 70%); /* Средний зелёный */
+  --g4: hsl(130, 50%, 85%); /* Средний зелёный */
+  --g5: hsl(130, 45%, 50%); /* Средний зелёный */
+  --g6: hsl(130, 50%, 40%); /* Средний зелёный */
+  --g3: hsl(131, 50%, 25%); /* Тёмно-зелёный */
+
+  /* Красные (Danger, Error) */
+  --r1: hsl(5, 50%, 85%); /* Светло-красный */
+  --r2: hsl(5, 80%, 70%); /* Средний красный */
+  --r3: hsl(4, 50%, 25%); /* Тёмно-красный */
+
+  /* ========================================= */
+  /* НОВЫЕ АКЦЕНТЫ (Тренды 2024-2025) */
+  /* ========================================= */
+
+  /* Фиолетовые (PRO план) - Digital Lavender */
+  --purple-1: hsl(260, 60%, 95%); /* Светло-лавандовый фон */
+  --purple-2: hsl(260, 55%, 85%); /* Лавандовый */
+  --purple-3: hsl(260, 50%, 65%); /* Средний фиолетовый */
+  --purple-4: hsl(260, 60%, 50%); /* Яркий фиолетовый */
+  --purple-5: hsl(260, 65%, 35%); /* Тёмно-фиолетовый */
+
+  /* Золотые (PREMIUM план) - Luxury Gold */
+  --gold-1: hsl(40, 70%, 95%); /* Светло-золотой фон */
+  --gold-2: hsl(40, 65%, 80%); /* Светлое золото */
+  --gold-3: hsl(40, 70%, 60%); /* Золото */
+  --gold-4: hsl(40, 75%, 50%); /* Яркое золото */
+  --gold-5: hsl(40, 80%, 35%); /* Тёмное золото */
+
+  /* Голубые (TRIAL) - Trust Blue */
+  --blue-1: hsl(210, 70%, 95%); /* Светло-голубой фон */
+  --blue-2: hsl(210, 65%, 85%); /* Голубой */
+  --blue-3: hsl(210, 60%, 65%); /* Средний голубой */
+  --blue-4: hsl(210, 70%, 50%); /* Яркий голубой */
+  --blue-5: hsl(210, 75%, 35%); /* Тёмно-голубой */
+
+  /* ========================================= */
+  /* ГРАДИЕНТЫ */
+  /* ========================================= */
+  --gradient-common: linear-gradient(135deg, hsl(30, 20%, 75%) 0%, hsl(40, 40%, 85%) 100%);
+
+  /* PRO (сохраняем твой) */
+  --gradient-pro: linear-gradient(hsl(40, 60%, 60%) 0%, hsl(40, 60%, 85%) 100%);
+
+  /* НОВЫЕ градиенты */
+  --gradient-purple: linear-gradient(135deg, var(--purple-3) 0%, var(--purple-4) 100%);
+  --gradient-gold: linear-gradient(135deg, var(--gold-3) 0%, var(--gold-4) 100%);
+  --gradient-blue: linear-gradient(135deg, var(--blue-3) 0%, var(--blue-4) 100%);
+
+  /* Subtle градиенты для фонов */
+  --gradient-bg: linear-gradient(135deg, var(--y1) 0%, var(--y2) 100%);
+  --gradient-card: linear-gradient(to bottom, var(--y0) 0%, var(--y2) 100%);
+
+  /* Radial градиенты (сохраняем твои) */
+  --radial-15: rgba(242, 238, 233, 0.75);
+  --radial-65: rgba(242, 238, 233, 0);
+
+  /* ========================================= */
+  /* СЕМАНТИЧЕСКИЕ ЦВЕТА (Статусы) */
+  /* ========================================= */
+
+  /* Toast backgrounds */
+  --bg-t-info: hsl(210, 100%, 85%); /* Обновлено: более мягкий голубой */
+  --bg-t-success: hsl(130, 60%, 85%); /* Обновлено: мягкий зелёный */
+  --bg-t-warning: hsl(45, 100%, 75%); /* Обновлено: тёплый жёлтый */
+  --bg-t-error: hsl(5, 85%, 75%); /* Обновлено: мягкий красный */
+  --text-toast: hsl(220, 61%, 20%); /* Тёмный текст на toast */
+
+  /* ========================================= */
+  /* ЦВЕТА ДЛЯ ТАРИФНЫХ ПЛАНОВ */
+  /* ========================================= */
+
+  /* FREE Plan (Зелёный) */
+  --plan-free-bg: var(--g1);
+  --plan-free-border: var(--g3);
+  --plan-free-text: var(--g3);
+  --plan-free-gradient: var(--gradient-green);
+
+  /* PRO Plan (Фиолетовый) */
+  --plan-pro-bg: var(--purple-1);
+  --plan-pro-border: var(--purple-4);
+  --plan-pro-text: var(--purple-5);
+  --plan-pro-gradient: var(--gradient-purple);
+  --bg-pro: var(--purple-4); /* Обновлено для совместимости */
+  --t-pro: var(--purple-5); /* Обновлено для совместимости */
+
+  /* PREMIUM Plan (Золотой) */
+  --plan-premium-bg: var(--gold-1);
+  --plan-premium-border: var(--gold-4);
+  --plan-premium-text: var(--gold-5);
+  --plan-premium-gradient: var(--gradient-gold);
+
+  /* TRIAL (Голубой) */
+  --plan-trial-bg: var(--blue-1);
+  --plan-trial-border: var(--blue-4);
+  --plan-trial-text: var(--blue-5);
+  --plan-trial-gradient: var(--gradient-blue);
+
+  /* ========================================= */
+  /* ТЕНИ (Многоуровневые) */
+  /* ========================================= */
+
+  --shadow: rgba(0, 0, 0, 0.25); /* Базовая тень */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.25);
+  --shadow-2xl: 0 20px 40px rgba(0, 0, 0, 0.3);
+
+  /* Цветные тени для планов */
+  --shadow-free: 0 8px 24px rgba(169, 244, 183, 0.3);
+  --shadow-pro: 0 8px 24px rgba(149, 117, 205, 0.3);
+  --shadow-premium: 0 8px 24px rgba(255, 193, 7, 0.3);
+  --shadow-trial: 0 8px 24px rgba(100, 181, 246, 0.3);
+
+  /* ========================================= */
+  /* СЕМАНТИЧЕСКИЕ ПЕРЕМЕННЫЕ (Твои) */
+  /* ========================================= */
+
+  --bg-main: var(--y1);
+  --bg-side: var(--y3);
+  --bg-card: var(--y2);
+  --bg-group: var(--y6);
+  --bg-chat-l: var(--w3);
+  --bg-chat-r: var(--w4);
+  --text-head: var(--y7);
+  --text-title: var(--y8);
+  --text-base: var(--y8);
+  --text-accent: var(--y0);
+  --border: var(--y10);
+}
+
+/* ========================================= */
+/* DARK THEME */
+/* ========================================= */
+html[data-theme='dark'] {
+  /* Нейтральные (Y-палитра Dark) */
+  --y0: hsl(210, 20%, 15%);
+  --y1: hsl(200, 12%, 18%);
+  --y2: hsl(200, 11%, 22%);
+  --y3: hsl(200, 8%, 26%);
+  --y5: hsl(220, 10%, 50%);
+  --y6: hsl(220, 8%, 24%);
+  --y7: hsl(210, 10%, 75%);
+  --y8: hsl(210, 10%, 65%);
+  --y9: hsl(200, 10%, 40%);
+  --y10: hsl(220, 10%, 35%);
+  --bb: hsl(210, 10%, 55%);
+
+  /* Белые/светлые для чатов (Dark) */
+  --w3: hsl(220, 10%, 20%);
+  --w4: hsl(0, 0%, 22%);
+
+  /* Зелёные (Dark) */
+  --g0: hsl(130, 20%, 15%);
+  --g1: hsl(130, 50%, 20%);
+  --g2: hsl(130, 55%, 35%);
+  --g3: hsl(130, 50%, 80%);
+
+  /* Красные (Dark) */
+  --r1: hsl(5, 30%, 20%);
+  --r2: hsl(0, 55%, 35%);
+  --r3: hsl(5, 50%, 85%);
+
+  /* Фиолетовые (Dark) */
+  --purple-1: hsl(260, 40%, 15%);
+  --purple-2: hsl(260, 45%, 25%);
+  --purple-3: hsl(260, 50%, 45%);
+  --purple-4: hsl(260, 55%, 60%);
+  --purple-5: hsl(260, 60%, 75%);
+
+  /* Золотые (Dark) */
+  --gold-1: hsl(40, 50%, 20%);
+  --gold-2: hsl(40, 55%, 35%);
+  --gold-3: hsl(40, 60%, 50%);
+  --gold-4: hsl(40, 65%, 60%);
+  --gold-5: hsl(40, 70%, 75%);
+
+  /* Голубые (Dark) */
+  --blue-1: hsl(210, 50%, 15%);
+  --blue-2: hsl(210, 55%, 25%);
+  --blue-3: hsl(210, 60%, 45%);
+  --blue-4: hsl(210, 65%, 60%);
+  --blue-5: hsl(210, 70%, 75%);
+
+  /* Градиенты (Dark) */
+  --gradient-pro: linear-gradient(hsl(20, 50%, 25%) 0%, hsl(40, 80%, 30%) 100%);
+  --gradient-purple: linear-gradient(135deg, var(--purple-3) 0%, var(--purple-4) 100%);
+  --gradient-gold: linear-gradient(135deg, var(--gold-3) 0%, var(--gold-4) 100%);
+  --gradient-blue: linear-gradient(135deg, var(--blue-3) 0%, var(--blue-4) 100%);
+  --gradient-green: linear-gradient(135deg, var(--g2) 0%, var(--g3) 100%);
+
+  /* Radial (Dark) */
+  --radial-15: rgba(50, 58, 62, 0.75);
+  --radial-65: rgba(50, 58, 62, 0);
+
+  /* Тени (Dark) */
+  --shadow: rgba(180, 180, 180, 0.2);
+  --shadow-xs: 0 1px 2px rgba(200, 200, 200, 0.08);
+  --shadow-sm: 0 2px 4px rgba(200, 200, 200, 0.1);
+  --shadow-md: 0 4px 8px rgba(200, 200, 200, 0.15);
+  --shadow-lg: 0 8px 16px rgba(200, 200, 200, 0.2);
+  --shadow-xl: 0 12px 24px rgba(200, 200, 200, 0.25);
+  --shadow-2xl: 0 20px 40px rgba(200, 200, 200, 0.3);
+
+  /* Цветные тени (Dark) */
+  --shadow-free: 0 8px 24px rgba(126, 231, 143, 0.3);
+  --shadow-pro: 0 8px 24px rgba(149, 117, 205, 0.3);
+  --shadow-premium: 0 8px 24px rgba(255, 193, 7, 0.3);
+  --shadow-trial: 0 8px 24px rgba(100, 181, 246, 0.3);
+
+  /* Планы (Dark) */
+  --plan-free-bg: var(--g1);
+  --plan-free-border: var(--g3);
+  --plan-free-text: var(--g3);
+
+  --plan-pro-bg: var(--purple-1);
+  --plan-pro-border: var(--purple-4);
+  --plan-pro-text: var(--purple-5);
+  --bg-pro: var(--purple-4);
+  --t-pro: hsl(200, 90%, 60%);
+
+  --plan-premium-bg: var(--gold-1);
+  --plan-premium-border: var(--gold-4);
+  --plan-premium-text: var(--gold-5);
+
+  --plan-trial-bg: var(--blue-1);
+  --plan-trial-border: var(--blue-4);
+  --plan-trial-text: var(--blue-5);
 }

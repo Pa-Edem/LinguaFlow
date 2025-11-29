@@ -64,7 +64,7 @@
           <!-- v-if="uiStore.modalContent === 'analysis'" -->
           <button
             v-if="uiStore.modalContent === 'analysis'"
-            class="btn btn-common oooo oloo"
+            class="btn btn-menu"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
@@ -73,15 +73,11 @@
           </button>
           <!-- v-if="uiStore.modalContent === 'upgrade'" -->
           <div v-else-if="uiStore.modalContent === 'upgrade'" class="footer-buttons">
-            <button
-              class="btn btn-common oooo looo"
-              :class="isDesktop ? 'w-150' : 'mobile w-125'"
-              @click="uiStore.hideModal()"
-            >
+            <button class="btn btn-menu" :class="isDesktop ? 'w-150' : 'mobile w-125'" @click="uiStore.hideModal()">
               {{ $t('buttons.close') }}
             </button>
             <router-link
-              class="btn btn-action oooo oool"
+              class="btn btn-action"
               :class="isDesktop ? 'w-150' : 'mobile w-125'"
               to="/profile"
               @click="uiStore.hideModal()"
@@ -93,7 +89,7 @@
           <!-- v-if="uiStore.modalContent === 'endOfLevel'" -->
           <button
             v-else-if="uiStore.modalContent === 'endOfLevel'"
-            class="btn btn-common"
+            class="btn btn-menu"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
@@ -101,15 +97,11 @@
           </button>
           <!-- v-if="uiStore.modalContent === 'confirm'" -->
           <div v-else-if="uiStore.modalContent === 'confirm'" class="footer-buttons">
-            <button
-              class="btn btn-common oooo oloo"
-              :class="isDesktop ? 'w-150' : 'mobile w-100'"
-              @click="uiStore.cancelModal()"
-            >
+            <button class="btn btn-menu" :class="isDesktop ? 'w-150' : 'mobile w-100'" @click="uiStore.cancelModal()">
               {{ uiStore.modalProps.cancelText || $t('buttons.cancel') }}
             </button>
             <button
-              class="btn btn-danger oooo oool"
+              class="btn btn-danger"
               :class="isDesktop ? 'w-150' : 'mobile w-100'"
               @click="uiStore.confirmModal()"
             >
@@ -119,7 +111,7 @@
           <!-- v-if="uiStore.modalContent === 'limits'" -->
           <button
             v-else-if="uiStore.modalContent === 'limits'"
-            class="btn btn-common oooo oloo"
+            class="btn btn-menu"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
@@ -129,7 +121,7 @@
           <!-- v-if="uiStore.modalContent === 'plan'" -->
           <button
             v-else-if="uiStore.modalContent === 'plan'"
-            class="btn btn-common oooo oloo"
+            class="btn btn-menu"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
