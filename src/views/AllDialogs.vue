@@ -15,6 +15,8 @@
       </button>
       <div class="grow"></div>
       <div class="user-profile">
+        <!-- ✅ КОЛОКОЛЬЧИК -->
+        <NotificationBell />
         <router-link to="/profile" class="btn btn-menu">
           <span class="material-symbols-outlined">person</span>
           <span>{{ $t('all.profile') }}</span>
@@ -118,6 +120,8 @@
           <span class="material-symbols-outlined">person</span>
           <span>{{ $t('all.profile') }}</span>
         </router-link>
+        <!-- ✅ КОЛОКОЛЬЧИК -->
+        <NotificationBell />
       </div>
     </footer>
   </div>
@@ -130,8 +134,10 @@ import { useDialogStore } from '../stores/dialogStore';
 import { useUserStore } from '../stores/userStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useUiStore } from '../stores/uiStore';
+import { useNotificationStore } from '../stores/notificationStore';
 import DialogCard from '../components/DialogCard.vue';
 import TrialModal from '../components/TrialModal.vue';
+import NotificationBell from '../components/NotificationBell.vue';
 import { useBreakpoint } from '../composables/useBreakpoint';
 import { usePermissions } from '../composables/usePermissions';
 import { clearOldNoteFlags } from '../utils/dataTransformer';
@@ -141,6 +147,7 @@ const dialogStore = useDialogStore();
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
 const uiStore = useUiStore();
+const notificationStore = useNotificationStore();
 
 const { isDesktop } = useBreakpoint();
 
@@ -270,6 +277,9 @@ onMounted(async () => {
       // ✅ Для remaining > 1 → ничего не показываем
     }
   }
+
+  // ✅ ПРОВЕРКА УВЕДОМЛЕНИЙ
+  await notificationStore.checkForNewNotifications();
 });
 
 const goToCreateDialog = async () => {

@@ -1,6 +1,7 @@
 //src/stores/userStore.js
 import { defineStore } from 'pinia';
 import { useSettingsStore } from './settingsStore';
+import { useNotificationStore } from './notificationStore.js';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
   auth,
@@ -336,6 +337,9 @@ export const useUserStore = defineStore('user', {
     async logout() {
       try {
         await signOut(auth);
+        // ✅ ОЧИСТКА УВЕДОМЛЕНИЙ
+        const notificationStore = useNotificationStore();
+        notificationStore.clearNotifications();
       } catch (error) {
         console.error('Logout error:', error.code);
         throw error;

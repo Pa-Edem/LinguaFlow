@@ -46,7 +46,7 @@
             </div>
           </div>
           <!-- ✅ Trial Badge -->
-          <TrialBadge v-if="userStore.isOnTrial" :showUpgradeButton="true" class="mb-16" />
+          <TrialBadge v-if="userStore.isOnTrial" class="mb-16" />
 
           <!-- Статистика лимитов (для FREE и PRO) -->
           <div v-if="!userStore.isPremium" class="limits-summary">

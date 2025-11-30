@@ -1041,3 +1041,43 @@ export const notifyTrialEnding = onSchedule(
     }
   }
 );
+
+/**
+ * Автоматическая очистка уведомлений старше 2 недель
+ */
+export const cleanupOldNotifications = onSchedule(
+  {
+    schedule: 'every day 03:00',
+    timeZone: 'UTC',
+    region: 'europe-west1',
+  },
+  async (event) => {
+    try {
+      console.log('🧹 Starting notification cleanup...');
+
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+      const snapshot = await db.collection('notifications').where('createdAt', '<', twoWeeksAgo).get();
+
+      if (snapshot.empty) {
+        console.log('✅ No old notifications to delete');
+        return;
+      }
+
+      const batch = db.batch();
+      let count = 0;
+
+      snapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+        count++;
+      });
+
+      await batch.commit();
+
+      console.log(`✅ Deleted ${count} old notifications`);
+    } catch (error) {
+      console.error('❌ Error cleaning up notifications:', error);
+    }
+  }
+);

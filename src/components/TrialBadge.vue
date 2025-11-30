@@ -3,13 +3,8 @@
   <div v-if="userStore.isOnTrial" class="trial-badge-container">
     <div class="trial-badge" :class="badgeClass">
       <span class="trial-icon">🎁</span>
-      <div class="trial-info">
-        <span class="trial-label">TRIAL</span>
-        <span class="trial-days">{{ daysText }}</span>
-      </div>
-      <router-link v-if="showUpgradeButton" to="/pricing" class="trial-upgrade-btn">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </router-link>
+      <span class="trial-label">TRIAL</span>
+      <span class="trial-days">{{ daysText }}</span>
     </div>
 
     <!-- Предупреждение за 1 день -->
@@ -24,19 +19,6 @@
 <script setup>
 import { computed } from 'vue';
 import { useUserStore } from '../stores/userStore';
-
-const props = defineProps({
-  // Показывать кнопку "Купить"
-  showUpgradeButton: {
-    type: Boolean,
-    default: false,
-  },
-  // Компактный режим (для хедера)
-  compact: {
-    type: Boolean,
-    default: false,
-  },
-});
 
 const userStore = useUserStore();
 
@@ -110,21 +92,14 @@ const badgeClass = computed(() => {
 
 /* Иконка */
 .trial-icon {
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 /* Информация */
-.trial-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-}
-
 .trial-label {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xs);
+  font-size: var(--lg);
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
   text-transform: uppercase;
@@ -136,28 +111,6 @@ const badgeClass = computed(() => {
   font-size: var(--lg);
   font-weight: 700;
   color: white;
-}
-
-/* Кнопка "Купить" */
-.trial-upgrade-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: white;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.trial-upgrade-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateX(2px);
-}
-
-.trial-upgrade-btn .material-symbols-outlined {
-  font-size: 1.25rem;
 }
 
 /* ========================================= */
@@ -200,30 +153,6 @@ const badgeClass = computed(() => {
 }
 
 /* ========================================= */
-/* КОМПАКТНЫЙ РЕЖИМ (для хедера) */
-/* ========================================= */
-.trial-badge-container.compact .trial-badge {
-  padding: 6px 12px;
-  gap: 8px;
-}
-
-.trial-badge-container.compact .trial-icon {
-  font-size: 1.25rem;
-}
-
-.trial-badge-container.compact .trial-label {
-  font-size: var(--xxs);
-}
-
-.trial-badge-container.compact .trial-days {
-  font-size: var(--sm);
-}
-
-.trial-badge-container.compact .trial-warning {
-  display: none;
-}
-
-/* ========================================= */
 /* АДАПТИВ */
 /* ========================================= */
 @media (max-width: 768px) {
@@ -238,10 +167,6 @@ const badgeClass = computed(() => {
 
   .trial-days {
     font-size: var(--md);
-  }
-
-  .trial-upgrade-btn {
-    display: none;
   }
 
   .trial-warning {

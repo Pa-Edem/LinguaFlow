@@ -143,6 +143,26 @@ service cloud.firestore {
           && request.auth.uid == uid;
       }
     }
+
+    // ==========================================
+    // Notifications - уведомления пользователей
+    // ==========================================
+    match /notifications/{notificationId} {
+      // Пользователь может читать только СВОИ уведомления
+      allow read: if request.auth != null 
+                  && request.auth.uid == resource.data.userId;
+      
+      // Пользователь может обновлять только СВОИ уведомления (пометка как прочитанное)
+      allow update: if request.auth != null 
+                    && request.auth.uid == resource.data.userId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      
+      // Создавать могут только Cloud Functions
+      allow create: if false;
+      
+      // Удалять могут только Cloud Functions
+      allow delete: if false;
+    }
     
     // ==========================================
     // БЛОКИРОВКА ВСЕГО ОСТАЛЬНОГО
