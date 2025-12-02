@@ -6,7 +6,7 @@
     <div class="profile-header">
       <div class="user-avatar">
         <img v-if="userStore.user?.photoURL" :src="userStore.user.photoURL" class="avatar-image" />
-        <span class="material-symbols-outlined">person</span>
+        <span v-else class="material-symbols-outlined">person</span>
       </div>
       <div class="user-info">
         <div class="user-name">{{ userStore.user?.displayName || 'Anonymous' }}</div>

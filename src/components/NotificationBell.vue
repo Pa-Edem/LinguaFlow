@@ -109,11 +109,26 @@ const markAllAsReadOnClose = async () => {
 // Иконка в зависимости от типа уведомления
 const getNotificationIcon = (type) => {
   const icons = {
+    // Trial
     trial_ending: '⏰',
     trial_expired: '❌',
+    // ✅ Достижения
     achievement: '🏆',
-    feedback: '💬',
-    stats: '📊',
+    // ✅ Серии
+    streak_reminder: '⏰',
+    streak_broken: '💔',
+    streak_milestone: '🔥',
+    // ✅ Статистика
+    monthly_stats: '📊',
+    // ✅ Upgrade
+    upgrade_prompt: '🚀',
+    upgrade_premium: '💎',
+    // ✅ Системные
+    feature_announcement: '🎉',
+    maintenance: '🔧',
+    subscription_renewal: '💳',
+    payment_failed: '⚠️',
+    // Fallback
     default: '🔔',
   };
   return icons[type] || icons.default;

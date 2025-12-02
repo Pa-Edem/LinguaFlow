@@ -219,22 +219,22 @@ onMounted(async () => {
   if (!userStore.trialUsed && userStore.tier === 'free') {
     const trialModalShown = localStorage.getItem('trial_modal_shown');
     if (!trialModalShown) {
-      console.log('✅ Showing Trial Modal in 1 second...');
       // Первый визит → показываем модалку
       setTimeout(() => {
-        console.log('🎉 Trial Modal opened!');
         showTrialModal.value = true;
       }, 1000); // Задержка 1 секунда для плавности
 
       localStorage.setItem('trial_modal_shown', 'true');
-    } else {
-      console.log('❌ Trial Modal already shown');
     }
-  } else {
-    console.log('❌ Trial Modal conditions not met:', {
-      reason: userStore.trialUsed ? 'trial already used' : 'not free tier',
-    });
+    // else {
+    //   console.log('❌ Trial Modal already shown');
+    // }
   }
+  // else {
+  // console.log('❌ Trial Modal conditions not met:', {
+  //   reason: userStore.trialUsed ? 'trial already used' : 'not free tier',
+  // });
+  // }
 
   // ✅ Проверяем, закончился ли trial (показываем toast 1 раз)
   const trialExpiredShown = sessionStorage.getItem('trial_expired_shown') === 'true';

@@ -36,7 +36,6 @@ export const useNotificationStore = defineStore('notifications', {
       const userStore = useUserStore();
 
       if (!userStore.isLoggedIn) {
-        console.log('⚠️ User not logged in, skipping notifications');
         return;
       }
 
@@ -59,10 +58,7 @@ export const useNotificationStore = defineStore('notifications', {
           id: doc.id,
           ...doc.data(),
         }));
-
         this.lastChecked = new Date();
-
-        console.log(`🔔 Loaded ${this.notifications.length} notifications, ${this.unreadCount} unread`);
       } catch (error) {
         console.error('❌ Error loading notifications:', error);
       } finally {
@@ -83,8 +79,6 @@ export const useNotificationStore = defineStore('notifications', {
         if (notification) {
           notification.read = true;
         }
-
-        console.log(`✅ Notification ${notificationId} marked as read`);
       } catch (error) {
         console.error('❌ Error marking notification as read:', error);
       }
@@ -115,8 +109,6 @@ export const useNotificationStore = defineStore('notifications', {
         this.notifications.forEach((n) => {
           n.read = true;
         });
-
-        console.log(`✅ Marked ${unreadNotifications.length} notifications as read`);
       } catch (error) {
         console.error('❌ Error marking all as read:', error);
       }
@@ -133,7 +125,6 @@ export const useNotificationStore = defineStore('notifications', {
 
       // Если последняя проверка была меньше минуты назад - пропускаем
       if (this.lastChecked && new Date() - this.lastChecked < 60000) {
-        console.log('⏭️ Skipping notification check (checked recently)');
         return;
       }
 

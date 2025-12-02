@@ -41,6 +41,9 @@ export const useUserStore = defineStore('user', {
     trialEndDate: null,
     trialUsed: false,
     trialDaysLeft: 0,
+    // ✅ Статистика и достижения
+    stats: null,
+    achievements: [],
   }),
   getters: {
     isPro: (state) => {
@@ -69,6 +72,10 @@ export const useUserStore = defineStore('user', {
       }
       return null;
     },
+    // ✅ Для статистики
+    dialogsLearned: (state) => state.stats?.dialogsLearned || 0,
+    currentStreak: (state) => state.stats?.currentStreak || 0,
+    averageAccuracy: (state) => state.stats?.averageAccuracy || 0,
   },
   actions: {
     initUser() {
@@ -91,6 +98,9 @@ export const useUserStore = defineStore('user', {
             this.manualPremium = false;
             this.tier = 'free';
             this.subscriptionExpires = null;
+            // ✅ Очистить stats
+            this.stats = null;
+            this.achievements = [];
           }
           this.isLoading = false;
           resolve();
@@ -115,10 +125,11 @@ export const useUserStore = defineStore('user', {
           this.trialEndDate = userData.trialEndDate || null;
           // Проверяем активность trial
           this.checkTrialStatus();
+          // ✅ Загружаем stats и achievements
+          this.stats = userData.stats || null;
+          this.achievements = userData.achievements || [];
         } else {
           // ✅ Профиля нет — создаём с merge: true
-          console.log('📝 Создаём профиль...');
-
           const newUserProfile = {
             email: user.email,
             displayName: user.displayName || 'Anonymous',
@@ -129,6 +140,33 @@ export const useUserStore = defineStore('user', {
             trialStartDate: null,
             trialEndDate: null,
             trialUsed: false,
+            // ✅ НОВОЕ: Статистика и достижения
+            stats: {
+              // Основные
+              dialogsLearned: 0,
+              dialogsMastered: 0,
+              // По типам тренировок
+              level2Completed: 0,
+              level3Completed: 0,
+              level4Completed: 0,
+              // По уровням языка
+              dialogsLearnedA1: 0,
+              dialogsLearnedA2: 0,
+              dialogsLearnedB1: 0,
+              dialogsLearnedB2: 0,
+              dialogsLearnedC1: 0,
+              dialogsLearnedC2: 0,
+              // Качество
+              averageAccuracy: 0,
+              perfectDialogs: 0,
+              // Серии
+              currentStreak: 0,
+              longestStreak: 0,
+              lastActivityDate: null,
+              // Время
+              totalTimeSpent: 0,
+            },
+            achievements: [],
           };
 
           // ⚠️ ВАЖНО: merge: true защищает от повторного создания
@@ -141,7 +179,9 @@ export const useUserStore = defineStore('user', {
           this.trialStartDate = null;
           this.trialEndDate = null;
           this.trialDaysLeft = 0;
-          console.log('✅ Профиль создан');
+          // ✅ Инициализируем stats
+          this.stats = newUserProfile.stats;
+          this.achievements = [];
         }
       } catch (error) {
         console.error('❌ Ошибка профиля:', error.code, error.message);
@@ -149,6 +189,8 @@ export const useUserStore = defineStore('user', {
         this.manualPremium = false;
         this.trialUsed = false;
         this.trialActive = false;
+        this.stats = null;
+        this.achievements = [];
       }
 
       // 2. Определяем tier из Firestore subscriptions
@@ -164,21 +206,18 @@ export const useUserStore = defineStore('user', {
         // 1. ПРИОРИТЕТ: Manual Premium Override
         if (this.manualPremium) {
           this.tier = 'premium';
-          console.log('🎫 Manual PREMIUM override enabled');
           return;
         }
 
         // 2. ПРИОРИТЕТ: Manual Pro Override
         if (this.manualPro) {
           this.tier = 'pro';
-          console.log('🎫 Manual PRO override enabled');
           return;
         }
 
         // 3. ПРИОРИТЕТ: Trial активен
         if (this.trialActive) {
           this.tier = 'pro';
-          console.log(`🎫 Trial active (${this.trialDaysLeft} days left)`);
           return;
         }
 
@@ -200,14 +239,12 @@ export const useUserStore = defineStore('user', {
 
           if (tier) {
             this.tier = tier;
-            console.log(`🎫 User tier: ${tier} (from Stripe)`);
             return;
           }
         }
 
         // 5. FALLBACK: Free tier
         this.tier = 'free';
-        console.log('🎫 User tier: free (no active subscription)');
       } catch (error) {
         console.error('❌ Ошибка получения tier:', error);
         this.tier = 'free';
@@ -228,7 +265,6 @@ export const useUserStore = defineStore('user', {
       if (now >= endDate) {
         this.trialActive = false;
         this.trialDaysLeft = 0;
-        console.log('⏰ Trial expired');
         return;
       }
 
@@ -239,8 +275,6 @@ export const useUserStore = defineStore('user', {
       const diffTime = endDate - now;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       this.trialDaysLeft = diffDays;
-
-      console.log(`✅ Trial active: ${this.trialDaysLeft} days left`);
     },
     async startTrial() {
       if (!this.user) {
@@ -250,7 +284,6 @@ export const useUserStore = defineStore('user', {
 
       // Проверяем, не использован ли уже trial
       if (this.trialUsed) {
-        console.log('❌ Trial already used');
         return false;
       }
 
@@ -277,7 +310,6 @@ export const useUserStore = defineStore('user', {
         // Пересчитываем tier (теперь будет 'pro')
         await this.fetchUserTier(this.user.uid);
 
-        console.log('🎉 Trial started! 7 days of PRO access');
         return true;
       } catch (error) {
         console.error('❌ Error starting trial:', error);

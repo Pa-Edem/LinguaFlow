@@ -5,6 +5,7 @@ import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onRequest } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -1081,3 +1082,259 @@ export const cleanupOldNotifications = onSchedule(
     }
   }
 );
+
+/**
+ * 1. Напоминание о серии (каждый день в 18:00 UTC)
+ * Отправляет напоминание если пользователь ещё не практиковался сегодня
+ * И серия ≥ 3 дней
+ */
+export const sendStreakReminder = onSchedule(
+  {
+    schedule: 'every day 18:00',
+    timeZone: 'UTC',
+    region: 'europe-west1',
+  },
+  async (event) => {
+    console.log('⏰ Checking for streak reminders...');
+
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const usersSnapshot = await db.collection('users').get();
+
+    const batch = db.batch();
+    let count = 0;
+
+    usersSnapshot.forEach((userDoc) => {
+      const userData = userDoc.data();
+      const stats = userData.stats || {};
+
+      // Проверить условия:
+      // 1. Серия ≥ 3 дней
+      // 2. Ещё не практиковался сегодня (lastActivityDate !== today)
+      // 3. Тариф PRO или PREMIUM (или trial активен)
+      const tier = userData.tier || 'free';
+      const trialActive = userData.trialActive === true;
+      const currentStreak = stats.currentStreak || 0;
+      const lastActivityDate = stats.lastActivityDate || '';
+
+      const isPaidOrTrial = tier === 'pro' || tier === 'premium' || trialActive;
+
+      if (isPaidOrTrial && currentStreak >= 3 && lastActivityDate !== today) {
+        // Создать уведомление-напоминание
+        const notificationRef = db.collection('notifications').doc();
+        batch.set(notificationRef, {
+          userId: userDoc.id,
+          type: 'streak_reminder',
+          title: '⏰ Сохраните вашу серию!',
+          message: `У вас серия ${currentStreak} ${getDaysWord(
+            currentStreak
+          )} подряд. Не забудьте попрактиковаться сегодня!`,
+          read: false,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+        count++;
+      }
+    });
+
+    await batch.commit();
+
+    console.log(`✅ Sent ${count} streak reminders`);
+  }
+);
+
+/**
+ * 2. Месячная статистика (1-го числа каждого месяца в 09:00 UTC)
+ * Отправляет уведомление с статистикой за прошлый месяц
+ */
+export const sendMonthlyStats = onSchedule(
+  {
+    schedule: '0 9 1 * *', // Каждое 1-е число месяца в 09:00
+    timeZone: 'UTC',
+    region: 'europe-west1',
+  },
+  async (event) => {
+    console.log('📊 Sending monthly statistics...');
+
+    // Получить предыдущий месяц
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const monthName = lastMonth.toLocaleString('ru-RU', { month: 'long' });
+
+    const usersSnapshot = await db.collection('users').get();
+
+    const batch = db.batch();
+    let count = 0;
+
+    usersSnapshot.forEach((userDoc) => {
+      const userData = userDoc.data();
+      const stats = userData.stats || {};
+      const tier = userData.tier || 'free';
+      const trialActive = userData.trialActive === true;
+
+      // Только для PRO и PREMIUM (и trial)
+      const isPaidOrTrial = tier === 'pro' || tier === 'premium' || trialActive;
+
+      if (!isPaidOrTrial) return;
+
+      // Получить статистику
+      const dialogsLearned = stats.dialogsLearned || 0;
+      const trainingsCompleted =
+        (stats.level2Completed || 0) + (stats.level3Completed || 0) + (stats.level4Completed || 0);
+      const averageAccuracy = stats.averageAccuracy || 0;
+      const longestStreak = stats.longestStreak || 0;
+      const level2Completed = stats.level2Completed || 0;
+      const level3Completed = stats.level3Completed || 0;
+      const level4Completed = stats.level4Completed || 0;
+
+      // Создать уведомление
+      const notificationRef = db.collection('notifications').doc();
+      batch.set(notificationRef, {
+        userId: userDoc.id,
+        type: 'monthly_stats',
+        title: `📊 Ваша статистика за ${monthName}`,
+        message: `Диалогов выучено: ${dialogsLearned}, Тренировок: ${trainingsCompleted}, Точность: ${averageAccuracy}%, Лучшая серия: ${longestStreak} дней`,
+        read: false,
+        createdAt: FieldValue.serverTimestamp(),
+        data: {
+          dialogsLearned,
+          trainingsCompleted,
+          averageAccuracy,
+          longestStreak,
+          level2Completed,
+          level3Completed,
+          level4Completed,
+          month: monthName,
+        },
+      });
+
+      count++;
+    });
+
+    await batch.commit();
+
+    console.log(`✅ Sent ${count} monthly reports`);
+  }
+);
+
+/**
+ * 3. Обработка Stripe webhooks для payment_failed
+ * Отправляет уведомление при неудачной оплате + email + grace period 3 дня
+ */
+export const handleStripeWebhook = onRequest(
+  {
+    region: 'europe-west1',
+    cors: true,
+  },
+  async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    let event;
+
+    try {
+      // Проверить подпись webhook
+      event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+    } catch (err) {
+      console.error('❌ Webhook signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Обработать событие
+    switch (event.type) {
+      case 'invoice.payment_failed':
+        await handlePaymentFailed(event.data.object);
+        break;
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object);
+        break;
+
+      default:
+        console.log(`Unknown event type: ${event.type}`);
+    }
+
+    res.json({ received: true });
+  }
+);
+
+/**
+ * Обработать неудачную оплату
+ */
+async function handlePaymentFailed(invoice) {
+  try {
+    const customerId = invoice.customer;
+    const amountDue = invoice.amount_due / 100; // Центы → валюта
+
+    // Найти пользователя по Stripe customer ID
+    const usersSnapshot = await db.collection('users').where('stripeCustomerId', '==', customerId).get();
+
+    if (usersSnapshot.empty) {
+      console.error('❌ User not found for customer:', customerId);
+      return;
+    }
+
+    const userDoc = usersSnapshot.docs[0];
+    const userId = userDoc.id;
+    const userData = userDoc.data();
+
+    // Установить grace period (3 дня)
+    const gracePeriodEnd = new Date();
+    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 3);
+
+    await db.collection('users').doc(userId).update({
+      paymentFailed: true,
+      gracePeriodEnd: gracePeriodEnd,
+    });
+
+    // Создать уведомление
+    await db.collection('notifications').add({
+      userId,
+      type: 'payment_failed',
+      title: '⚠️ Проблема с оплатой',
+      message: `Не удалось списать ${amountDue}€. Обновите платёжные данные в течение 3 дней.`,
+      read: false,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    // TODO: Отправить email (SendGrid/Mailgun)
+    console.log(`📧 Email should be sent to: ${userData.email}`);
+
+    console.log(`✅ Payment failed notification sent: ${userId}`);
+  } catch (error) {
+    console.error('❌ Error handling payment_failed:', error);
+  }
+}
+
+/**
+ * Обработать удаление подписки
+ */
+async function handleSubscriptionDeleted(subscription) {
+  try {
+    const customerId = subscription.customer;
+
+    const usersSnapshot = await db.collection('users').where('stripeCustomerId', '==', customerId).get();
+
+    if (usersSnapshot.empty) return;
+
+    const userDoc = usersSnapshot.docs[0];
+    const userId = userDoc.id;
+
+    // Обновить статус подписки
+    await db.collection('users').doc(userId).update({
+      subscriptionStatus: 'canceled',
+    });
+
+    console.log(`✅ Subscription canceled for user: ${userId}`);
+  } catch (error) {
+    console.error('❌ Error handling subscription.deleted:', error);
+  }
+}
+
+/**
+ * Хелпер: склонение слова "день"
+ */
+function getDaysWord(count) {
+  if (count === 1) return 'день';
+  if (count >= 2 && count <= 4) return 'дня';
+  return 'дней';
+}
