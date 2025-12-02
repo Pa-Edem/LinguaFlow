@@ -28,9 +28,6 @@ export const useSettingsStore = defineStore('settings', {
       totalDialogs: 15,
       unlimitedAnalysis: false,
     },
-    // ✅ СТАРЫЕ счётчики (для совместимости)
-    dailyPreviewCount: 0,
-    dailyGenerationCount: 0,
     date: new Date().toDateString(),
 
     // ✅ НОВЫЕ счётчики с накоплением
@@ -141,9 +138,6 @@ export const useSettingsStore = defineStore('settings', {
         const response = await getUsageStats();
 
         if (response.data) {
-          // ✅ Старые счётчики (для совместимости)
-          this.dailyGenerationCount = response.data.dailyGenerationCount || 0;
-          this.dailyPreviewCount = response.data.dailyPreviewCount || 0;
           this.date = response.data.date;
           // ✅ НОВЫЕ счётчики с накоплением
           this.accumulatedGenerations = response.data.accumulatedGenerations || 0;

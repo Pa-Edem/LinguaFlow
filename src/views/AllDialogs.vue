@@ -177,7 +177,7 @@ const usage = computed(() => {
       limit: settingsStore.limit.totalDialogs,
     },
     daily: {
-      count: settingsStore.dailyGenerationCount,
+      count: settingsStore.dailyUsageToday,
       limit: settingsStore.limit.dailyGenerations,
     },
   };
@@ -282,6 +282,37 @@ onMounted(async () => {
   await notificationStore.checkForNewNotifications();
 });
 
+// const goToCreateDialog = async () => {
+//   // ✅ PREMIUM — всегда можно создавать
+//   if (userStore.isPremium) {
+//     router.push({ name: 'new-dialog' });
+//     return;
+//   }
+
+//   // ✅ PRO/FREE — проверяем лимиты
+//   // Сначала обновляем счётчики с сервера
+//   await settingsStore.loadUsageStats();
+
+//   // Проверяем актуальные лимиты
+//   const dailyCount = settingsStore.dailyGenerationCount;
+//   const dailyLimit = settingsStore.limit.dailyGenerations;
+//   const totalCount = dialogStore.allDialogs.length;
+//   const totalLimit = settingsStore.limit.totalDialogs;
+
+//   // Если можно генерировать — переходим
+//   if (dailyCount < dailyLimit && totalCount < totalLimit) {
+//     router.push({ name: 'new-dialog' });
+//   }
+//   // Если лимит достигнут — показываем модалку и блокируем кнопку
+//   else {
+//     uiStore.showUpgradeModal();
+//     sessionStorage.setItem('upgradeShown_create', 'true');
+//     upgradeShownForCreate.value = true;
+//   }
+// };
+
+// ✅ Обработчик активации trial из модалки
+
 const goToCreateDialog = async () => {
   // ✅ PREMIUM — всегда можно создавать
   if (userStore.isPremium) {
@@ -290,28 +321,29 @@ const goToCreateDialog = async () => {
   }
 
   // ✅ PRO/FREE — проверяем лимиты
-  // Сначала обновляем счётчики с сервера
   await settingsStore.loadUsageStats();
 
-  // Проверяем актуальные лимиты
-  const dailyCount = settingsStore.dailyGenerationCount;
-  const dailyLimit = settingsStore.limit.dailyGenerations;
+  // ✅ НОВЫЕ СЧЁТЧИКИ
+  const usedToday = settingsStore.dailyUsageToday;
+  const accumulated = settingsStore.accumulatedGenerations;
+  const dailyMax = settingsStore.limit.dailyGenerationsMax;
   const totalCount = dialogStore.allDialogs.length;
   const totalLimit = settingsStore.limit.totalDialogs;
 
-  // Если можно генерировать — переходим
-  if (dailyCount < dailyLimit && totalCount < totalLimit) {
+  // ✅ Проверка: есть ли накопленные И не превышен дневной максимум И не превышен лимит диалогов
+  const canUse = usedToday < dailyMax && accumulated > 0 && totalCount < totalLimit;
+
+  if (canUse) {
+    // ✅ Можно создавать — переходим
     router.push({ name: 'new-dialog' });
-  }
-  // Если лимит достигнут — показываем модалку и блокируем кнопку
-  else {
+  } else {
+    // ❌ Лимит исчерпан — модалка + блокировка
     uiStore.showUpgradeModal();
     sessionStorage.setItem('upgradeShown_create', 'true');
     upgradeShownForCreate.value = true;
   }
 };
 
-// ✅ Обработчик активации trial из модалки
 const handleTrialActivated = () => {
   // Модалка уже закрыта, toast показан в TrialModal
   console.log('✅ Trial activated from modal');

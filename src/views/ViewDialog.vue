@@ -178,7 +178,7 @@ const upgradeShownFlags = ref({
 
 // Computed для блокировки каждой кнопки отдельно
 const canUseAnalysis = computed(() => {
-  if (userStore.isPro) return true;
+  if (userStore.isPro || userStore.isPremium) return true;
   if (upgradeShownFlags.value.analysis) return false;
   return canView();
 });
@@ -293,31 +293,87 @@ const toggleListening = () => {
   if (!dialog.value) return;
   trainingStore.togglePlayStop(dialog.value.fin.join('. '));
 };
+
+// const handleProClick = async (action, buttonType) => {
+//   if (userStore.isPro) {
+//     action();
+//     return;
+//   }
+//   await settingsStore.loadUsageStats();
+
+//   const previewCount = settingsStore.dailyPreviewCount;
+//   const previewLimit = settingsStore.limit.useProMode;
+
+//   // Если ещё можно использовать
+//   if (previewCount < previewLimit) {
+//     await action();
+//     await settingsStore.loadUsageStats();
+
+//     const previewsLeft = settingsStore.limit.useProMode - settingsStore.dailyPreviewCount;
+//     const message = t('view.usePro');
+//     let toastMessage = `${message}${previewsLeft}.`;
+//     if (previewsLeft === 0) {
+//       toastMessage = t('view.endPro');
+//     }
+//     uiStore.showToast(toastMessage, 'warning');
+//   }
+//   // Если лимит достигнут
+//   else {
+//     uiStore.showUpgradeModal();
+//     if (buttonType) {
+//       sessionStorage.setItem(`upgradeShown_${buttonType}`, 'true');
+//       upgradeShownFlags.value[buttonType] = true;
+//     }
+//   }
+// };
+
 const handleProClick = async (action, buttonType) => {
-  if (userStore.isPro) {
+  // ✅ 1. FREE не может использовать АНАЛИЗ вообще
+  if (!userStore.isPro && !userStore.isPremium && buttonType === 'analysis') {
+    uiStore.showUpgradeModal();
+    sessionStorage.setItem('upgradeShown_analysis', 'true');
+    upgradeShownFlags.value.analysis = true;
+    return;
+  }
+
+  // ✅ 2. PREMIUM = безлимит (всё)
+  if (userStore.isPremium) {
     action();
     return;
   }
+
+  // ✅ 3. PRO = безлимитный анализ (не тратит preview)
+  if (userStore.isPro && buttonType === 'analysis') {
+    action();
+    return;
+  }
+
+  // ✅ 4. FREE и PRO (для других операций) → проверяем лимиты
   await settingsStore.loadUsageStats();
 
-  const previewCount = settingsStore.dailyPreviewCount;
-  const previewLimit = settingsStore.limit.useProMode;
+  const usedToday = settingsStore.dailyPreviewToday;
+  const accumulated = settingsStore.accumulatedPreview;
+  const dailyMax = settingsStore.limit.dailyPreviewMax;
 
-  // Если ещё можно использовать
-  if (previewCount < previewLimit) {
+  const canUse = usedToday < dailyMax && accumulated > 0;
+
+  if (canUse) {
+    // ✅ Выполняем действие
     await action();
+
+    // ✅ Перезагружаем счётчики
     await settingsStore.loadUsageStats();
 
-    const previewsLeft = settingsStore.limit.useProMode - settingsStore.dailyPreviewCount;
+    // ✅ Показываем тост
+    const remaining = Math.min(settingsStore.accumulatedPreview, dailyMax - settingsStore.dailyPreviewToday);
     const message = t('view.usePro');
-    let toastMessage = `${message}${previewsLeft}.`;
-    if (previewsLeft === 0) {
+    let toastMessage = `${message}${remaining}.`;
+    if (remaining === 0) {
       toastMessage = t('view.endPro');
     }
     uiStore.showToast(toastMessage, 'warning');
-  }
-  // Если лимит достигнут
-  else {
+  } else {
+    // ❌ Лимит исчерпан → модалка + блокировка
     uiStore.showUpgradeModal();
     if (buttonType) {
       sessionStorage.setItem(`upgradeShown_${buttonType}`, 'true');
@@ -325,12 +381,69 @@ const handleProClick = async (action, buttonType) => {
     }
   }
 };
+
 const getInfo = async () => {
   await handleProClick(async () => {
     await trainingStore.fetchDialogAnalysis();
     uiStore.showModal('analysis');
   }, 'analysis');
 };
+
+// const goToTraining = async (level) => {
+//   if (!level.isPro) {
+//     // Бесплатная тренировка — просто переходим
+//     router.push({ name: level.name, params: { id: props.id } });
+//     return;
+//   }
+
+//   // PRO-тренировка (level-2 или level-3)
+//   if (userStore.isPro) {
+//     router.push({ name: level.name, params: { id: props.id } });
+//     return;
+//   }
+
+//   // Free-пользователь → проверяем лимит
+//   await settingsStore.loadUsageStats();
+
+//   const previewCount = settingsStore.dailyPreviewCount;
+//   const previewLimit = settingsStore.limit.useProMode;
+
+//   if (previewCount < previewLimit) {
+//     // ✅ Увеличиваем счётчик на сервере
+//     try {
+//       const callGemini = httpsCallable(functions, 'callGemini');
+//       await callGemini({
+//         prompt: 'increment_preview_count', // Специальный промпт
+//         operationType: 'training',
+//       });
+
+//       // Перезагружаем счётчики
+//       await settingsStore.loadUsageStats();
+
+//       // Показываем тост
+//       const previewsLeft = settingsStore.limit.useProMode - settingsStore.dailyPreviewCount;
+//       const message = t('view.usePro');
+//       let toastMessage = `${message}${previewsLeft}.`;
+//       if (previewsLeft === 0) {
+//         toastMessage = t('view.endPro');
+//       }
+//       uiStore.showToast(toastMessage, 'warning');
+
+//       // Переходим на тренировку
+//       router.push({ name: level.name, params: { id: props.id } });
+//     } catch (error) {
+//       console.error('Ошибка увеличения счётчика:', error);
+//       uiStore.showToast('Произошла ошибка', 'error');
+//     }
+//   } else {
+//     // Лимит достигнут → модалка и блокировка
+//     uiStore.showUpgradeModal();
+//     const buttonType = level.name === 'level-2' ? 'level2' : 'level3';
+//     sessionStorage.setItem(`upgradeShown_${buttonType}`, 'true');
+//     upgradeShownFlags.value[buttonType] = true;
+//   }
+// };
+
 const goToTraining = async (level) => {
   if (!level.isPro) {
     // Бесплатная тренировка — просто переходим
@@ -338,47 +451,54 @@ const goToTraining = async (level) => {
     return;
   }
 
-  // PRO-тренировка (level-2 или level-3)
-  if (userStore.isPro) {
+  // PREMIUM = безлимит
+  if (userStore.isPremium) {
     router.push({ name: level.name, params: { id: props.id } });
     return;
   }
 
-  // Free-пользователь → проверяем лимит
+  // FREE и PRO → проверяем лимиты
   await settingsStore.loadUsageStats();
 
-  const previewCount = settingsStore.dailyPreviewCount;
-  const previewLimit = settingsStore.limit.useProMode;
+  const usedToday = settingsStore.dailyPreviewToday;
+  const accumulated = settingsStore.accumulatedPreview;
+  const dailyMax = settingsStore.limit.dailyPreviewMax;
 
-  if (previewCount < previewLimit) {
+  // ✅ Можно использовать если ЕСТЬ накопленные И не превышен дневной лимит
+  const canUse = usedToday < dailyMax && accumulated > 0;
+
+  if (canUse) {
     // ✅ Увеличиваем счётчик на сервере
     try {
       const callGemini = httpsCallable(functions, 'callGemini');
       await callGemini({
-        prompt: 'increment_preview_count', // Специальный промпт
+        prompt: 'increment_preview_count',
         operationType: 'training',
       });
 
-      // Перезагружаем счётчики
+      // ✅ Перезагружаем счётчики
       await settingsStore.loadUsageStats();
 
-      // Показываем тост
-      const previewsLeft = settingsStore.limit.useProMode - settingsStore.dailyPreviewCount;
+      // ✅ Показываем тост с ОБНОВЛЁННЫМИ счётчиками
+      const newAccumulated = settingsStore.accumulatedPreview;
+      const newUsedToday = settingsStore.dailyPreviewToday;
+      const remaining = Math.min(newAccumulated, dailyMax - newUsedToday);
+
       const message = t('view.usePro');
-      let toastMessage = `${message}${previewsLeft}.`;
-      if (previewsLeft === 0) {
+      let toastMessage = `${message}${remaining}.`;
+      if (remaining === 0) {
         toastMessage = t('view.endPro');
       }
       uiStore.showToast(toastMessage, 'warning');
 
-      // Переходим на тренировку
+      // ✅ Переходим на тренировку (ВСЕГДА, если canUse был true)
       router.push({ name: level.name, params: { id: props.id } });
     } catch (error) {
-      console.error('Ошибка увеличения счётчика:', error);
+      console.error('❌ Ошибка увеличения счётчика:', error);
       uiStore.showToast('Произошла ошибка', 'error');
     }
   } else {
-    // Лимит достигнут → модалка и блокировка
+    // ❌ Лимит исчерпан → модалка + блокировка
     uiStore.showUpgradeModal();
     const buttonType = level.name === 'level-2' ? 'level2' : 'level3';
     sessionStorage.setItem(`upgradeShown_${buttonType}`, 'true');
