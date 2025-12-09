@@ -1,7 +1,7 @@
 <!-- src\views\NewDialog.vue -->
 <template>
   <div class="layout in-view">
-    <div class="title">{{ $t('new.createNew') }}</div>
+    <h2 class="title">{{ $t('new.createNew') }}</h2>
     <form @submit.prevent="saveDialog" class="dialog-form">
       <div class="form-group">
         <label for="topic">{{ $t('new.topic') }}</label>
@@ -30,7 +30,7 @@
         <div class="ton-info">
           <label for="ton-slider">{{ $t('new.tone') }}</label>
           <label for="ton-slider">{{ $t('new.neutral') }}</label>
-          <label>{{ ton }}</label>
+          <span class="ton-value">{{ ton }}</span>
         </div>
         <div class="slider-container">
           <input id="ton-slider" type="range" min="-5" max="5" step="1" v-model="ton" />
@@ -46,13 +46,13 @@
         <input id="replicas" v-model.number="form.replicas" type="number" min="6" max="20" required />
       </div>
       <div class="submit-wrap">
-        <router-link to="/dialogs" class="btn btn-common oooo oloo" :class="isDesktop ? 'w-250' : 'mobile'">
+        <router-link to="/dialogs" class="btn btn-menu" :class="isDesktop ? 'w-250' : 'w-125 mobile'">
           <span class="material-symbols-outlined icon">close</span>
           {{ $t('buttons.cancel') }}
         </router-link>
         <button
-          class="btn btn-action oooo oool"
-          :class="isDesktop ? 'w-250' : 'mobile'"
+          class="btn btn-action"
+          :class="isDesktop ? 'w-250' : 'w-125 mobile'"
           type="submit"
           :disabled="!isFormValid || trainingStore.isLoading"
         >
@@ -148,144 +148,64 @@ const saveDialog = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: var(--space-md);
-  background: radial-gradient(ellipse at center, var(--radial-15) 15%, var(--radial-65) 65%);
+  padding: var(--md);
   position: relative;
   overflow: hidden;
 }
-
-/* Декоративный элемент */
-.layout::before {
-  content: '';
-  position: absolute;
-  width: 350px;
-  height: 350px;
-  background: var(--gradient-green);
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
-  bottom: -100px;
-  left: -100px;
-  pointer-events: none;
-  animation: float-slow 20s ease-in-out infinite;
-}
-
-@keyframes float-slow {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(40px, 40px);
-  }
-}
-
-/* ========================================= */
-/* TITLE */
-/* ========================================= */
 .title {
   text-align: center;
-  margin-bottom: var(--space-xl);
-  font-size: var(--xxl);
-  color: var(--text-head);
-  font-weight: 700;
-  letter-spacing: var(--tracking-tight);
-  animation: fadeInDown 0.6s ease-out;
+  margin-bottom: var(--md);
+  font-size: var(--xxxl);
 }
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ========================================= */
-/* DIALOG FORM */
-/* ========================================= */
 .dialog-form {
+  width: 100%;
+  max-width: 640px;
+  position: relative;
+  z-index: 2;
+  background: var(--bg-card);
+  padding: var(--xl);
+  border-radius: var(--xxs);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xl);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  max-width: 640px;
-  padding: var(--space-2xl);
-  border-radius: var(--radius-xl);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-xl);
-  position: relative;
-  z-index: 2;
-  animation: fadeInUp 0.6s ease-out;
 }
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ========================================= */
-/* FORM GROUP */
-/* ========================================= */
 .form-group {
   width: 100%;
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--xl);
 }
-
 .form-group:last-of-type {
   margin-bottom: 0;
 }
-
-/* ========================================= */
-/* LABELS */
-/* ========================================= */
 label {
   display: block;
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--xxxs);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
-  font-weight: 600;
+  font-size: var(--xs);
+  font-weight: 500;
   color: var(--text-title);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
 }
-
-/* ========================================= */
-/* INPUTS */
-/* ========================================= */
 input,
 select,
 textarea {
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--xxs) var(--md);
   border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--xxxs);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
+  font-size: var(--md);
   color: var(--text-base);
   background: var(--bg-main);
-  transition: all var(--transition-base);
-  box-shadow: var(--shadow-xs);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--plan-free-border);
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-  transform: translateY(-1px);
+  border-color: var(--bb);
 }
 
 input:hover,
@@ -303,7 +223,6 @@ textarea::placeholder {
 textarea {
   resize: vertical;
   min-height: 80px;
-  line-height: var(--leading-relaxed);
 }
 
 textarea:focus::placeholder {
@@ -324,14 +243,15 @@ select option:disabled {
 /* ========================================= */
 .upgrade-hint {
   display: block;
-  margin-top: var(--space-xs);
+  margin-top: var(--xxxs);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xs);
+  font-size: var(--sm);
+  text-align: center;
   color: var(--plan-pro-text);
   font-weight: 500;
-  padding: var(--space-xs) var(--space-sm);
+  padding: var(--xxs) 0;
   background: var(--plan-pro-bg);
-  border-radius: var(--radius-sm);
+  border-radius: var(--xxxs);
   border: 1px solid var(--plan-pro-border);
 }
 
@@ -341,11 +261,9 @@ select option:disabled {
 .slider-container {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
   width: 100%;
-  margin: var(--space-sm) 0;
+  margin: var(--xxs) 0;
 }
-
 .slider-container input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
@@ -353,10 +271,9 @@ select option:disabled {
   padding: 0;
   height: 8px;
   background: var(--bg-group);
-  border-radius: var(--radius-full);
+  border-radius: 8px;
   border: 2px solid var(--border);
   cursor: pointer;
-  transition: all var(--transition-base);
 }
 
 .slider-container input[type='range']:hover {
@@ -371,13 +288,10 @@ select option:disabled {
   background: var(--plan-free-border);
   cursor: pointer;
   border-radius: 50%;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-base);
 }
 
 .slider-container input[type='range']::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  box-shadow: var(--shadow-md);
 }
 
 .slider-container input[type='range']::-moz-range-thumb {
@@ -387,13 +301,10 @@ select option:disabled {
   cursor: pointer;
   border-radius: 50%;
   border: none;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-base);
 }
 
 .slider-container input[type='range']::-moz-range-thumb:hover {
   transform: scale(1.2);
-  box-shadow: var(--shadow-md);
 }
 
 /* ========================================= */
@@ -404,17 +315,23 @@ select option:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: var(--space-xs) 0;
+  margin: var(--xxxs) 0;
 }
 
 .ton-info span,
-.ton-info label {
+.ton-info label,
+.ton-info span.ton-value {
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--xs);
   color: var(--text-title);
   font-weight: 500;
+  text-transform: uppercase;
+  line-height: var(--xs);
 }
-
+.ton-info span.ton-value {
+  font-size: var(--sm);
+  font-weight: 700;
+}
 /* ========================================= */
 /* SUBMIT WRAP */
 /* ========================================= */
@@ -422,8 +339,8 @@ select option:disabled {
   width: 100%;
   display: flex;
   justify-content: space-between;
-  gap: var(--space-md);
-  margin-top: var(--space-lg);
+  gap: var(--md);
+  margin-top: var(--lg);
 }
 
 /* ========================================= */
@@ -435,63 +352,10 @@ select option:disabled {
   font-weight: 600;
   color: var(--r3);
   background: var(--r1);
-  margin-top: var(--space-lg);
-  padding: var(--space-md) var(--space-lg);
+  margin-top: var(--lg);
+  padding: var(--sm) var(--lg);
   text-align: center;
-  border-radius: var(--radius-md);
+  border-radius: var(--xxs);
   border: 2px solid var(--r2);
-  box-shadow: var(--shadow-md);
-  animation: shake 0.4s ease-in-out;
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-8px);
-  }
-  75% {
-    transform: translateX(8px);
-  }
-}
-
-/* ========================================= */
-/* RESPONSIVE */
-/* ========================================= */
-@media (max-width: 768px) {
-  .layout {
-    padding: var(--space-sm);
-  }
-
-  .dialog-form {
-    padding: var(--space-xl);
-  }
-
-  .title {
-    font-size: var(--xl);
-  }
-
-  .submit-wrap {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .dialog-form {
-    padding: var(--space-lg);
-  }
-
-  .form-group {
-    margin-bottom: var(--space-lg);
-  }
-
-  input,
-  select,
-  textarea {
-    padding: var(--space-xs) var(--space-sm);
-    font-size: var(--xs);
-  }
 }
 </style>

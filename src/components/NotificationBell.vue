@@ -196,7 +196,7 @@ onUnmounted(() => {
   padding: 8px 16px;
   color: var(--text-head);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xxs);
+  font-size: var(--xs);
   background-color: var(--bg-side);
   border: none;
   cursor: pointer;

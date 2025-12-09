@@ -1,6 +1,7 @@
 //src/stores/uiStore.js
 import { defineStore } from 'pinia';
 import { useDialogStore } from './dialogStore';
+import { useSettingsStore } from './settingsStore';
 import { useUserStore } from './userStore';
 import { useTrainingStore } from './trainingStore';
 
@@ -16,10 +17,12 @@ export const useUiStore = defineStore('ui', {
   getters: {
     loading() {
       const dialogStore = useDialogStore();
+      const settingsStore = useSettingsStore();
       const userStore = useUserStore();
       const trainingStore = useTrainingStore();
       return (
         dialogStore.isLoading ||
+        settingsStore.isLoading ||
         userStore.isLoading ||
         trainingStore.isLoading ||
         userStore.isCreatingPortal ||

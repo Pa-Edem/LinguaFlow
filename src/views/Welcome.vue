@@ -2,27 +2,27 @@
 <template>
   <div class="page in-view">
     <div class="page-container">
-      <div class="page-info-title">
+      <div class="page-info">
         <div class="page-image">
           <img class="image" src="../assets/logo.svg" />
         </div>
-        <div class="page-info-header">
-          <div class="page-info-subtitle subtitle">{{ $t('welcome.subtitle') }}</div>
-          <div class="title">{{ $t('welcome.title') }}</div>
+        <div class="header">
+          <h3 class="subtitle">{{ $t('welcome.subtitle') }}</h3>
+          <h1 class="title">{{ $t('welcome.title') }}</h1>
         </div>
       </div>
-      <div class="page-info-text">
-        <p class="info-description">{{ $t('welcome.text1') }}</p>
-        <p class="info-description">{{ $t('welcome.text2') }}</p>
-        <p class="info-description">{{ $t('welcome.text3') }}</p>
+      <div class="text">
+        <p class="description">{{ $t('welcome.text1') }}</p>
+        <p class="description">{{ $t('welcome.text2') }}</p>
+        <p class="description">{{ $t('welcome.text3') }}</p>
       </div>
       <div class="btn-container">
-        <select :class="isDesktop ? 'w-150 py12' : 'mobile w-100'" name="uiLanguage" v-model="uiLanguage">
+        <select class="btn" :class="isDesktop ? 'w-150' : 'mobile w-125'" name="uiLanguage" v-model="uiLanguage">
           <option v-for="lang in uiLanguages" :key="lang.code" :value="lang.code">
             {{ lang.name }}
           </option>
         </select>
-        <router-link to="/auth" class="btn btn-menu" :class="isDesktop ? 'w-150' : 'mobile w-100'">
+        <router-link to="/auth" class="btn btn-menu" :class="isDesktop ? 'w-150' : 'mobile w-125'">
           <span class="material-symbols-outlined">account_circle</span>
           {{ $t('buttons.start') }}
         </router-link>
@@ -52,113 +52,47 @@ const uiLanguage = computed({
 </script>
 
 <style scoped>
-/* ========================================= */
-/* PAGE LAYOUT */
-/* ========================================= */
+/* MOBILES (767px and down) */
 .page {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: var(--space-xl);
-  background: radial-gradient(ellipse at center, var(--radial-15) 15%, var(--radial-65) 65%);
+  padding: var(--md);
   position: relative;
   overflow: hidden;
 }
-
-/* Декоративные градиентные круги */
-.page::before,
-.page::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.2;
-  pointer-events: none;
-  animation: float-slow 20s ease-in-out infinite;
-}
-
-.page::before {
-  width: 400px;
-  height: 400px;
-  background: var(--gradient-purple);
-  top: -100px;
-  left: -100px;
-}
-
-.page::after {
-  width: 350px;
-  height: 350px;
-  background: var(--gradient-gold);
-  bottom: -100px;
-  right: -100px;
-  animation-delay: -10s;
-}
-
-@keyframes float-slow {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(30px, 30px) scale(1.1);
-  }
-}
-
-/* ========================================= */
-/* CONTAINER */
-/* ========================================= */
 .page-container {
   width: 100%;
   max-width: 500px;
   display: flex;
   flex-direction: column;
   text-align: center;
-  gap: var(--space-xl);
+  gap: var(--xl);
   position: relative;
   z-index: 2;
   background: var(--bg-card);
-  padding: var(--space-2xl);
-  border-radius: var(--radius-xl);
+  padding: var(--lg);
+  border-radius: var(--xxs);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-xl);
-  animation: fadeInUp 0.8s ease-out;
 }
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ========================================= */
-/* HEADER SECTION */
-/* ========================================= */
-.page-info-title {
+.page-info {
   display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: var(--space-md);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--md);
 }
-
 .page-image {
   height: 120px;
   width: auto;
   flex-shrink: 0;
 }
-
 .image {
   height: 100%;
-  padding-right: var(--space-md);
   filter: drop-shadow(0 4px 8px var(--shadow));
   animation: float 3s ease-in-out infinite;
 }
-
 @keyframes float {
   0%,
   100% {
@@ -168,192 +102,78 @@ const uiLanguage = computed({
     transform: translateY(-8px);
   }
 }
-
-.page-info-header {
-  height: 120px;
-  flex: 1;
+.header {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: var(--md);
 }
-
-.page-info-subtitle {
+.subtitle {
   font-size: var(--lg);
-  color: var(--plan-pro-text);
-  font-weight: 700;
+  color: var(--text-title);
   text-transform: uppercase;
   text-align: right;
-  letter-spacing: var(--tracking-wide);
 }
-
-.page-info-title .title {
+.title {
   text-align: left;
-  font-size: var(--xxxl);
-  line-height: var(--leading-none);
+  font-size: calc(var(--xxxl) * 1.5);
   color: var(--text-head);
-  letter-spacing: var(--tracking-tight);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
-
-/* ========================================= */
-/* TEXT SECTION */
-/* ========================================= */
-.page-info-text {
-  font-size: var(--sm);
-  line-height: var(--leading-relaxed);
+.text {
+  font-size: var(--lg);
   color: var(--text-base);
   text-align: center;
 }
-
-.info-description {
-  margin: var(--space-md) 0;
-  opacity: 0;
-  animation: fadeIn 0.6s ease-out forwards;
+.description {
+  margin: var(--md) 0;
 }
-
-.info-description:nth-child(1) {
-  animation-delay: 0.2s;
-}
-
-.info-description:nth-child(2) {
-  animation-delay: 0.3s;
-}
-
-.info-description:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ========================================= */
-/* BUTTON CONTAINER */
-/* ========================================= */
 .btn-container {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--md);
 }
-
-/* ========================================= */
-/* SELECT (Language) */
-/* ========================================= */
 select {
   padding: 11px 12px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--xxxs);
   border: 2px solid var(--border);
   background: var(--bg-main);
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
   color: var(--text-head);
-  cursor: pointer;
-  transition: all var(--transition-base);
-  box-shadow: var(--shadow-xs);
 }
-
 select:hover {
   border-color: var(--bb);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
 }
-
 select:focus {
-  border-color: var(--plan-pro-border);
+  border-color: var(--bb);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(103, 58, 183, 0.1);
 }
-
 select option {
-  padding: var(--space-sm);
-  background: var(--bg-card);
+  padding: var(--sm);
+  background-color: var(--bg-card);
   color: var(--text-base);
 }
-
-.py12 {
-  padding: 11px 12px;
+/* TABLETS (768px and up) */
+@media (min-width: 768px) {
+  .page-container {
+    max-width: 640px;
+    gap: var(--xxl);
+    padding: var(--xl);
+  }
 }
-
-/* ========================================= */
-/* RESPONSIVE */
-/* ========================================= */
-@media (min-width: 992px) {
+/* DESKTOPS (1200px and up) */
+@media (min-width: 1200px) {
   .page-container {
     max-width: 960px;
-    padding: var(--space-2xl);
+    gap: var(--xxxl);
+    padding: var(--xxxl);
   }
-
-  .page-info-header {
-    height: 180px;
-  }
-
-  .page-image {
-    height: 180px;
-  }
-
-  .image {
-    height: 180px;
-  }
-
-  .page-info-title .title {
-    font-size: 3rem;
-  }
-}
-@media (max-width: 768px) {
-  .page {
-    padding: var(--space-md);
-  }
-  .page-container {
-    padding: var(--space-xl);
-    gap: var(--space-lg);
-  }
-  .page-info-title {
-    flex-direction: column;
+  .page-info {
+    display: flex;
+    flex-direction: row;
     align-items: center;
-  }
-  .page-info-header {
-    height: auto;
-    text-align: center;
-  }
-  .page-info-subtitle {
-    text-align: center;
-  }
-  .page-info-title .title {
-    text-align: center;
-    font-size: var(--xxl);
-  }
-  .btn-container {
-    gap: var(--space-sm);
-  }
-  select,
-  .btn {
-    width: 100% !important;
-  }
-}
-@media (max-width: 480px) {
-  .page-container {
-    padding: var(--space-lg);
-  }
-  .page-image {
-    height: 80px;
-  }
-  .image {
-    height: 80px;
-  }
-  .page-info-title .title {
-    font-size: var(--xl);
+    justify-content: space-between;
+    gap: var(--xxxl);
   }
 }
 </style>

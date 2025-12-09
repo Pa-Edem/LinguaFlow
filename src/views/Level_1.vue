@@ -5,7 +5,7 @@
       <template #sidebar-content>
         <TrainingSidebar :dialogId="props.id" :slogan="$t('level1.slogan')" :description="$t('level1.description')">
           <template #extra-controls>
-            <button class="btn btn-control oooo" disabled>
+            <button class="btn btn-control" disabled>
               <span class="material-symbols-outlined icon">mic_off</span>
               <span class="btn-text">{{ $t('buttons.mic') }}</span>
             </button>
@@ -54,7 +54,7 @@
     <footer class="actions-footer">
       <TrainingSidebar :dialogId="props.id" :description="$t('level1.descriptionMobile')">
         <template #extra-controls>
-          <button class="btn btn-control oooo mobile" disabled>
+          <button class="btn btn-control mobile" disabled>
             <span class="material-symbols-outlined icon">mic_off</span>
           </button>
         </template>

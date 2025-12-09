@@ -138,7 +138,6 @@
 - ✅ **Безлимит сохранённых диалогов**
 - ✅ **Приоритетная поддержка** (12 часов)
 - ✅ Экспорт данных (в разработке)
-- ✅ Оффлайн режим (в разработке)
 
 **Лимиты:**
 
@@ -185,7 +184,7 @@
 ### 1. Проверка произношения (Speech Recognition)
 
 - Пользователь произносит финскую фразу в микрофон
-- AI анализирует произношение через Google Cloud Speech-to-Text
+- Приложение анализирует произношение
 - Сравнивает с оригиналом
 - Даёт оценку правильности (0-100%)
 - Показывает ошибки и рекомендации
@@ -194,7 +193,7 @@
 
 ### 2. Проверка перевода (Translation Check)
 
-- Пользователь вводит перевод финской фразы на русский
+- Пользователь вводит перевод русской фразы на финский
 - AI анализирует правильность через Claude API
 - Сравнивает с правильным переводом
 - Даёт оценку и feedback
@@ -330,7 +329,7 @@
 **Настройки:**
 
 - Выбор голоса (dropdown)
-- Скорость речи (slider 0.5x - 2.0x)
+- Скорость речи (slider 0.75x - 1.25x)
 - Предпросмотр (кнопка "Тест")
 
 **Доступно для:**
@@ -496,7 +495,6 @@
 - `PlanCard.vue` — карточки планов
 - `PlanModal.vue` — модалка для апгрейда
 - `TrialModal.vue` — модалка активации trial
-- `TrialBanner.vue` — баннер с напоминанием о trial
 
 ---
 
@@ -616,11 +614,8 @@ C2 🔒 PRO
 ### В разработке:
 
 - ✅ Экспорт данных (CSV/JSON)
-- ✅ Оффлайн режим (PREMIUM)
 - ✅ Больше языков UI
 - ✅ Больше языков изучения
-- ✅ Командные аккаунты
-- ✅ API для разработчиков
 
 ---
 
@@ -649,6 +644,103 @@ C2 🔒 PRO
 **Версия документа:** 1.0  
 **Дата обновления:** 27 ноября 2025  
 **Автор:** LinguaFlow Team
+
+```
+
+```
+
+LinguaFlow
+├─ .firebase
+│ ├─ hosting.cHVibGlj.cache
+│ └─ hosting.ZGlzdA.cache
+├─ .firebaserc
+├─ firebase.json
+├─ firestore.indexes.json
+├─ firestore.rules
+├─ functions
+│ ├─ index.js
+│ ├─ package-lock.json
+│ └─ package.json
+├─ index.html
+├─ package-lock.json
+├─ package.json
+├─ public
+│ ├─ chat.svg
+│ └─ index.html
+├─ README.md
+├─ src
+│ ├─ App.vue
+│ ├─ assets
+│ │ ├─ google.svg
+│ │ └─ logo.svg
+│ ├─ components
+│ │ ├─ Auth.vue
+│ │ ├─ CheckmarkAnimation.vue
+│ │ ├─ DialogCard.vue
+│ │ ├─ DialogLayout.vue
+│ │ ├─ LimitsModal.vue
+│ │ ├─ Loader.vue
+│ │ ├─ Modal.vue
+│ │ ├─ MonthlyStatsModal.vue
+│ │ ├─ MonthlyStatsModalPremium.vue
+│ │ ├─ NotificationBell.vue
+│ │ ├─ PlanCard.vue
+│ │ ├─ PlanModal.vue
+│ │ ├─ PricingFAQ.vue
+│ │ ├─ PricingTable.vue
+│ │ ├─ ProBenefitItem.vue
+│ │ ├─ ToastContainer.vue
+│ │ ├─ TrainingSidebar.vue
+│ │ ├─ TrialBadge.vue
+│ │ ├─ TrialModal.vue
+│ │ └─ UpgradePrompt.vue
+│ ├─ composables
+│ │ ├─ useBreakpoint.js
+│ │ └─ usePermissions.js
+│ ├─ config
+│ │ ├─ stripeConfig.js
+│ │ └─ trainingConfig.js
+│ ├─ firebase.js
+│ ├─ i18n.js
+│ ├─ locales
+│ │ ├─ en.json
+│ │ ├─ ru.json
+│ │ └─ uk.json
+│ ├─ main.js
+│ ├─ router
+│ │ └─ index.js
+│ ├─ services
+│ │ ├─ achievementService.js
+│ │ └─ trainingProgressService.js
+│ ├─ stores
+│ │ ├─ dialogStore.js
+│ │ ├─ notificationStore.js
+│ │ ├─ settingsStore.js
+│ │ ├─ trainingStore.js
+│ │ ├─ uiStore.js
+│ │ └─ userStore.js
+│ ├─ styles
+│ │ ├─ buttons.css
+│ │ ├─ colors.css
+│ │ ├─ main.css
+│ │ └─ variables.css
+│ ├─ utils
+│ │ ├─ compareTexts.js
+│ │ ├─ dataTransformer.js
+│ │ ├─ languageUtils.js
+│ │ └─ levelHelper.js
+│ └─ views
+│ ├─ Level_1.vue
+│ ├─ Level_2.vue
+│ ├─ Level_3.vue
+│ ├─ Level_4.vue
+│ ├─ NewDialog.vue
+│ ├─ PricingView.vue
+│ ├─ Profile.vue
+│ ├─ Settings.vue
+│ ├─ ViewDialog.vue
+│ └─ Welcome.vue
+└─ vite.config.js
 
 ```
 

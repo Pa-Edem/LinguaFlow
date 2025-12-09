@@ -26,7 +26,7 @@
   overflow: hidden;
 }
 .mobile {
-  font-size: var(--xs);
+  font-size: var(--sm);
   max-width: 160px;
   min-width: 100px;
   padding: 10px 16px;
@@ -95,25 +95,6 @@ a.btn-menu:not(:disabled):hover {
 a.btn-danger:not(:disabled):hover {
   color: var(--r3);
 }
-/* PRIMARY (Фиолетовый градиент) */
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: 2px solid var(--purple-3);
-}
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: linear-gradient(30deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-a.btn-primary:not(:disabled):hover {
-  color: white;
-}
-
 /* ========================================= */
 /* PRO (Фиолетовый) */
 /* ========================================= */
@@ -124,16 +105,6 @@ a.btn-primary:not(:disabled):hover {
 }
 .btn-pro:hover:not(:disabled) {
   background: var(--purple-2);
-  box-shadow: var(--shadow-pro);
-}
-/* Градиентная версия */
-.btn-pro.gradient {
-  background: var(--gradient-purple);
-  color: white;
-  border-color: var(--purple-4);
-}
-.btn-pro.gradient:hover:not(:disabled) {
-  filter: brightness(1.1);
   box-shadow: var(--shadow-pro);
 }
 /* ========================================= */
@@ -150,38 +121,6 @@ a.btn-primary:not(:disabled):hover {
   background: var(--gold-2);
   box-shadow: var(--shadow-premium);
 }
-/* Градиентная версия с блеском */
-.btn-premium.gradient {
-  background: var(--gradient-gold);
-  color: white;
-  border-color: var(--gold-4);
-}
-.btn-premium.gradient:hover:not(:disabled) {
-  filter: brightness(1.1);
-  box-shadow: var(--shadow-premium);
-  animation: shimmer 2s infinite;
-}
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-.btn-premium.gradient::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 200%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
-  transition: left 0.5s ease;
-}
-.btn-premium.gradient:hover::before {
-  left: 100%;
-}
 /* ========================================= */
 /* TRIAL (Голубой) */
 /* ========================================= */
@@ -194,17 +133,6 @@ a.btn-primary:not(:disabled):hover {
   background: var(--blue-2);
   box-shadow: var(--shadow-trial);
 }
-/* Градиентная версия */
-.btn-trial.gradient {
-  background: var(--gradient-blue);
-  color: white;
-  border-color: var(--blue-4);
-}
-.btn-trial.gradient:hover:not(:disabled) {
-  filter: brightness(1.1);
-  box-shadow: var(--shadow-trial);
-}
-
 /* ========================================= */
 /* CONTROL (Для управления) */
 /* ========================================= */
@@ -215,12 +143,10 @@ a.btn-primary:not(:disabled):hover {
   border: 2px solid var(--border);
   padding: 10px 16px;
 }
-
 .btn-control:hover:not(:disabled) {
   background: var(--bg-side);
   border-color: var(--bb);
 }
-
 /* Микрофон */
 .btn-control.mic,
 .btn-control.mic:hover:not(:disabled) {
@@ -228,14 +154,12 @@ a.btn-primary:not(:disabled):hover {
   color: var(--r3);
   border-color: var(--r3);
 }
-
 .btn-control.mic.active,
 .btn-control.mic.active:hover:not(:disabled) {
   border-radius: 24px;
   background: var(--r2);
   animation: pulse-mic 1.5s linear infinite;
 }
-
 @keyframes pulse-mic {
   0% {
     box-shadow: inset 0 0 0 0 var(--gold-4);
@@ -250,155 +174,44 @@ a.btn-primary:not(:disabled):hover {
     box-shadow: inset 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }
-
-/* ========================================= */
-/* GHOST (Прозрачный) */
-/* ========================================= */
-.btn-ghost {
-  background: transparent;
-  color: var(--text-base);
-  border-color: var(--border);
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background: var(--bg-side);
-  color: var(--text-head);
-  border-color: var(--bb);
-}
-
-/* ========================================= */
-/* РАЗМЕРЫ */
-/* ========================================= */
 .w-0 {
   min-width: 36px;
   max-width: 36px;
   width: 36px;
   padding: 8px;
 }
-
 .w-50 {
   max-width: 50px;
   min-width: 50px;
   width: 50px;
 }
-
 .w-100 {
   max-width: 100px;
   min-width: 100px;
   width: 100px;
 }
-
 .w-125 {
   max-width: 125px;
   min-width: 125px;
   width: 125px;
 }
-
 .w-150 {
   max-width: 150px;
   min-width: 150px;
   width: 150px;
 }
-
 .w-250 {
   max-width: 250px;
   min-width: 250px;
   width: 250px;
 }
-
 .w-360 {
   max-width: 360px;
   min-width: 360px;
   width: 360px;
 }
-
 .w-100p {
   max-width: 100%;
   min-width: 100%;
   width: 100%;
-}
-
-/* ========================================= */
-/* СКРУГЛЕНИЕ (Твои классы) */
-/* ========================================= */
-/* .oooo {
-  border-radius: 24px;
-}
-
-.looo {
-  border-bottom-left-radius: 2px !important;
-}
-
-.oloo {
-  border-top-left-radius: 2px !important;
-}
-
-.oolo {
-  border-top-right-radius: 2px !important;
-}
-
-.oool {
-  border-bottom-right-radius: 2px !important;
-} */
-
-/* ========================================= */
-/* ДОПОЛНИТЕЛЬНЫЕ УТИЛИТЫ */
-/* ========================================= */
-
-/* Маленькая кнопка */
-.btn-sm {
-  padding: 8px 16px;
-  font-size: var(--xxs);
-  min-width: 100px;
-}
-
-/* Большая кнопка */
-.btn-lg {
-  padding: 16px 32px;
-  font-size: var(--md);
-  min-width: 200px;
-}
-
-/* Иконка-only кнопка */
-.btn-icon {
-  min-width: 40px;
-  max-width: 40px;
-  width: 40px;
-  height: 40px;
-  padding: 8px;
-  border-radius: 50%;
-}
-
-/* Loading состояние */
-.btn.loading {
-  pointer-events: none;
-  opacity: 0.7;
-}
-
-.btn.loading::after {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Полная ширина на мобилках */
-@media (max-width: 768px) {
-  .btn {
-    width: 100%;
-  }
-
-  .btn-sm {
-    padding: 6px 12px;
-  }
 }

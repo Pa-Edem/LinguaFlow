@@ -1,6 +1,6 @@
 <!-- src/components/PlanCard.vue -->
 <template>
-  <div class="plan-card" :class="{ current: isCurrent, featured: isFeatured }">
+  <div class="plan-card" :class="{ current: isCurrent }">
     <!-- Бейдж "Текущий" -->
     <div v-if="isCurrent" class="current-badge">Активен</div>
 
@@ -20,8 +20,10 @@
           {{ plan.currency }}{{ plan.price.monthly }}
           <span class="price-period">/мес</span>
         </div>
-        <div v-if="plan.price.yearly" class="price-yearly">
-          или {{ plan.currency }}{{ plan.price.yearly }}/год
+        <div v-if="plan.price.yearly" class="price-amount">
+          <span class="material-symbols-outlined or">arrow_range</span>
+          {{ plan.currency }}{{ plan.price.yearly }}
+          <span class="price-period">/год</span>
           <span class="price-discount">(-{{ discount }}%)</span>
         </div>
       </template>
@@ -36,7 +38,7 @@
     </div>
 
     <!-- Кнопка -->
-    <button class="plan-button" :class="buttonClass" @click="handleClick" :disabled="isCurrent && !canManage">
+    <button class="btn mx-auto" :class="buttonClass" @click="handleClick" :disabled="isCurrent && !canManage">
       <span class="material-symbols-outlined" v-if="buttonIcon">{{ buttonIcon }}</span>
       {{ buttonText }}
     </button>
@@ -45,6 +47,8 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useUserStore } from '../stores/userStore';
+import { useBreakpoint } from '../composables/useBreakpoint';
 import { calculateYearlyDiscount } from '../config/stripeConfig';
 
 const props = defineProps({
@@ -56,12 +60,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isFeatured: {
-    type: Boolean,
-    default: false,
-  },
 });
 
+const userStore = useUserStore();
+const { isDesktop } = useBreakpoint();
 const emit = defineEmits(['select']);
 
 // ✅ Иконка для плана (FREE, PRO, PREMIUM)
@@ -101,30 +103,59 @@ const discount = computed(() => {
   return calculateYearlyDiscount(props.plan.price.monthly, props.plan.price.yearly);
 });
 
+// Проверяем наличие реальной Stripe подписки
+const hasStripeSubscription = computed(() => {
+  // Manual override или trial → НЕТ Stripe подписки
+  if (userStore.manualPro || userStore.manualPremium || userStore.trialActive) {
+    return false;
+  }
+
+  // Если tier = 'pro' или 'premium' и НЕТ manual/trial → ЕСТЬ Stripe подписка
+  return userStore.tier === 'pro' || userStore.tier === 'premium';
+});
+
 // Текст кнопки
 const buttonText = computed(() => {
   if (props.isCurrent) {
-    return props.plan.id === 'free' ? 'Детали' : 'Управление подпиской';
+    // FREE план → всегда "Детали"
+    if (props.plan.id === 'free') {
+      return 'Детали';
+    }
+
+    // PRO/PREMIUM с реальной Stripe подпиской → "Управление подпиской"
+    if (hasStripeSubscription.value) {
+      return 'Управление подпиской';
+    }
+
+    // Manual/Trial → "Детали"
+    return 'Детали';
   }
-  return props.plan.id === 'free' ? 'Детали' : 'Детали';
+
+  // Не текущий план → всегда "Детали"
+  return 'Детали';
 });
 
 // Иконка кнопки
 const buttonIcon = computed(() => {
-  if (props.isCurrent && props.plan.id !== 'free') return 'settings';
-  return props.plan.id === 'free' ? 'info' : 'info';
+  if (props.isCurrent && hasStripeSubscription.value) {
+    return 'settings'; // Иконка "настройки" только для Stripe подписки
+  }
+  return 'info';
 });
 
 // CSS класс кнопки
 const buttonClass = computed(() => {
-  if (props.isCurrent) return 'btn-current';
-  if (props.isFeatured) return 'btn-featured';
-  return 'btn-upgrade';
+  if (!isDesktop.value) {
+    return props.isCurrent ? 'btn-current mobile' : 'btn-upgrade mobile';
+  } else {
+    return props.isCurrent ? 'btn-current' : 'btn-upgrade';
+  }
 });
 
 // Можно ли управлять подпиской
 const canManage = computed(() => {
-  return props.plan.id !== 'free';
+  // Управлять можно только если есть реальная Stripe подписка
+  return hasStripeSubscription.value;
 });
 
 // Обработчик клика
@@ -134,212 +165,154 @@ const handleClick = () => {
 </script>
 
 <style scoped>
+/* MOBILES (767px and down) */
 .plan-card {
   position: relative;
-  background: var(--bg-side);
+  background: var(--y0);
   border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: var(--xs);
+  padding: var(--md);
   display: flex;
   flex-direction: column;
+  gap: var(--xs);
   transition: all 0.3s ease;
-  min-height: 320px;
 }
-
 .plan-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
 }
-
-/* Текущий план */
 .plan-card.current {
-  border-color: #48bb78;
-  background: linear-gradient(135deg, #48bb7810 0%, #38a16910 100%);
+  border-color: var(--g3);
 }
-
-/* Featured план (PREMIUM) */
-.plan-card.featured {
-  border-color: #f6ad55;
-  background: linear-gradient(135deg, #f6ad5510 0%, #ed893610 100%);
-  box-shadow: 0 4px 16px rgba(246, 173, 85, 0.2);
-}
-
-/* Бейдж "Активен" */
 .current-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: var(--md);
+  right: var(--md);
   padding: 4px 12px;
-  background: #48bb78;
+  background: var(--g3);
   color: white;
-  border-radius: 12px;
+  border-radius: var(--xxs);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xxs);
-  font-weight: 700;
+  font-size: var(--xs);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
-
-/* Хедер с иконкой */
 .plan-header {
+  display: flex;
   text-align: center;
-  margin-bottom: 16px;
 }
-
 .plan-icon {
-  font-size: 3rem;
-  margin-bottom: 8px;
+  font-size: var(--xxxl);
 }
 .plan-header .free-icon {
   color: var(--text-head);
 }
-.plan-header .pro-icon {
-  color: var(--g3);
+.plan-header .pro-icon,
+.plan-header .pro-icon ~ .plan-name {
+  color: var(--purple-5);
 }
-.plan-header .premium-icon {
-  color: var(--bg-pro);
+.plan-header .premium-icon,
+.plan-header .premium-icon ~ .plan-name {
+  color: var(--gold-4);
 }
 .plan-name {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--lg);
+  font-size: var(--xxl);
   font-weight: 700;
   color: var(--text-head);
   text-transform: uppercase;
   letter-spacing: 1px;
+  margin-left: var(--xs);
 }
-
-/* Цена */
 .plan-price {
-  text-align: center;
-  margin-bottom: 8px;
-  min-height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-
 .price-amount {
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--xl);
   font-weight: 700;
   color: var(--text-head);
-  margin-bottom: 4px;
 }
-
+.or {
+  margin: 0 var(--xxs);
+  font-size: var(--md);
+  font-weight: normal;
+}
 .price-period {
   font-size: var(--sm);
   font-weight: 400;
   color: var(--text-title);
 }
-
-.price-yearly {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xxs);
-  color: var(--text-base);
-}
-
 .price-discount {
-  color: #48bb78;
+  margin-left: var(--xxs);
+  color: var(--g3);
   font-weight: 700;
 }
-
-/* Фичи */
 .plan-features {
   flex: 1;
-  margin-bottom: 8px;
+  margin-bottom: var(--xxs);
 }
-
 .feature-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--xxs);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
+  font-size: var(--md);
   color: var(--text-base);
 }
-
 .feature-icon {
-  color: #48bb78;
+  color: var(--g2);
   font-size: var(--md);
   font-weight: 700;
   flex-shrink: 0;
 }
-
 .feature-text {
   line-height: 1.4;
 }
-
-/* Кнопка */
-.plan-button {
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.plan-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Кнопка для текущего плана */
 .btn-current {
   background: var(--bg-main);
   color: var(--text-head);
   border: 1px solid var(--border);
 }
-
 .btn-current:hover:not(:disabled) {
   background: var(--border);
 }
-
-/* Кнопка для upgrade */
 .btn-upgrade {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 1px solid var(--blue-3);
   color: white;
 }
-
 .btn-upgrade:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
-
-/* Кнопка для featured плана */
-.btn-featured {
-  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
-  color: white;
-}
-
-.btn-featured:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(246, 173, 85, 0.4);
-}
-
-.plan-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-/* Адаптив */
-@media (max-width: 768px) {
+/* TABLETS (768px and up) */
+@media (min-width: 768px) {
   .plan-card {
-    min-height: auto;
+    min-height: 320px;
+  }
+  .plan-price {
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .price-amount,
+  .or {
+    display: block;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
   }
 }
-/* Mobile optimizations */
-@media (max-width: 480px) {
-  .plan-card {
-    padding: 12px;
-    min-height: auto;
-  }
-  .plan-icon {
-    font-size: 2.5rem;
-    margin: 0;
+/* DESKTOPS (1200px and up) */
+@media (min-width: 1200px) {
+  .plan-price {
+    min-height: 100px;
   }
 }
 </style>

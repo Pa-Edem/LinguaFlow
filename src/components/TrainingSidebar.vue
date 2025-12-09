@@ -1,3 +1,4 @@
+<!-- src/components/TrainingSidebar.vue -->
 <template>
   <div class="training-sidebar-content">
     <div class="desktop-only">

@@ -89,7 +89,6 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-// import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
 import { useUiStore } from '../stores/uiStore';
 import { getPriceId, calculateYearlyDiscount } from '../config/stripeConfig';
@@ -103,7 +102,6 @@ const props = defineProps({
   },
 });
 
-// const router = useRouter();
 const userStore = useUserStore();
 const uiStore = useUiStore();
 
@@ -419,7 +417,7 @@ async function manageSubscription() {
 .manage-hint,
 .checkout-hint {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xxs);
+  font-size: var(--sm);
   color: var(--text-title);
   margin: 0;
 }

@@ -45,6 +45,7 @@ export const useTrainingStore = defineStore('training', {
     isMicActive: false,
     recognitionText: '',
     formattedRecognitionText: '',
+    currentAccuracy: 0, // ✅ НОВОЕ: храним точность
     geminiResult: '',
     isLoading: false,
     currentAudio: null,
@@ -96,6 +97,7 @@ export const useTrainingStore = defineStore('training', {
     resetLineState() {
       this.recognitionText = '';
       this.formattedRecognitionText = '';
+      this.currentAccuracy = 0; // ✅ НОВОЕ: сбрасываем точность
       this.geminiResult = '';
     },
     playCurrentLineAudio() {
@@ -211,6 +213,7 @@ export const useTrainingStore = defineStore('training', {
 
       this.recognitionText = '';
       this.formattedRecognitionText = '';
+      this.currentAccuracy = 0; // ✅ НОВОЕ: сбрасываем точность
       this.geminiResult = '';
 
       this.recognition = new SpeechRecognition();
@@ -247,8 +250,10 @@ export const useTrainingStore = defineStore('training', {
 
         if (finalTranscript && finalTranscript !== i18n.global.t('store.listening')) {
           if (this.currentTrainingType === 'level-2') {
-            const { formattedText } = compareAndFormatTexts(finText, finalTranscript);
-            this.formattedRecognitionText = formattedText;
+            const result = compareAndFormatTexts(finText, finalTranscript);
+            this.formattedRecognitionText = result.formattedText;
+            this.currentAccuracy = result.accuracy; // ✅ НОВОЕ: сохраняем точность
+            console.log(`✅ Точность реплики: ${result.accuracy}%`, result.details);
           } else if (this.currentTrainingType === 'level-3') {
             this.checkUserTranslation(rusText, finText, level);
           }

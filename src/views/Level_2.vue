@@ -11,7 +11,7 @@
         >
           <template #extra-controls>
             <button
-              class="btn btn-control oooo oloo mic"
+              class="btn btn-control mic"
               @click="trainingStore.toggleSpeechRecognition()"
               :class="{ active: trainingStore.isMicActive }"
             >
@@ -36,14 +36,20 @@
         </div>
         <div class="div"></div>
         <div class="recognized-text-container">
-          <p
-            v-if="trainingStore.formattedRecognitionText"
-            class="recognized-text"
-            v-html="trainingStore.formattedRecognitionText"
-          ></p>
-          <p v-else class="placeholder-text">
-            {{ $t('level2.info') }}
-          </p>
+          <div class="text-with-checkmark">
+            <p
+              v-if="trainingStore.formattedRecognitionText"
+              class="recognized-text"
+              v-html="trainingStore.formattedRecognitionText"
+            ></p>
+            <p v-else class="placeholder-text">
+              {{ $t('level2.info') }}
+            </p>
+
+            <!-- CHECK или CROSS СПРАВА ОТ ТЕКСТА -->
+            <CheckmarkAnimation :show="showCheckmark" />
+            <CrossAnimation :show="showCross" />
+          </div>
         </div>
       </div>
     </DialogLayout>
@@ -75,19 +81,26 @@
 
     <footer class="actions-footer">
       <div class="recognized-text-container-mobile">
-        <p
-          v-if="trainingStore.formattedRecognitionText"
-          class="recognized-text-mobile"
-          v-html="trainingStore.formattedRecognitionText"
-        ></p>
-        <p v-else class="placeholder-text-mobile">
-          {{ $t('level2.info') }}
-        </p>
+        <!-- ✅ КОНТЕЙНЕР С ТЕКСТОМ И ГАЛОЧКОЙ -->
+        <div class="text-with-checkmark">
+          <p
+            v-if="trainingStore.formattedRecognitionText"
+            class="recognized-text-mobile"
+            v-html="trainingStore.formattedRecognitionText"
+          ></p>
+          <p v-else class="placeholder-text-mobile">
+            {{ $t('level2.info') }}
+          </p>
+
+          <!-- CHECK или CROSS СПРАВА ОТ ТЕКСТА -->
+          <CheckmarkAnimation :show="showCheckmark" />
+          <CrossAnimation :show="showCross" />
+        </div>
       </div>
       <TrainingSidebar :dialogId="props.id" :description="$t('level2.descriptionMobile')">
         <template #extra-controls>
           <button
-            class="btn btn-control oooo oloo mobile mic"
+            class="btn btn-control mobile mic"
             @click="trainingStore.toggleSpeechRecognition()"
             :class="{ active: trainingStore.isMicActive }"
           >
@@ -104,12 +117,20 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useDialogStore } from '../stores/dialogStore';
 import { useTrainingStore } from '../stores/trainingStore';
 import { useBreakpoint } from '../composables/useBreakpoint';
+import { useUiStore } from '../stores/uiStore';
+import { useUserStore } from '../stores/userStore';
 import DialogLayout from '../components/DialogLayout.vue';
 import TrainingSidebar from '../components/TrainingSidebar.vue';
+import CheckmarkAnimation from '../components/CheckmarkAnimation.vue';
+import CrossAnimation from '../components/CrossAnimation.vue';
+import { saveDialogProgress } from '../services/trainingProgressService';
+import { TRAINING_CONFIG } from '../config/trainingConfig';
 
 const props = defineProps({ id: { type: String, required: true } });
 const dialogStore = useDialogStore();
 const trainingStore = useTrainingStore();
+const uiStore = useUiStore();
+const userStore = useUserStore();
 const { isDesktop } = useBreakpoint();
 
 const lineIndex = computed(() => trainingStore.currentLineIndex);
@@ -117,6 +138,47 @@ const dialog = computed(() => dialogStore.currentDialog);
 
 const mobileContent = ref(null);
 const desktopContent = ref(null);
+
+// ✅ НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ТОЧНОСТИ
+const replicaScores = ref([]);
+const showCheckmark = ref(false);
+const showCross = ref(false);
+
+// ✅ СЛЕДИМ ЗА ТОЧНОСТЬЮ ИЗ STORE
+watch(
+  () => trainingStore.currentAccuracy,
+  (newAccuracy) => {
+    if (newAccuracy > 0) {
+      // Сохраняем результат реплики
+      replicaScores.value[trainingStore.currentLineIndex] = newAccuracy;
+
+      console.log(`✅ Реплика ${trainingStore.currentLineIndex + 1}: ${newAccuracy}%`);
+
+      // ✅ ПОКАЗЫВАЕМ ГАЛОЧКУ если точность >= 85%
+      if (newAccuracy >= TRAINING_CONFIG.completion.minReplicaAccuracy) {
+        showCheckmark.value = true;
+        setTimeout(() => {
+          showCheckmark.value = false;
+        }, 3000);
+      } else {
+        // ПОКАЗЫВАЕМ КРЕСТИК если точность < 85%
+        showCross.value = true;
+        setTimeout(() => {
+          showCross.value = false;
+        }, 3000);
+      }
+
+      // ПРОВЕРЯЕМ: ВСЕ РЕПЛИКИ ПРОЙДЕНЫ И МЫ НА ПОСЛЕДНЕЙ?
+      const totalReplicas = dialog.value.fin.length;
+      const completedReplicas = replicaScores.value.filter((score) => score !== undefined).length;
+      const isLastReplica = trainingStore.currentLineIndex === totalReplicas - 1;
+
+      if (completedReplicas === totalReplicas && isLastReplica) {
+        completeTraining();
+      }
+    }
+  }
+);
 
 watch(lineIndex, () => {
   setTimeout(() => {
@@ -135,16 +197,84 @@ const visibleLines = computed(() => {
   };
 });
 
+// ✅ ЗАВЕРШЕНИЕ ТРЕНИРОВКИ
+async function completeTraining() {
+  // Фильтруем только реально пройденные реплики
+  const validScores = replicaScores.value.filter((score) => score !== undefined);
+
+  if (validScores.length === 0) {
+    console.warn('⚠️ Нет результатов для сохранения');
+    return;
+  }
+
+  // Вычисляем среднюю точность
+  const averageAccuracy = Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length);
+
+  // Проверяем прохождение
+  const dialogCompleted = TRAINING_CONFIG.isDialogCompleted(validScores);
+
+  console.log(`🎯 Завершение тренировки:`, {
+    averageAccuracy,
+    dialogCompleted,
+    scores: validScores,
+  });
+
+  // ✅ ПОЛУЧИТЬ ТАРИФ ПОЛЬЗОВАТЕЛЯ
+  const tier = userStore.isPremium ? 'premium' : userStore.isPro ? 'pro' : 'free';
+  console.log(`💳 Тариф пользователя: ${tier}`);
+
+  // ✅ СОХРАНИТЬ ПРОГРЕСС (в зависимости от тарифа)
+  const result = await saveDialogProgress(
+    props.id,
+    'level2',
+    {
+      averageAccuracy,
+      replicaScores: validScores,
+    },
+    tier,
+    dialog.value?.languageLevel // A1, A2, B1...
+  );
+
+  // ✅ ПОКАЗАТЬ ДОСТИЖЕНИЯ (если есть)
+  if (result && result.newAchievements && result.newAchievements.length > 0) {
+    console.log('🎉 Новые достижения разблокированы:', result.newAchievements);
+    // TODO: Показать уведомления о достижениях
+  }
+
+  // ✅ ПОКАЗАТЬ МОДАЛКУ (в зависимости от тарифа)
+  if (tier === 'free') {
+    // FREE: модалка без сохранения
+    uiStore.showModal('trainingCompleteFree', {
+      averageAccuracy,
+      dialogCompleted,
+    });
+  } else {
+    // PRO/PREMIUM: модалка с результатами
+    uiStore.showModal('trainingComplete', {
+      averageAccuracy,
+      dialogCompleted,
+      replicaScores: validScores,
+      minReplicaAccuracy: TRAINING_CONFIG.completion.minReplicaAccuracy,
+      minDialogAccuracy: TRAINING_CONFIG.completion.minDialogAccuracy,
+    });
+  }
+}
+
 onMounted(async () => {
   trainingStore.setCurrentTrainingType('level-2');
   await dialogStore.fetchDialogById(props.id);
   if (dialogStore.currentDialog) {
     trainingStore.startLevel();
   }
+  // Инициализируем массив результатов
+  replicaScores.value = Array(dialog.value?.fin.length || 0).fill(undefined);
 });
 
 onUnmounted(() => {
   trainingStore.stopSpeech();
+
+  // Сбрасываем результаты
+  replicaScores.value = [];
 });
 </script>
 
@@ -167,19 +297,32 @@ onUnmounted(() => {
 }
 
 .recognized-text-container {
-  height: 90px;
-  flex-shrink: 0;
+  min-height: 80px;
   padding: 1rem 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+  border-top: 1px solid var(--border);
+}
+.text-with-checkmark {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .recognized-text,
 .placeholder-text {
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--md);
   color: var(--text-base);
+}
+.accuracy-text {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
+  color: var(--text-muted);
+  font-weight: 600;
 }
 /* ======================== МОБИЛЬНЫЙ ======================== */
 .page-container {
@@ -196,13 +339,12 @@ onUnmounted(() => {
 .actions-footer {
   flex-shrink: 0;
   padding: 8px 16px 16px;
-  background-color: var(--y10);
+  background-color: var(--bg-side);
   border-top: 1px solid var(--bb);
   box-shadow: 0 -4px 8px var(--shadow);
 }
 .recognized-text-container-mobile {
-  height: 60px;
-  flex-shrink: 0;
+  min-height: 40px;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -214,5 +356,12 @@ onUnmounted(() => {
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--md);
   color: var(--text-head);
+}
+.accuracy-text-mobile {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: var(--sm);
+  color: var(--text-muted);
+  font-weight: 600;
+  margin: 0;
 }
 </style>

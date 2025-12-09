@@ -119,15 +119,15 @@ const toggle = (index) => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  background: transparent;
+  background-color: transparent;
   border: none;
   cursor: pointer;
   text-align: left;
-  transition: background 0.2s ease;
+  transition: 'background-color' 0.2s ease;
 }
 
 .faq-question:hover {
-  background: var(--bg-side);
+  background-color: var(--bg-side);
 }
 
 .question-text {

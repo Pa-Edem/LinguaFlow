@@ -113,17 +113,6 @@
             <td class="value">✅ Доступен</td>
             <td class="value highlight">✅ Доступен</td>
           </tr>
-
-          <!-- Оффлайн режим -->
-          <tr>
-            <td class="feature-name">
-              <div class="feature-title">Оффлайн режим</div>
-              <div class="feature-desc">Работа без интернета</div>
-            </td>
-            <td class="value">❌</td>
-            <td class="value">❌</td>
-            <td class="value highlight">✅ Скоро</td>
-          </tr>
         </tbody>
       </table>
     </div>

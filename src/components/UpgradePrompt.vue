@@ -54,9 +54,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/userStore';
 
 const props = defineProps({
   show: {
@@ -77,7 +76,6 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const router = useRouter();
-const userStore = useUserStore();
 
 /**
  * Закрыть модалку

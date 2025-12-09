@@ -14,11 +14,9 @@
           <div class="theme-switcher">
             <button @click="settingsStore.setTheme('light')" :class="{ active: settingsStore.theme === 'light' }">
               <span class="material-symbols-outlined">light_mode</span>
-              <!-- {{ $t('settings.light') }} -->
             </button>
             <button @click="settingsStore.setTheme('dark')" :class="{ active: settingsStore.theme === 'dark' }">
               <span class="material-symbols-outlined">dark_mode</span>
-              <!-- {{ $t('settings.dark') }} -->
             </button>
           </div>
         </div>
@@ -203,7 +201,7 @@ const togglePlayTest = () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  max-width: 800px;
+  max-width: 768px;
   margin: 0 auto;
   overflow: hidden;
 }
@@ -211,13 +209,11 @@ const togglePlayTest = () => {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--xs);
 }
 .page-title {
-  margin: 16px 0 0 16px;
+  margin: var(--lg) 0 0 var(--lg);
   font-size: var(--lg);
-  font-family: 'Roboto Condensed', sans-serif;
-  color: var(--text-head);
 }
 .desktop-only {
   display: none;
@@ -225,23 +221,21 @@ const togglePlayTest = () => {
 .settings-content {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 0 16px 32px 16px;
+  padding: 0 var(--lg) var(--xxxl) var(--lg);
 }
 .settings-group {
-  padding: 12px 0;
+  padding: var(--lg) 0;
 }
 .group-title {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xs);
-  font-weight: 700;
+  font-size: var(--sm);
   text-align: center;
   color: var(--text-base);
   text-transform: uppercase;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
 }
 .group-title .pro {
-  font-size: var(--xs);
+  font-size: var(--lg);
   color: var(--gold-4);
   vertical-align: middle;
   margin-left: 8px;
@@ -254,7 +248,7 @@ const togglePlayTest = () => {
   border-top: 1px solid var(--border);
 }
 .setting-item {
-  height: 36px;
+  height: 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -262,7 +256,7 @@ const togglePlayTest = () => {
 }
 .setting-item label {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--sm);
+  font-size: var(--md);
   color: var(--text-title);
 }
 .theme-switcher {
@@ -292,11 +286,11 @@ const togglePlayTest = () => {
   border-radius: 6px;
   border: 1px solid var(--border);
   background-color: var(--bg-group);
-  font-size: var(--sm);
+  font-size: var(--md);
   color: var(--text-base);
 }
 .setting-item select option .pro-voice {
-  font-size: var(--xs);
+  font-size: var(--md);
   color: var(--bg-pro);
   vertical-align: middle;
   margin-left: 8px;
@@ -360,6 +354,9 @@ const togglePlayTest = () => {
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--sm);
   color: var(--text-title);
+}
+.slider-info span {
+  font-weight: 700;
 }
 .slider-container span {
   font-size: var(--xs);
@@ -429,7 +426,7 @@ input[type='range']::-moz-range-thumb {
   .settings-content {
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 8px;
+    padding-right: 16px;
   }
   .setting-item label {
     font-size: var(--sm);

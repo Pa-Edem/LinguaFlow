@@ -26,7 +26,7 @@ const dialog = computed(() => dialogStore.currentDialog);
 </script>
 
 <style scoped>
-/* 1. Стили для МОБИЛЬНЫХ УСТРОЙСТВ */
+/* MOBILES */
 .dialog-layout {
   display: flex;
   flex-direction: column;
@@ -49,7 +49,7 @@ const dialog = computed(() => dialogStore.currentDialog);
   padding: 16px;
   min-height: 0;
 }
-/* 2. Улучшения для ПЛАНШЕТОВ И БОЛЬШЕ */
+/* TABLETS & DESKTOPS */
 @media (min-width: 768px) {
   .dialog-layout {
     flex-direction: row;

@@ -1,90 +1,19 @@
 /* //src/styles/variables.css */
-/* :root {
-  --xxxs: 8px;
-  --xxs: 10px;
-  --xs: 12px;
-  --sm: 14px;
-  --md: 16px;
-  --lg: 18px;
-  --xl: 20px;
-  --xxl: 24px;
-  --xxxl: 32px;
-} */
-/* (tablets, 768px and up) */
-/* @media (min-width: 768px) {
-  :root {
-    --xxxs: 10px;
-    --xxs: 12px;
-    --xs: 14px;
-    --sm: 16px;
-    --md: 18px;
-    --lg: 20px;
-    --xl: 24px;
-    --xxl: 28px;
-    --xxxl: 32px;
-  }
-} */
-/* (large desktops, 1200px and up) */
-/* @media (min-width: 1200px) {
-  :root {
-    --xxxs: 12px;
-    --xxs: 14px;
-    --xs: 16px;
-    --sm: 18px;
-    --md: 20px;
-    --lg: 24px;
-    --xl: 28px;
-    --xxl: 32px;
-    --xxxl: 36px;
-  }
-} */
-
-/* 
- * ОБНОВЛЁННЫЕ ПЕРЕМЕННЫЕ + УТИЛИТЫ
- */
-
 :root {
   /* ========================================= */
-  /* РАЗМЕРЫ ШРИФТОВ (Твоя база) */
+  /* MOBILES (767px and down) - Базовый размер для rem */
   /* ========================================= */
-  --xxxs: 8px;
-  --xxs: 10px;
-  --xs: 12px;
-  --sm: 14px;
-  --md: 16px;
-  --lg: 18px;
-  --xl: 20px;
-  --xxl: 24px;
-  --xxxl: 32px;
+  font-size: 62.5%; /* Устанавливает 1rem = 10px (если базовый 16px) */
 
-  /* ========================================= */
-  /* НОВЫЕ УТИЛИТЫ */
-  /* ========================================= */
-
-  /* Spacing (отступы) */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-  --space-2xl: 48px;
-  --space-3xl: 64px;
-  --space-4xl: 96px;
-
-  /* Border Radius (скругление) */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-  --radius-full: 9999px;
-
-  /* Transitions (переходы) */
-  --transition-fast: 0.15s ease;
-  --transition-base: 0.2s ease;
-  --transition-slow: 0.3s ease;
-  --transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --xxxs: 0.4rem; /* 4px */
+  --xxs: 0.8rem; /* 8px */
+  --xs: 1rem; /* 10px */
+  --sm: 1.2rem; /* 12px */
+  --md: 1.4rem; /* 14px */
+  --lg: 1.6rem; /* 16px */
+  --xl: 1.8rem; /* 18px */
+  --xxl: 2rem; /* 20px */
+  --xxxl: 2.4rem; /* 24px */
 
   /* Z-index (слои) */
   --z-dropdown: 1000;
@@ -94,62 +23,24 @@
   --z-modal: 1050;
   --z-popover: 1060;
   --z-tooltip: 1070;
-
-  /* Line Heights (высота строки) */
-  --leading-none: 1;
-  --leading-tight: 1.25;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.75;
-  --leading-loose: 2;
-
-  /* Letter Spacing (межбуквенное расстояние) */
-  --tracking-tighter: -0.05em;
-  --tracking-tight: -0.025em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.025em;
-  --tracking-wider: 0.05em;
-  --tracking-widest: 0.1em;
-
-  /* Max Widths (максимальная ширина контейнеров) */
-  --max-w-xs: 320px;
-  --max-w-sm: 384px;
-  --max-w-md: 448px;
-  --max-w-lg: 512px;
-  --max-w-xl: 576px;
-  --max-w-2xl: 672px;
-  --max-w-3xl: 768px;
-  --max-w-4xl: 896px;
-  --max-w-5xl: 1024px;
-  --max-w-6xl: 1152px;
-  --max-w-7xl: 1280px;
-  --max-w-full: 100%;
 }
 
 /* ========================================= */
 /* TABLETS (768px and up) */
 /* ========================================= */
 @media (min-width: 768px) {
+  /* Базовый font-size можно сбросить на 100% (1rem = 16px) 
+     или оставить 62.5% для консистентного расчета */
   :root {
-    /* Размеры шрифтов */
-    --xxxs: 10px;
-    --xxs: 12px;
-    --xs: 14px;
-    --sm: 16px;
-    --md: 18px;
-    --lg: 20px;
-    --xl: 24px;
-    --xxl: 28px;
-    --xxxl: 32px;
-
-    /* Spacing увеличиваем */
-    --space-xs: 6px;
-    --space-sm: 12px;
-    --space-md: 20px;
-    --space-lg: 28px;
-    --space-xl: 40px;
-    --space-2xl: 56px;
-    --space-3xl: 72px;
-    --space-4xl: 112px;
+    --xxxs: 0.8rem; /* 8px */
+    --xxs: 1rem; /* 10px */
+    --xs: 1.2rem; /* 12px */
+    --sm: 1.4rem; /* 14px */
+    --md: 1.6rem; /* 16px */
+    --lg: 1.8rem; /* 18px */
+    --xl: 2rem; /* 20px */
+    --xxl: 2.4rem; /* 24px */
+    --xxxl: 2.8rem; /* 28px */
   }
 }
 
@@ -158,202 +49,14 @@
 /* ========================================= */
 @media (min-width: 1200px) {
   :root {
-    /* Размеры шрифтов */
-    --xxxs: 12px;
-    --xxs: 14px;
-    --xs: 16px;
-    --sm: 18px;
-    --md: 20px;
-    --lg: 24px;
-    --xl: 28px;
-    --xxl: 32px;
-    --xxxl: 36px;
-
-    /* Spacing увеличиваем ещё больше */
-    --space-xs: 8px;
-    --space-sm: 16px;
-    --space-md: 24px;
-    --space-lg: 32px;
-    --space-xl: 48px;
-    --space-2xl: 64px;
-    --space-3xl: 96px;
-    --space-4xl: 128px;
+    --xxxs: 1rem; /* 10px */
+    --xxs: 1.2rem; /* 12px */
+    --xs: 1.4rem; /* 14px */
+    --sm: 1.6rem; /* 16px */
+    --md: 1.8rem; /* 18px */
+    --lg: 2rem; /* 20px */
+    --xl: 2.4rem; /* 24px */
+    --xxl: 2.8rem; /* 28px */
+    --xxxl: 3.2rem; /* 32px */
   }
-}
-
-/* ========================================= */
-/* UTILITY CLASSES */
-/* ========================================= */
-
-/* Spacing Utilities */
-.p-xs {
-  padding: var(--space-xs);
-}
-.p-sm {
-  padding: var(--space-sm);
-}
-.p-md {
-  padding: var(--space-md);
-}
-.p-lg {
-  padding: var(--space-lg);
-}
-.p-xl {
-  padding: var(--space-xl);
-}
-
-.m-xs {
-  margin: var(--space-xs);
-}
-.m-sm {
-  margin: var(--space-sm);
-}
-.m-md {
-  margin: var(--space-md);
-}
-.m-lg {
-  margin: var(--space-lg);
-}
-.m-xl {
-  margin: var(--space-xl);
-}
-
-/* Gap Utilities */
-.gap-xs {
-  gap: var(--space-xs);
-}
-.gap-sm {
-  gap: var(--space-sm);
-}
-.gap-md {
-  gap: var(--space-md);
-}
-.gap-lg {
-  gap: var(--space-lg);
-}
-.gap-xl {
-  gap: var(--space-xl);
-}
-
-/* Border Radius Utilities */
-.rounded-xs {
-  border-radius: var(--radius-xs);
-}
-.rounded-sm {
-  border-radius: var(--radius-sm);
-}
-.rounded-md {
-  border-radius: var(--radius-md);
-}
-.rounded-lg {
-  border-radius: var(--radius-lg);
-}
-.rounded-xl {
-  border-radius: var(--radius-xl);
-}
-.rounded-full {
-  border-radius: var(--radius-full);
-}
-
-/* Text Sizes */
-.text-xxxs {
-  font-size: var(--xxxs);
-}
-.text-xxs {
-  font-size: var(--xxs);
-}
-.text-xs {
-  font-size: var(--xs);
-}
-.text-sm {
-  font-size: var(--sm);
-}
-.text-md {
-  font-size: var(--md);
-}
-.text-lg {
-  font-size: var(--lg);
-}
-.text-xl {
-  font-size: var(--xl);
-}
-.text-xxl {
-  font-size: var(--xxl);
-}
-.text-xxxl {
-  font-size: var(--xxxl);
-}
-
-/* Font Weights */
-.font-normal {
-  font-weight: 400;
-}
-.font-medium {
-  font-weight: 500;
-}
-.font-semibold {
-  font-weight: 600;
-}
-.font-bold {
-  font-weight: 700;
-}
-
-/* Line Heights */
-.leading-none {
-  line-height: var(--leading-none);
-}
-.leading-tight {
-  line-height: var(--leading-tight);
-}
-.leading-normal {
-  line-height: var(--leading-normal);
-}
-.leading-relaxed {
-  line-height: var(--leading-relaxed);
-}
-
-/* Letter Spacing */
-.tracking-tight {
-  letter-spacing: var(--tracking-tight);
-}
-.tracking-normal {
-  letter-spacing: var(--tracking-normal);
-}
-.tracking-wide {
-  letter-spacing: var(--tracking-wide);
-}
-
-/* Max Widths */
-.max-w-xs {
-  max-width: var(--max-w-xs);
-}
-.max-w-sm {
-  max-width: var(--max-w-sm);
-}
-.max-w-md {
-  max-width: var(--max-w-md);
-}
-.max-w-lg {
-  max-width: var(--max-w-lg);
-}
-.max-w-xl {
-  max-width: var(--max-w-xl);
-}
-.max-w-2xl {
-  max-width: var(--max-w-2xl);
-}
-.max-w-3xl {
-  max-width: var(--max-w-3xl);
-}
-.max-w-4xl {
-  max-width: var(--max-w-4xl);
-}
-.max-w-full {
-  max-width: var(--max-w-full);
-}
-
-/* Center */
-.mx-auto {
-  margin-left: auto;
-  margin-right: auto;
 }

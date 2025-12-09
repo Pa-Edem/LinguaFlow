@@ -3,78 +3,150 @@
   <div class="loader-overlay">
     <div class="tagcloud-wrapper">
       <div class="tagcloud-rotation">
-        <ul class="tagcloud-tags" style="--num-elements: 24">
+        <ul class="tagcloud-tags" style="--num-elements: 48">
           <li class="tagcloud-tag" style="--index: 1">
-            <div><span>water</span></div>
+            <div><span>la</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 2">
-            <div><span>livre</span></div>
+            <div><span>mér</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 3">
-            <div><span>blume</span></div>
+            <div><span>du</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 4">
-            <div><span>praia</span></div>
+            <div><span>Ofe</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 5">
-            <div><span>fiets</span></div>
+            <div><span>zä</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 6">
-            <div><span>ptak</span></div>
+            <div><span>Åil</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 7">
-            <div><span>strom</span></div>
+            <div><span>po</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 8">
-            <div><span>asztal</span></div>
+            <div><span>tro</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 9">
-            <div><span>tuli</span></div>
+            <div><span>Ces</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 10">
-            <div><span>fjell</span></div>
+            <div><span>ka</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 11">
-            <div><span>havet</span></div>
+            <div><span>re</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 12">
-            <div><span>cerul</span></div>
+            <div><span>ün</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 13">
-            <div><span>riba</span></div>
+            <div><span>bi</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 14">
-            <div><span>domov</span></div>
+            <div><span>Alo</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 15">
-            <div><span>casa</span></div>
+            <div><span>ne</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 16">
-            <div><span>поле</span></div>
+            <div><span>di</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 17">
-            <div><span>libro</span></div>
+            <div><span>Wäl</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 18">
-            <div><span>bord</span></div>
+            <div><span>vo</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 19">
-            <div><span>рука</span></div>
+            <div><span>da</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 20">
-            <div><span>fenêtre</span></div>
+            <div><span>ty</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 21">
-            <div><span>kutya</span></div>
+            <div><span>he</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 22">
-            <div><span>řeka</span></div>
+            <div><span>te</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 23">
-            <div><span>schule</span></div>
+            <div><span>sör</span></div>
           </li>
           <li class="tagcloud-tag" style="--index: 24">
-            <div><span>jabłko</span></div>
+            <div><span>gi</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 25">
+            <div><span>le</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 26">
+            <div><span>mo</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 27">
+            <div><span>rá</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 28">
+            <div><span>vi</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 29">
+            <div><span>li</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 30">
+            <div><span>bu</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 31">
+            <div><span>so</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 32">
+            <div><span>pa</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 33">
+            <div><span>me</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 34">
+            <div><span>cä</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 35">
+            <div><span>lu</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 36">
+            <div><span>Sse</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 37">
+            <div><span>brö</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 38">
+            <div><span>ri</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 39">
+            <div><span>fä</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 40">
+            <div><span>no</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 41">
+            <div><span>tu</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 42">
+            <div><span>Uku</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 43">
+            <div><span>chü</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 44">
+            <div><span>hy</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 45">
+            <div><span>pi</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 46">
+            <div><span>gö</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 47">
+            <div><span>si</span></div>
+          </li>
+          <li class="tagcloud-tag" style="--index: 48">
+            <div><span>Gra</span></div>
           </li>
         </ul>
       </div>
@@ -98,8 +170,6 @@
 .tagcloud-wrapper {
   --size: 320px;
   --_radius: calc(var(--size) / 2 - 44px);
-  font-family: 'Open Sans', sans-serif;
-  font-size: var(--sm);
 }
 .tagcloud-wrapper,
 .tagcloud-rotation,
@@ -169,6 +239,8 @@
   transform: rotateZ(0deg);
 }
 .tagcloud-wrapper .tagcloud-tag div span {
+  font-family: 'Roboto', sans-serif;
+  font-size: 20px;
   color: var(--text-head);
   text-decoration: none;
   font-weight: bold;

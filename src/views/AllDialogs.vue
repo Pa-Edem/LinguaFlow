@@ -42,9 +42,9 @@
     </header>
 
     <main class="content">
-      <div v-if="dialogs.length > 0" class="dialogs-grid">
+      <div v-if="dialogs.length > 0">
         <!-- ✅ НОВЫЙ компактный индикатор лимитов только для FREE и PRO -->
-        <div v-if="!userStore.isPremium" class="limits-compact" :class="!isDesktop ? '' : 'p16'">
+        <div v-if="!userStore.isPremium" class="limits-compact">
           <div class="limits-progress">
             <!-- Генерация -->
             <div class="limit-row">
@@ -282,37 +282,7 @@ onMounted(async () => {
   await notificationStore.checkForNewNotifications();
 });
 
-// const goToCreateDialog = async () => {
-//   // ✅ PREMIUM — всегда можно создавать
-//   if (userStore.isPremium) {
-//     router.push({ name: 'new-dialog' });
-//     return;
-//   }
-
-//   // ✅ PRO/FREE — проверяем лимиты
-//   // Сначала обновляем счётчики с сервера
-//   await settingsStore.loadUsageStats();
-
-//   // Проверяем актуальные лимиты
-//   const dailyCount = settingsStore.dailyGenerationCount;
-//   const dailyLimit = settingsStore.limit.dailyGenerations;
-//   const totalCount = dialogStore.allDialogs.length;
-//   const totalLimit = settingsStore.limit.totalDialogs;
-
-//   // Если можно генерировать — переходим
-//   if (dailyCount < dailyLimit && totalCount < totalLimit) {
-//     router.push({ name: 'new-dialog' });
-//   }
-//   // Если лимит достигнут — показываем модалку и блокируем кнопку
-//   else {
-//     uiStore.showUpgradeModal();
-//     sessionStorage.setItem('upgradeShown_create', 'true');
-//     upgradeShownForCreate.value = true;
-//   }
-// };
-
 // ✅ Обработчик активации trial из модалки
-
 const goToCreateDialog = async () => {
   // ✅ PREMIUM — всегда можно создавать
   if (userStore.isPremium) {
@@ -356,9 +326,7 @@ const handleTrialDeclined = () => {
 </script>
 
 <style scoped>
-/* ============================================= */
-/* 1. СТИЛИ ДЛЯ МОБИЛЬНЫХ (по умолчанию) */
-/* ============================================= */
+/* MOBILES (767px and down) */
 .page-wrapper {
   display: flex;
   flex-direction: column;
@@ -404,7 +372,7 @@ main.content {
   margin-bottom: 50px;
 }
 .level-title {
-  font-size: var(--xxs);
+  font-size: var(--xs);
   color: var(--text-title);
   text-transform: uppercase;
   padding-left: 8px;
@@ -436,7 +404,7 @@ main.content {
   padding: 8px 16px;
   color: var(--text-head);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xxs);
+  font-size: var(--xs);
 }
 .message-container {
   height: 100%;
@@ -451,74 +419,59 @@ main.content {
   color: var(--text-head);
   margin-bottom: 32px;
 }
-/* ✅ НОВЫЕ СТИЛИ для компактного индикатора */
 .limits-compact {
   display: flex;
   flex-wrap: nowrap;
   background: var(--bg-side);
   border-radius: 12px;
-  padding: 8px;
+  padding: var(--xxs) var(--sm);
   border: 1px solid var(--border);
-}
-.p16 {
-  padding: 16px 8px;
 }
 .limits-progress {
   flex-grow: 1;
   padding: 0 8px;
 }
-
 .limit-row {
   margin-bottom: 8px;
 }
-
 .limit-row:last-of-type {
   margin-bottom: 0;
 }
-
 .limit-info {
   display: flex;
   align-items: center;
   gap: 6px;
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xxs);
+  font-size: var(--sm);
   color: var(--text-base);
 }
-
 .limit-label {
   font-weight: 400;
 }
-
 .limit-value {
   font-weight: 500;
   color: var(--text-head);
 }
-
 .limit-accumulated {
   color: var(--text-title);
 }
-
 .limit-progress-bar {
   height: 6px;
   background: var(--y3);
   border-radius: 3px;
   overflow: hidden;
 }
-
 .progress-fill {
   height: 100%;
   border-radius: 3px;
   transition: width 0.5s ease;
 }
-
 .progress-fill.generation {
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
 }
-
 .progress-fill.preview {
   background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
 }
-
 .progress-fill.storage {
   background: linear-gradient(90deg, #ed8936 0%, #dd6b20 100%);
 }
@@ -527,9 +480,7 @@ main.content {
   flex-direction: column;
   justify-content: center;
 }
-/* ============================================= */
-/* 2. СТИЛИ ДЛЯ ПЛАНШЕТОВ И ДЕСКТОПОВ */
-/* ============================================= */
+/* TABLETS & DESKTOPS (768px and up)  */
 @media (min-width: 768px) {
   .page-wrapper {
     flex-direction: row;

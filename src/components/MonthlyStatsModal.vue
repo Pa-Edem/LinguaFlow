@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   show: {

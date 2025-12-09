@@ -147,20 +147,12 @@
   /* ГРАДИЕНТЫ */
   /* ========================================= */
   --gradient-common: linear-gradient(135deg, hsl(30, 20%, 75%) 0%, hsl(40, 40%, 85%) 100%);
-
-  /* PRO (сохраняем твой) */
   --gradient-pro: linear-gradient(hsl(40, 60%, 60%) 0%, hsl(40, 60%, 85%) 100%);
-
-  /* НОВЫЕ градиенты */
   --gradient-purple: linear-gradient(135deg, var(--purple-3) 0%, var(--purple-4) 100%);
   --gradient-gold: linear-gradient(135deg, var(--gold-3) 0%, var(--gold-4) 100%);
   --gradient-blue: linear-gradient(135deg, var(--blue-3) 0%, var(--blue-4) 100%);
-
-  /* Subtle градиенты для фонов */
   --gradient-bg: linear-gradient(135deg, var(--y1) 0%, var(--y2) 100%);
   --gradient-card: linear-gradient(to bottom, var(--y0) 0%, var(--y2) 100%);
-
-  /* Radial градиенты (сохраняем твои) */
   --radial-15: rgba(242, 238, 233, 0.75);
   --radial-65: rgba(242, 238, 233, 0);
 

@@ -119,45 +119,68 @@ async function getOrUpdateUsage(userId, tier, limits) {
     // Использовано сегодня
     dailyUsageToday: 0,
     dailyPreviewToday: 0,
+    // Текущий тариф
+    tier: tier,
   };
 
   if (usageDoc.exists) {
     const existing = usageDoc.data();
 
     // ✅ ПРОВЕРКА СМЕНЫ ТАРИФА
-    // Если тариф изменился (например FREE → PRO при активации trial)
-    // Пересчитываем accumulated с учётом новых лимитов
+    // Если тариф изменился (например PREMIUM → FREE или FREE → PRO)
     if (!existing.tier || existing.tier !== tier) {
-      console.log(`🔄 Смена тарифа ${existing.tier} → ${tier} для ${userId}`);
+      console.log(`🔄 Смена тарифа ${existing.tier || 'unknown'} → ${tier} для ${userId}`);
 
-      // Вычисляем сколько уже использовано в эту неделю
-      const usedGenerations = existing.dailyGenerationCount || 0;
-      const usedPreview = existing.dailyPreviewCount || 0;
+      // ✅ ПРАВИЛЬНАЯ ЛОГИКА:
+      // При смене тарифа начинаем С НУЛЯ с новыми лимитами
+      // Игнорируем предыдущие счётчики, т.к. они относились к другому тарифу
 
-      // Устанавливаем новые лимиты
-      // Начинаем с дневного лимита нового тарифа минус уже использованное
-      usageData.accumulatedGenerations = Math.max(0, limits.dailyGenerations - usedGenerations);
-      usageData.accumulatedPreview = Math.max(0, limits.dailyPreview - usedPreview);
-      usageData.dailyUsageToday = existing.dailyUsageToday || 0;
-      usageData.dailyPreviewToday = existing.dailyPreviewToday || 0;
+      if (tier === 'free' || tier === 'pro') {
+        // FREE и PRO - устанавливаем дневной лимит
+        usageData.accumulatedGenerations = limits.dailyGenerations;
+        usageData.accumulatedPreview = limits.dailyPreview;
+      } else if (tier === 'premium') {
+        // PREMIUM - безлимит, оставляем 0 (не важно)
+        usageData.accumulatedGenerations = 0;
+        usageData.accumulatedPreview = 0;
+      }
+
+      // ✅ Сбрасываем дневные счётчики
+      usageData.dailyUsageToday = 0;
+      usageData.dailyPreviewToday = 0;
+
+      // Сохраняем дату недели
       usageData.weekStartDate = existing.weekStartDate || weekStart;
-      usageData.lastResetDate = existing.lastResetDate || weekStart;
-      usageData.tier = tier; // ✅ Сохраняем текущий тариф
-    }
+      usageData.lastResetDate = weekStart;
+      usageData.tier = tier;
 
+      console.log(`✅ Новые лимиты после смены тарифа:
+        accumulatedGenerations: ${usageData.accumulatedGenerations}
+        accumulatedPreview: ${usageData.accumulatedPreview}
+        dailyUsageToday: 0
+        dailyPreviewToday: 0`);
+    }
     // Проверяем, новая ли неделя
-    if (existing.weekStartDate !== weekStart) {
+    else if (existing.weekStartDate !== weekStart) {
       console.log(`🔄 Новая неделя! Сброс накоплений для ${userId}`);
 
       // Сброс к базовым значениям
-      usageData.accumulatedGenerations = limits.dailyGenerations;
-      usageData.accumulatedPreview = limits.dailyPreview;
+      if (tier === 'free' || tier === 'pro') {
+        usageData.accumulatedGenerations = limits.dailyGenerations;
+        usageData.accumulatedPreview = limits.dailyPreview;
+      } else if (tier === 'premium') {
+        usageData.accumulatedGenerations = 0;
+        usageData.accumulatedPreview = 0;
+      }
+
       usageData.dailyUsageToday = 0;
       usageData.dailyPreviewToday = 0;
       usageData.weekStartDate = weekStart;
       usageData.lastResetDate = weekStart;
-    } else if (existing.date !== today) {
-      // Новый день (но та же неделя)
+      usageData.tier = tier;
+    }
+    // Новый день (но та же неделя)
+    else if (existing.date !== today) {
       console.log(`📅 Новый день для ${userId}`);
 
       // ✅ FREE и PRO имеют накопление
@@ -184,28 +207,34 @@ async function getOrUpdateUsage(userId, tier, limits) {
       usageData.dailyPreviewToday = 0;
       usageData.weekStartDate = existing.weekStartDate;
       usageData.lastResetDate = existing.lastResetDate;
-    } else {
-      // Тот же день - копируем всё
-      usageData = { ...existing };
+      usageData.tier = tier;
+    }
+    // Тот же день - копируем всё
+    else {
+      usageData = { ...existing, tier: tier }; // ✅ Обновляем tier на всякий случай
     }
   } else {
     // Первый запуск - устанавливаем базовые значения
+    console.log(`🆕 Первый запуск для ${userId}, тариф: ${tier}`);
+
     if (tier === 'free' || tier === 'pro') {
       usageData.accumulatedGenerations = limits.dailyGenerations;
       usageData.accumulatedPreview = limits.dailyPreview;
+    } else if (tier === 'premium') {
+      usageData.accumulatedGenerations = 0;
+      usageData.accumulatedPreview = 0;
     }
-    // PREMIUM - оставляем 0 (безлимит)
 
-    // ✅ Сохраняем текущий тариф
     usageData.tier = tier;
   }
+
   // Сохраняем обновлённые данные
   await usageRef.set(usageData, { merge: true });
   return usageData;
 }
 
 /* ============================================
-// ФУНКЦИЯ 1: getSpeech (✅ ИСПРАВЛЕНА)
+// ФУНКЦИЯ 1: getSpeech
 // ==========================================*/
 export const getSpeech = onCall(async (request) => {
   const userId = request.auth?.uid;
@@ -271,7 +300,7 @@ export const getSpeech = onCall(async (request) => {
 });
 
 /* ============================================
-// ФУНКЦИЯ 2: getAvailableVoices (✅ ИСПРАВЛЕНА + ИМЕНА)
+// ФУНКЦИЯ 2: getAvailableVoices
 // ==========================================*/
 export const getAvailableVoices = onCall(async (request) => {
   const userId = request.auth?.uid;
@@ -536,20 +565,42 @@ export const deleteUserAccount = onCall(async (request) => {
       console.log(`✅ Удалено ${dialogsSnapshot.size} диалогов`);
     }
 
-    // 2. Удаляем документ пользователя
+    // ✅ 2. Удаляем уведомления из коллекции notifications
+    const notificationsSnapshot = await db.collection('notifications').where('userId', '==', userId).get();
+
+    if (!notificationsSnapshot.empty) {
+      const batch = db.batch();
+      notificationsSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      console.log(`✅ Удалено ${notificationsSnapshot.size} уведомлений`);
+    }
+
+    // ✅ 3. Удаляем записи из коллекции usage
+    const usageSnapshot = await db.collection('usage').where('userId', '==', userId).get();
+
+    if (!usageSnapshot.empty) {
+      const batch = db.batch();
+      usageSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      console.log(`✅ Удалено ${usageSnapshot.size} записей usage`);
+    }
+
+    // ✅ 4. Удаляем подколлекцию dialogProgress в users/{userId}
+    const dialogProgressRef = db.collection('users').doc(userId).collection('dialogProgress');
+    const dialogProgressSnapshot = await dialogProgressRef.get();
+
+    if (!dialogProgressSnapshot.empty) {
+      const batch = db.batch();
+      dialogProgressSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      console.log(`✅ Удалено ${dialogProgressSnapshot.size} записей dialogProgress`);
+    }
+
+    // 5. Удаляем документ пользователя
     await db.collection('users').doc(userId).delete();
     console.log('✅ Документ пользователя удален');
 
-    // 3. Удаляем usage данные
-    const usageRef = db.collection('users').doc(userId).collection('usage').doc('daily');
-    const usageDoc = await usageRef.get();
-
-    if (usageDoc.exists) {
-      await usageRef.delete();
-      console.log('✅ Usage данные удалены');
-    }
-
-    // 4. Удаляем данные Stripe Extension (customers)
+    // 6. Удаляем данные Stripe Extension (customers)
     const customerRef = db.collection('customers').doc(userId);
     const customerSnapshot = await customerRef.get();
 
@@ -573,7 +624,7 @@ export const deleteUserAccount = onCall(async (request) => {
       console.log('✅ Документ customers удален');
     }
 
-    // 5. Удаляем Firebase Auth аккаунт (последним!)
+    // 7. Удаляем Firebase Auth аккаунт (последним!)
     await auth.deleteUser(userId);
     console.log('✅ Firebase Auth аккаунт удален');
 

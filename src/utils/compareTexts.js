@@ -1,18 +1,35 @@
 // src/utils/compareTexts.js
+import { TRAINING_CONFIG } from '../config/trainingConfig';
 
-// Функция для разделения текста на слова, пробелы и знаки препинания
+/**
+ * Функция для разделения текста на слова, пробелы и знаки препинания
+ * @param {string} text - Исходный текст
+ * @returns {Array<string>} - Массив частей текста
+ */
 function splitTextWithPunctuationAndSpaces(text) {
   return text.match(/\p{L}+|\s+|[.,!?;:]/gu);
 }
 
-// Функция для сравнения и форматирования
+/**
+ * Функция для сравнения и форматирования текстов с градацией ошибок
+ * @param {string} originalText - Оригинальная реплика
+ * @param {string} recognizedText - Распознанная реплика
+ * @returns {{formattedText: string, accuracy: number, details: object}}
+ */
 export function compareAndFormatTexts(originalText, recognizedText) {
+  // 1. Разбиваем оригинал на части (слова, пробелы, пунктуация)
   const originalParts = splitTextWithPunctuationAndSpaces(originalText);
+
+  // 2. Извлекаем только слова из оригинала
   const originalWords = originalParts.filter((part) => /\p{L}+/u.test(part));
+
+  // 3. Извлекаем слова из распознанного текста (игнорируем пунктуацию)
   const recognizedWords = (recognizedText.match(/\p{L}+/gu) || []).map((word) => word.toLowerCase());
 
   const m = originalWords.length;
   const n = recognizedWords.length;
+
+  // 4. Алгоритм Левенштейна (динамическое программирование)
   const dp = Array(m + 1)
     .fill(null)
     .map(() => Array(n + 1).fill(0));
@@ -47,6 +64,7 @@ export function compareAndFormatTexts(originalText, recognizedText) {
     }
   }
 
+  // 5. Восстанавливаем путь (matching)
   const matches = [];
   let i = m,
     j = n;
@@ -69,48 +87,121 @@ export function compareAndFormatTexts(originalText, recognizedText) {
     }
   }
 
+  // 6. Определяем тип ошибки для каждого слова (ЗЕЛЁНЫЙ/ЖЁЛТЫЙ/КРАСНЫЙ)
+  const wordResults = matches
+    .filter((match) => match.type !== 'insertion') // insertion не относится к оригиналу
+    .map((match) => {
+      if (match.type === 'correct') {
+        return { type: 'correct', text: match.original };
+      } else if (match.type === 'mismatch') {
+        // Используем TRAINING_CONFIG для определения типа ошибки
+        const errorType = TRAINING_CONFIG.getErrorType(match.original, match.recognized);
+        return {
+          type: errorType,
+          text: match.original,
+          recognized: match.recognized,
+        };
+      } else if (match.type === 'deletion') {
+        // Слово пропущено = серьёзная ошибка
+        return { type: 'major', text: match.original, recognized: null };
+      }
+    });
+
+  // 7. Вычисляем точность
+  const accuracy = TRAINING_CONFIG.calculateAccuracy(wordResults);
+
+  // 8. Формируем HTML с цветной подсветкой
   let formattedText = '';
   let matchIndex = 0;
-  let correctWordsCount = 0;
+  let correctCount = 0;
+  let minorCount = 0;
+  let majorCount = 0;
 
   for (const part of originalParts) {
     if (/\p{L}+/u.test(part)) {
+      // Это слово
       const match = matches[matchIndex];
       if (match) {
+        let formattedWord = '';
+
         if (match.type === 'correct') {
-          correctWordsCount++;
-          let formattedWord = match.original;
-          formattedText += formattedWord;
+          // 🟢 ЗЕЛЁНЫЙ — правильно
+          correctCount++;
+          formattedWord = match.original;
         } else if (match.type === 'mismatch') {
-          let formattedWord = match.recognized;
-          if (part[0] === part[0].toUpperCase()) {
-            formattedWord = formattedWord.charAt(0).toUpperCase() + formattedWord.slice(1);
+          // Определяем тип ошибки
+          const errorType = TRAINING_CONFIG.getErrorType(match.original, match.recognized);
+
+          if (errorType === 'correct') {
+            // 🟢 ЗЕЛЁНЫЙ — игнорируемая разница (например, умляут)
+            correctCount++;
+            formattedWord = match.original;
+          } else if (errorType === 'minor') {
+            // 🟡 ЖЁЛТЫЙ — мелкая ошибка
+            minorCount++;
+            let displayWord = match.recognized;
+
+            // Сохраняем регистр первой буквы
+            if (part[0] === part[0].toUpperCase()) {
+              displayWord = displayWord.charAt(0).toUpperCase() + displayWord.slice(1);
+            }
+
+            formattedWord = `<span style="color:#F9A825; font-weight: 500;">${displayWord}</span>`;
+          } else {
+            // 🔴 КРАСНЫЙ — серьёзная ошибка
+            majorCount++;
+            let displayWord = match.recognized;
+
+            if (part[0] === part[0].toUpperCase()) {
+              displayWord = displayWord.charAt(0).toUpperCase() + displayWord.slice(1);
+            }
+
+            formattedWord = `<span style="color:#C62828; font-weight: 600;">${displayWord}</span>`;
           }
-          formattedText += `<span style="color:#c62828; background-color: transparent;
-  padding: 0;">&nbsp;${formattedWord}&nbsp;</span>`;
         } else if (match.type === 'deletion') {
-          formattedText += `<span style="color:#c62828; background-color: transparent;
-  padding: 0;">&nbsp;${part}&nbsp;</span>`;
+          // 🔴 КРАСНЫЙ — слово пропущено
+          majorCount++;
+          formattedWord = `<span style="color:#C62828; font-weight: 600; text-decoration: line-through;">${part}</span>`;
         }
+
+        formattedText += formattedWord;
       }
       matchIndex++;
     } else {
+      // Пробел или пунктуация — оставляем как есть
       formattedText += part;
     }
   }
 
+  // 9. Добавляем лишние вставленные слова (insertion)
   while (matchIndex < matches.length) {
     if (matches[matchIndex].type === 'insertion') {
-      formattedText += ` <span style="color:#c62828; background-color: transparent;
-  padding: 0;">&nbsp;${matches[matchIndex].recognized}&nbsp;</span>`;
+      majorCount++;
+      formattedText += ` <span style="color:#C62828; font-weight: 600;">${matches[matchIndex].recognized}</span>`;
     }
     matchIndex++;
   }
 
-  return { formattedText };
+  // 10. Возвращаем результат
+  return {
+    formattedText,
+    accuracy,
+    details: {
+      correct: correctCount,
+      minor: minorCount,
+      major: majorCount,
+      total: wordResults.length,
+    },
+  };
 }
 
-// Функция возвращает массив объектов, описывающих каждое слово
+/**
+ * Функция возвращает массив объектов, описывающих каждое слово
+ * (для более детального анализа, если понадобится)
+ * @param {string} originalText - Оригинальная реплика
+ * @param {string} recognizedText - Распознанная реплика
+ * @returns {{analysis: Array, score: number}}
+ */
 export function analyzeRecognition(originalText, recognizedText) {
   const originalParts = originalText.match(/(\w+)|(\s+)|[.,!?;:]/g) || [];
   const recognizedWords = recognizedText.toLowerCase().match(/\w+/g) || [];
@@ -121,17 +212,16 @@ export function analyzeRecognition(originalText, recognizedText) {
 
   originalParts.forEach((part) => {
     if (/\w+/.test(part)) {
-      // Если это слово
+      // Это слово
       if (recIndex < recognizedWords.length && part.toLowerCase() === recognizedWords[recIndex]) {
         result.push({ type: 'word', text: part, status: 'correct' });
         correctCount++;
       } else {
-        // Просто помечаем оригинальное слово как неправильное
         result.push({ type: 'word', text: part, status: 'incorrect' });
       }
       recIndex++;
     } else {
-      // Если это пробел или пунктуация
+      // Пробел или пунктуация
       result.push({ type: 'separator', text: part });
     }
   });
