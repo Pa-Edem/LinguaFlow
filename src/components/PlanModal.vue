@@ -234,7 +234,7 @@ async function manageSubscription() {
 
 <style scoped>
 .plan-modal-content {
-  padding: 0;
+  padding: var(--lg);
 }
 
 /* Секция с ценой */

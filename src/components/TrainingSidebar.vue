@@ -1,4 +1,5 @@
 <!-- src/components/TrainingSidebar.vue -->
+
 <template>
   <div class="training-sidebar-content">
     <div class="desktop-only">
@@ -8,74 +9,94 @@
       <p class="description">{{ description }}</p>
     </div>
     <div v-if="isDesktop" class="controls">
-      <button class="btn btn-control oooo oloo" @click="trainingStore.repeatLevel()">
+      <button class="btn btn-control" @click="trainingStore.repeatLevel()">
         <span class="material-symbols-outlined icon">repeat</span>
         <span class="btn-text">{{ $t('buttons.reDialog') }}</span>
       </button>
-      <button class="btn btn-control oooo oool" @click="trainingStore.playCurrentLineAudio()">
+      <button class="btn btn-control" @click="trainingStore.playCurrentLineAudio()">
         <span class="material-symbols-outlined icon">repeat_one</span>
         <span class="btn-text">{{ $t('buttons.reLine') }}</span>
       </button>
 
       <slot name="extra-controls"></slot>
 
-      <button class="btn btn-control oooo looo play" @click="trainingStore.nextLine()">
+      <button class="btn btn-control play" @click="trainingStore.nextLine()">
         <span class="material-symbols-outlined icon">play_arrow</span>
         <span class="btn-text">{{ $t('buttons.nextLine') }}</span>
       </button>
-      <router-link
-        @click="trainingStore.stopSpeech()"
-        :to="{ name: 'view-dialog', params: { id: dialogId } }"
-        class="btn btn-control oooo oolo"
-      >
+      <button class="btn btn-control" @click="handleFinish">
         <span class="material-symbols-outlined icon">output_circle</span>
         <span class="btn-text">{{ $t('buttons.endPractice') }}</span>
-      </router-link>
+      </button>
     </div>
 
     <div v-else class="controls-mobile">
       <div class="line">
         <slot name="extra-controls"></slot>
-        <button class="btn btn-control mobile oooo oolo play" @click="trainingStore.nextLine()">
+        <button class="btn btn-control mobile play" @click="trainingStore.nextLine()">
           <span class="material-symbols-outlined icon">play_arrow</span>
           <span class="btn-text">{{ $t('level1.next') }}</span>
         </button>
       </div>
       <div class="line">
-        <button class="btn btn-control oooo oool mobile" @click="trainingStore.repeatLevel()">
+        <button class="btn btn-control mobile" @click="trainingStore.repeatLevel()">
           <span class="material-symbols-outlined icon">repeat</span>
           <span class="btn-text">{{ $t('level1.reDialog') }}</span>
         </button>
-        <button class="btn btn-control oooo looo mobile" @click="trainingStore.playCurrentLineAudio()">
+        <button class="btn btn-control mobile" @click="trainingStore.playCurrentLineAudio()">
           <span class="material-symbols-outlined icon">repeat_one</span>
           <span class="btn-text">{{ $t('level1.reLine') }}</span>
         </button>
-        <router-link
-          @click="trainingStore.stopSpeech()"
-          :to="{ name: 'view-dialog', params: { id: dialogId } }"
-          class="btn btn-control oooo oloo mobile"
-        >
+        <button class="btn btn-control mobile" @click="handleFinish">
           <span class="material-symbols-outlined icon">output_circle</span>
           <span class="btn-text">{{ $t('level1.endPractice') }}</span>
-        </router-link>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useTrainingStore } from '../stores/trainingStore';
+import { useDialogStore } from '../stores/dialogStore';
+import { useUiStore } from '../stores/uiStore';
 import { useBreakpoint } from '../composables/useBreakpoint';
 
 const { isDesktop } = useBreakpoint();
 
-defineProps({
+const props = defineProps({
   slogan: { type: String, required: false },
   description: { type: String, required: true },
   dialogId: { type: String, required: true },
 });
 
+const router = useRouter();
 const trainingStore = useTrainingStore();
+const dialogStore = useDialogStore();
+const uiStore = useUiStore();
+
+// ✅ ПРОВЕРКА: это последняя реплика?
+const isLastReplica = computed(() => {
+  const dialog = dialogStore.currentDialog;
+  if (!dialog) return false;
+  return trainingStore.currentLineIndex === dialog.fin.length - 1;
+});
+
+// ✅ ОБРАБОТЧИК КНОПКИ "ЗАВЕРШИТЬ"
+const handleFinish = () => {
+  trainingStore.stopSpeech();
+
+  if (isLastReplica.value) {
+    // ✅ ПОСЛЕДНЯЯ РЕПЛИКА → вызываем завершение тренировки
+    window.dispatchEvent(new CustomEvent('completeTraining'));
+  } else {
+    // ✅ НЕ ПОСЛЕДНЯЯ → модалка "прервано" + переход
+    uiStore.showToast('Тренировка прервана', 'warning');
+    router.push({ name: 'view-dialog', params: { id: props.dialogId } });
+  }
+};
 </script>
 
 <style scoped>

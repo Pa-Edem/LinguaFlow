@@ -51,7 +51,7 @@ defineProps({
   height: 48px;
   border-radius: 50%;
   display: block;
-  stroke-width: 3;
+  stroke-width: 4;
   stroke: #4caf50;
   stroke-miterlimit: 10;
   animation: checkmark-scale 0.3s ease-in-out 0.9s both;
@@ -60,7 +60,7 @@ defineProps({
 .checkmark-circle {
   stroke-dasharray: 166;
   stroke-dashoffset: 166;
-  stroke-width: 3;
+  stroke-width: 4;
   stroke: #4caf50;
   fill: none;
   animation: checkmark-stroke 0.8s cubic-bezier(0.65, 0, 0.45, 1) forwards;
@@ -70,7 +70,7 @@ defineProps({
   transform-origin: 50% 50%;
   stroke-dasharray: 48;
   stroke-dashoffset: 48;
-  stroke-width: 3;
+  stroke-width: 4;
   stroke: #4caf50;
   animation: checkmark-stroke 0.5s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
 }
@@ -92,17 +92,21 @@ defineProps({
 }
 /* TRANSITION (появление/исчезновение компонента) */
 .checkmark-fade-enter-active {
-  animation: fade-in 0.3s ease;
+  animation: fade-in 2s ease;
 }
 .checkmark-fade-leave-active {
   animation: fade-out 0.3s ease;
 }
 @keyframes fade-in {
-  from {
+  0% {
     opacity: 0;
     transform: scale(0.5);
   }
-  to {
+  50% {
+    opacity: 1;
+    transform: scale(2);
+  }
+  100% {
     opacity: 1;
     transform: scale(1);
   }

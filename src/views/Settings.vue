@@ -48,7 +48,7 @@
           <span class="material-symbols-outlined pro">crown</span>
         </h2>
 
-        <div v-if="userStore.isPro" class="setting-item">
+        <div v-if="userStore.isPro || userStore.isPremium" class="setting-item">
           <label for="browser-tts-check">{{ $t('settings.useBrowserTTS') }}</label>
           <input id="browser-tts-check" type="checkbox" class="toggle-switch" v-model="preferBrowserTTS" />
         </div>
@@ -60,7 +60,7 @@
             <select
               id="voice-select"
               v-model="selectedVoiceConfig"
-              :disabled="!userStore.isPro || settingsStore.isLoadingVoices"
+              :disabled="(!userStore.isPro && !userStore.isPremium) || settingsStore.isLoadingVoices"
             >
               <option :value="DEFAULT_VOICE_CONFIG">{{ $t('settings.defaultVoice') }}</option>
               <option v-for="(voice, index) in settingsStore.availableVoices" :key="index" :value="voice.config">

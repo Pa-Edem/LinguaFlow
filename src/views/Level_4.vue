@@ -78,25 +78,35 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useDialogStore } from '../stores/dialogStore';
 import { useTrainingStore } from '../stores/trainingStore';
+import { useUserStore } from '../stores/userStore';
+import { useUiStore } from '../stores/uiStore';
 import { useBreakpoint } from '../composables/useBreakpoint';
+import { saveDialogProgress } from '../services/trainingProgressService';
+import { TRAINING_CONFIG } from '../config/trainingConfig';
 import DialogLayout from '../components/DialogLayout.vue';
 import TrainingSidebar from '../components/TrainingSidebar.vue';
 
 const props = defineProps({ id: { type: String, required: true } });
 const dialogStore = useDialogStore();
 const trainingStore = useTrainingStore();
+const userStore = useUserStore();
+const uiStore = useUiStore();
 const { isDesktop } = useBreakpoint();
 
 const dialog = computed(() => dialogStore.currentDialog);
 
 const answerStatus = ref({});
 const isAnswered = ref(false);
+const totalErrors = ref(0);
 
 watch(
   () => trainingStore.currentLineIndex,
   () => {
     answerStatus.value = {};
     isAnswered.value = false;
+    if (trainingStore.currentLineIndex === 0) {
+      totalErrors.value = 0;
+    }
   }
 );
 
@@ -108,12 +118,77 @@ const handleAnswer = (option) => {
     answerStatus.value[option.text] = 'correct';
     setTimeout(() => {
       trainingStore.nextLine();
-    }, 1000);
+    }, 1500);
   } else {
+    // СЧИТАЕМ ОШИБКИ
+    totalErrors.value++;
     answerStatus.value[option.text] = 'incorrect';
     trainingStore.playCurrentLineAudio();
   }
 };
+
+// ОБРАБОТЧИК СОБЫТИЯ "ПОСЛЕДНЯЯ РЕПЛИКА"
+function handleCompleteEvent() {
+  completeTraining();
+}
+
+// ЗАВЕРШЕНИЕ ТРЕНИРОВКИ
+async function completeTraining() {
+  console.log('Завершение, сохранение прогресса');
+
+  const dialog = dialogStore.currentDialog;
+  const totalReplicas = dialog?.fin.length || 6;
+  const allReplicasCompleted = trainingStore.currentLineIndex >= totalReplicas - 1;
+  const averageAccuracy = totalErrors.value <= 1 ? 100 : 50;
+  const fakeScores = Array(totalReplicas).fill(averageAccuracy);
+
+  const tier = userStore.isPremium ? 'premium' : userStore.isPro ? 'pro' : 'free';
+
+  // Сохранить прогресс
+  if (tier !== 'free') {
+    const extractBaseLevel = (level) => {
+      if (!level) return '';
+      const match = level.match(/^([A-C][1-2])/);
+      return match ? match[1] : '';
+    };
+
+    const languageLevel = extractBaseLevel(dialog.value?.level);
+    const result = await saveDialogProgress(
+      props.id,
+      'level4',
+      {
+        averageAccuracy,
+        replicaScores: fakeScores,
+        totalErrors: totalErrors.value,
+        allReplicasCompleted,
+      },
+      tier,
+      languageLevel
+    );
+  }
+
+  // Показать модалку
+  const dialogCompleted = TRAINING_CONFIG.isDialogCompleted('level4', {
+    totalErrors: totalErrors.value,
+  });
+
+  if (tier === 'free') {
+    uiStore.showModal('trainingCompleteFree', {
+      dialogId: props.id,
+      averageAccuracy,
+      dialogCompleted,
+    });
+  } else {
+    uiStore.showModal('trainingComplete', {
+      dialogId: props.id,
+      averageAccuracy,
+      dialogCompleted,
+      replicaScores: fakeScores,
+      minReplicaAccuracy: 0,
+      minDialogAccuracy: 0,
+    });
+  }
+}
 
 onMounted(async () => {
   trainingStore.setCurrentTrainingType('level-4');
@@ -121,10 +196,12 @@ onMounted(async () => {
   if (dialogStore.currentDialog) {
     trainingStore.startLevel();
   }
+  window.addEventListener('completeTraining', handleCompleteEvent);
 });
 
 onUnmounted(() => {
   trainingStore.stopSpeech();
+  window.removeEventListener('completeTraining', handleCompleteEvent);
 });
 </script>
 
@@ -166,7 +243,7 @@ onUnmounted(() => {
   border-color: var(--bb);
 }
 .btn-quiz.correct {
-  background-color: var(--g1);
+  background-color: var(--g0);
   color: var(--g3);
   border-color: var(--g3);
   transform: scale(1.025);
@@ -246,7 +323,7 @@ onUnmounted(() => {
 }
 
 /* ======================== ДЕСКТОП ======================== */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .quiz-content {
     padding: 32px;
   }

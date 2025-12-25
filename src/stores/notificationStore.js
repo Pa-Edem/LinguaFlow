@@ -10,37 +10,28 @@ export const useNotificationStore = defineStore('notifications', {
     loading: false,
     lastChecked: null,
   }),
-
   getters: {
     // Количество непрочитанных уведомлений
     unreadCount: (state) => {
       return state.notifications.filter((n) => !n.read).length;
     },
-
     // Последние 5 уведомлений для выпадающего списка
     recentNotifications: (state) => {
       return state.notifications.slice(0, 5);
     },
-
     // Все уведомления (для страницы /notifications)
     allNotifications: (state) => {
       return state.notifications;
     },
   },
-
   actions: {
-    /**
-     * Загрузить уведомления пользователя
-     */
+    //Загрузить уведомления пользователя
     async loadNotifications() {
       const userStore = useUserStore();
-
       if (!userStore.isLoggedIn) {
         return;
       }
-
       this.loading = true;
-
       try {
         const notificationsRef = collection(db, 'notifications');
 
@@ -65,10 +56,7 @@ export const useNotificationStore = defineStore('notifications', {
         this.loading = false;
       }
     },
-
-    /**
-     * Отметить уведомление как прочитанное
-     */
+    //Отметить уведомление как прочитанное
     async markAsRead(notificationId) {
       try {
         const notificationRef = doc(db, 'notifications', notificationId);
@@ -83,10 +71,7 @@ export const useNotificationStore = defineStore('notifications', {
         console.error('❌ Error marking notification as read:', error);
       }
     },
-
-    /**
-     * Отметить все уведомления как прочитанные
-     */
+    //Отметить все уведомления как прочитанные
     async markAllAsRead() {
       const userStore = useUserStore();
 
@@ -113,27 +98,17 @@ export const useNotificationStore = defineStore('notifications', {
         console.error('❌ Error marking all as read:', error);
       }
     },
-
-    /**
-     * Проверить новые уведомления
-     * (вызывается при переходе на /dialogs)
-     */
+    //Проверить новые уведомления
     async checkForNewNotifications() {
       const userStore = useUserStore();
-
       if (!userStore.isLoggedIn) return;
-
       // Если последняя проверка была меньше минуты назад - пропускаем
       if (this.lastChecked && new Date() - this.lastChecked < 60000) {
         return;
       }
-
       await this.loadNotifications();
     },
-
-    /**
-     * Очистить уведомления (при выходе)
-     */
+    //Очистить уведомления (при выходе)
     clearNotifications() {
       this.notifications = [];
       this.lastChecked = null;

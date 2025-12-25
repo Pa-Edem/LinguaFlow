@@ -41,6 +41,15 @@ const routes = [
     meta: { requiresAuth: false },
   },
   {
+    path: '/stats',
+    name: 'stats',
+    component: () => import('../views/Stats.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresPaid: true,
+    },
+  },
+  {
     path: '/new',
     name: 'new-dialog',
     component: NewDialog,
@@ -108,20 +117,28 @@ router.beforeEach(async (to, from, next) => {
     return next({ name: 'all-dialogs' });
   }
 
-  // --- Проверка №3: Требуется ли право на ГЕНЕРАЦИЮ? ---
+  // --- Проверка №3: Проверка платного доступа (PRO/PREMIUM) для /stats ---
+  if (to.meta.requiresPaid) {
+    if (!userStore.isPro && !userStore.isPremium) {
+      return next('/dialogs');
+    }
+  }
+
+  // --- Проверка №4: Требуется ли право на ГЕНЕРАЦИЮ? ---
   if (to.meta.requiresGenerate && !canGenerate()) {
     // Если пользователь пытается зайти на /new, но лимиты исчерпаны
     return next({ name: 'all-dialogs' }); // Отправляем его обратно
   }
 
-  // --- Проверка №4: Требуется ли PRO/PREMIUM? ---
-  if (to.meta.requiresPaid && !canView()) {
+  // --- Проверка №5: Требуется ли PRO/PREMIUM для тренировок? ---
+  const isTrainingRoute = to.name === 'level-2' || to.name === 'level-3';
+  if (isTrainingRoute && to.meta.requiresPaid && !canView()) {
     // Если пользователь пытается зайти на /level-2 или /level-3
     // (canView() вернет false, если он Free и потратил "пробные клики")
     return next({ name: 'view-dialog', params: to.params });
   }
 
-  // --- Проверка №5: Все в порядке ---
+  // --- Проверка №6: Все в порядке ---
   return next();
 });
 

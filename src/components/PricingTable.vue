@@ -252,7 +252,7 @@ tbody td {
   }
 
   .plan-col {
-    width: 23.33%;
+    width: 20%;
   }
 
   .feature-title {
@@ -274,7 +274,14 @@ tbody td {
   }
 
   .table {
-    min-width: 600px;
+    min-width: 480px;
+  }
+  .feature-col {
+    width: 25%;
+  }
+
+  .plan-col {
+    width: 20%;
   }
 }
 </style>

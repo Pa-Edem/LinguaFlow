@@ -10,6 +10,11 @@ import { compareAndFormatTexts } from '../utils/compareTexts';
 import { getLangCode, getDemoPhrase } from '../utils/languageUtils';
 import { functions, httpsCallable } from '../firebase';
 
+/**
+ * Получить название языка интерфейса по коду
+ * @param {string} langCode - Код языка (en, ru, fi, etc.)
+ * @returns {string} - Название языка на английском
+ */
 function getUiLanguageName(langCode) {
   const names = {
     en: 'English',
@@ -31,26 +36,32 @@ function getUiLanguageName(langCode) {
     ro: 'Romanian',
     hr: 'Croatian',
     sl: 'Slovene',
-    // ... можно добавить еще
+    sr: 'Serbian',
   };
   return names[langCode] || 'English';
 }
 
 export const useTrainingStore = defineStore('training', {
   state: () => ({
-    currentTrainingType: '',
-    currentLineIndex: 0,
-    recognition: null,
-    isVoiceOver: false,
-    isMicActive: false,
-    recognitionText: '',
-    formattedRecognitionText: '',
-    currentAccuracy: 0, // ✅ НОВОЕ: храним точность
-    geminiResult: '',
-    isLoading: false,
-    currentAudio: null,
+    currentTrainingType: '', // Текущий тип тренировки: 'level-1', 'level-2', 'level-3', 'level-4'
+    currentLineIndex: 0, // Индекс текущей реплики в диалоге (0 - первая реплика)
+    recognition: null, // Объект SpeechRecognition (распознавание речи)
+    isVoiceOver: false, // Идёт ли озвучка текста (TTS)
+    isMicActive: false, // Активен ли микрофон (идёт ли запись)
+    canUseMic: true, // Можно ли использовать микрофон (блокировка после распознавания)
+    recognitionText: '', // Текст распознанной речи
+    formattedRecognitionText: '', // Форматированный текст с подсветкой ошибок (HTML)
+    currentAccuracy: 0, // Точность текущей реплики (0-100%)
+    geminiResult: '', // Результат от Gemini AI (анализ диалога или проверка перевода)
+    isLoading: false, // Идёт ли загрузка (вызов Cloud Function)
+    currentAudio: null, // Текущий Audio объект для PRO озвучки
   }),
   getters: {
+    /**
+     * Получить варианты ответов для квиза (Level-4)
+     * Возвращает массив из 4 объектов: 1 правильный + 3 неправильных
+     * @returns {Array} - [{text: string, correct: boolean}, ...]
+     */
     currentQuizOptions(state) {
       const dialogStore = useDialogStore();
       const dialog = dialogStore.currentDialog;
@@ -65,54 +76,118 @@ export const useTrainingStore = defineStore('training', {
     },
   },
   actions: {
+    /**
+     * Установить текущий тип тренировки
+     * @param {string} type - 'level-1', 'level-2', 'level-3', 'level-4'
+     */
     setCurrentTrainingType(type) {
       this.currentTrainingType = type;
     },
+    /**
+     * Остановить озвучку (TTS) и аудио
+     * Останавливает как браузерную озвучку, так и PRO (Google Cloud TTS)
+     */
+    stopSpeech() {
+      speechSynthesis.cancel();
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio = null;
+      }
+      this.isVoiceOver = false;
+    },
+    /**
+     * Сбросить состояние текущей реплики
+     * Очищает распознанный текст, точность, результаты AI
+     * Разрешает использование микрофона
+     */
+    resetLineState() {
+      this.recognitionText = '';
+      this.formattedRecognitionText = '';
+      this.currentAccuracy = 0;
+      this.geminiResult = '';
+      this.canUseMic = true;
+    },
+    /**
+     * Начать тренировку с первой реплики
+     * Сбрасывает индекс, состояние, воспроизводит первую реплику
+     */
     startLevel() {
       this.stopSpeech();
       this.currentLineIndex = 0;
+      this.canUseMic = true;
       this.resetLineState();
       if (this.currentTrainingType !== 'level-3') {
         setTimeout(() => this.playCurrentLineAudio(), 500);
       }
     },
+    /**
+     * Перейти к следующей реплике
+     * Если это последняя реплика → показать модалку завершения
+     * Иначе → увеличить индекс, сбросить состояние, воспроизвести следующую
+     */
     nextLine() {
       this.stopSpeech();
       const dialogStore = useDialogStore();
+
       if (this.currentLineIndex < dialogStore.currentDialog.fin.length - 1) {
+        // ✅ НЕ последняя реплика → переход на следующую
         this.currentLineIndex++;
         this.resetLineState();
         if (this.currentTrainingType !== 'level-3') {
           this.playCurrentLineAudio();
         }
       } else {
-        const uiStore = useUiStore();
-        uiStore.showModal('endOfLevel');
+        // ✅ ПОСЛЕДНЯЯ РЕПЛИКА → генерируем событие для Level_2.vue
+        if (this.currentTrainingType === 'level-2' || this.currentTrainingType === 'level-3') {
+          // Для Level-2 и Level-3 — вызываем completeTraining через событие
+          window.dispatchEvent(new CustomEvent('completeTraining'));
+        } else {
+          // Для Level-1 и Level-4 — стандартная модалка
+          const uiStore = useUiStore();
+          uiStore.showModal('endOfLevel');
+        }
       }
     },
+    /**
+     * Повторить диалог с начала
+     * Разрешает микрофон, останавливает озвучку, начинает с первой реплики
+     */
     repeatLevel() {
+      this.canUseMic = true;
       this.stopSpeech();
       this.startLevel();
     },
-    resetLineState() {
-      this.recognitionText = '';
-      this.formattedRecognitionText = '';
-      this.currentAccuracy = 0; // ✅ НОВОЕ: сбрасываем точность
-      this.geminiResult = '';
-    },
+    /**
+     * Воспроизвести текущую реплику (озвучка)
+     * Разрешает микрофон, воспроизводит финский текст текущей реплики
+     */
     playCurrentLineAudio() {
+      this.canUseMic = true;
       const dialogStore = useDialogStore();
       const text = dialogStore.currentDialog?.fin[this.currentLineIndex];
       if (text) {
         this.playText(text);
       }
     },
+    /**
+     * Воспроизвести демо-фразу для PRO голоса
+     * Используется в настройках для прослушивания разных голосов
+     */
     playProDemoVoice() {
       const settingsStore = useSettingsStore();
       const langName = settingsStore.learningLanguage;
       const demoText = getDemoPhrase(langName);
       this.playText(demoText, true);
     },
+    /**
+     * Озвучить текст (TTS)
+     * @param {string} text - Текст для озвучки
+     * @param {boolean} forcePro - Принудительно использовать PRO голос (для демо)
+     *
+     * Логика:
+     * - Если PRO/PREMIUM и НЕ выбрана браузерная озвучка → Google Cloud TTS (PRO)
+     * - Иначе → браузерная озвучка (FREE)
+     */
     async playText(text, forcePro = false) {
       if (!text) return;
       this.stopSpeech();
@@ -125,7 +200,7 @@ export const useTrainingStore = defineStore('training', {
       const rate = settingsStore.speechRate;
       const voiceConfig = settingsStore.selectedVoiceConfig;
 
-      const useProVoice = (userStore.isPro || forcePro) && !settingsStore.preferBrowserTTS;
+      const useProVoice = (userStore.isPro || userStore.isPremium || forcePro) && !settingsStore.preferBrowserTTS;
 
       // Проверяем, нужно ли использовать PRO-голос
       if (useProVoice) {
@@ -174,19 +249,24 @@ export const useTrainingStore = defineStore('training', {
         };
       }
     },
-    stopSpeech() {
-      speechSynthesis.cancel();
-
-      if (this.currentAudio) {
-        this.currentAudio.pause();
-        this.currentAudio = null;
-      }
-
-      this.isVoiceOver = false;
-    },
+    /**
+     * Переключить воспроизведение/остановку озвучки
+     * @param {string} text - Текст для озвучки
+     * Если озвучка идёт → остановить, иначе → начать
+     */
     togglePlayStop(text) {
       !this.isVoiceOver ? this.playText(text) : this.stopSpeech();
     },
+    /**
+     * Переключить запись речи (микрофон)
+     * Если микрофон активен → остановить запись
+     * Иначе → начать запись и распознавание речи
+     *
+     * Логика:
+     * 1. Нажатие 1: начать запись (isMicActive = true)
+     * 2. Нажатие 2: остановить запись → распознавание → результат
+     * 3. После распознавания: canUseMic = false (блокировка)
+     */
     toggleSpeechRecognition() {
       if (this.recognition) {
         this.recognition.stop();
@@ -213,13 +293,13 @@ export const useTrainingStore = defineStore('training', {
 
       this.recognitionText = '';
       this.formattedRecognitionText = '';
-      this.currentAccuracy = 0; // ✅ НОВОЕ: сбрасываем точность
+      this.currentAccuracy = 0;
       this.geminiResult = '';
 
       this.recognition = new SpeechRecognition();
       this.recognition.lang = langCode;
-      this.recognition.continuous = true;
-      this.recognition.interimResults = true;
+      this.recognition.continuous = true; // Непрерывная запись
+      this.recognition.interimResults = false; // Промежуточные результаты
 
       this.recognition.onstart = () => {
         this.isMicActive = true;
@@ -254,8 +334,12 @@ export const useTrainingStore = defineStore('training', {
             this.formattedRecognitionText = result.formattedText;
             this.currentAccuracy = result.accuracy; // ✅ НОВОЕ: сохраняем точность
             console.log(`✅ Точность реплики: ${result.accuracy}%`, result.details);
+            // ✅ БЛОКИРУЕМ микрофон после распознавания
+            this.canUseMic = false;
           } else if (this.currentTrainingType === 'level-3') {
             this.checkUserTranslation(rusText, finText, level);
+            // ✅ БЛОКИРУЕМ микрофон после распознавания
+            this.canUseMic = false;
           }
         } else {
           this.recognitionText = '';
@@ -263,6 +347,19 @@ export const useTrainingStore = defineStore('training', {
       };
       this.recognition.start();
     },
+    /**
+     * Сгенерировать и создать новый диалог через AI
+     * @param {object} creationParams - Параметры создания диалога
+     *   {topic, level, replicas, words}
+     * @returns {string|null} - ID созданного диалога или null при ошибке
+     *
+     * Процесс:
+     * 1. Формируем промпт для Gemini
+     * 2. Вызываем Cloud Function 'callGemini'
+     * 3. Парсим JSON ответ
+     * 4. Создаём диалог в Firestore
+     * 5. Перезагружаем счётчики использования
+     */
     async generateAndCreateDialog(creationParams) {
       this.isLoading = true;
       try {
@@ -314,6 +411,17 @@ export const useTrainingStore = defineStore('training', {
         this.isLoading = false;
       }
     },
+    /**
+     * Получить анализ диалога от AI
+     * Анализирует словарный запас, грамматику, идиомы, прагматику
+     *
+     * Процесс:
+     * 1. Проверяем есть ли сохранённый анализ
+     * 2. Если нет → вызываем Cloud Function
+     * 3. Форматируем результат (Markdown → HTML)
+     * 4. Сохраняем анализ в диалог
+     * 5. Перезагружаем счётчики
+     */
     async fetchDialogAnalysis() {
       const dialogStore = useDialogStore();
       const dialog = dialogStore.currentDialog;
@@ -353,6 +461,17 @@ export const useTrainingStore = defineStore('training', {
         this.isLoading = false;
       }
     },
+    /**
+     * Сформировать промпт для генерации нового диалога
+     * @param {object} params - {topic, level, replicas, words}
+     * @returns {string} - Промпт для Gemini
+     *
+     * Промпт создаёт диалог с:
+     * - Заданной темой и уровнем
+     * - Нужным количеством реплик
+     * - Включением указанных слов
+     * - Культурной заметкой
+     */
     getPromptForNewDialog(params) {
       // Получаем языки из настроек
       const settingsStore = useSettingsStore();
@@ -395,43 +514,52 @@ Example output format for a Finnish (learning) / Russian (native) request:
 }
     `;
     },
+    /**
+     * Сформировать промпт для проверки перевода (Level-3)
+     * @param {string} rusText - Оригинальный русский текст
+     * @param {string} finText - Правильный финский перевод (для справки)
+     * @param {string} level - Уровень диалога
+     * @returns {string} - Промпт для Gemini
+     */
     getPromptForTranslation(rusText, finText, level) {
       const settingsStore = useSettingsStore();
       const learningLanguage = settingsStore.learningLanguage;
       const uiLanguageName = getUiLanguageName(settingsStore.uiLanguage);
 
-      const feedback_perfect = i18n.global.t('feedback.perfect');
-      const feedback_natural = i18n.global.t('feedback.natural');
-      const feedback_minor = i18n.global.t('feedback.minor');
-      const feedback_wrong = i18n.global.t('feedback.wrong');
-
       return `
-You are an expert ${learningLanguage} language tutor.
-Your task is to evaluate a ${level} user's spoken ${learningLanguage} translation of a ${uiLanguageName} dialogue line.
+You are a ${learningLanguage} tutor. Level: ${level}. UI language: ${uiLanguageName}.
 
-You will receive three inputs:
-1. Original ${uiLanguageName}: ${rusText}
-2. Correct ${learningLanguage} (for reference): ${finText}
-3. User's Spoken ${learningLanguage} (transcription): ${this.recognitionText}
+Original (${uiLanguageName}): ${rusText}
+Correct (${learningLanguage}): ${finText}
+User said: ${this.recognitionText}
 
-Analyze the user's transcription.
-Your entire response MUST be written in ${uiLanguageName}, in 2-3 sentences maximum.
+Response format (in ${uiLanguageName}):
+PERFECT: [phrase]
+GOOD: [better variant]
+CLOSE: Replace 'X' with 'Y'
+WRONG: [correct phrase]
 
-Choose ONE of the following four response types:
-
-1.  **If the translation is accurate AND natural:**
-    (Respond with a variation of: "${feedback_perfect}")
-
-2.  **If the translation is accurate BUT unnatural or too literal:**
-    (Respond with a variation of: "${feedback_natural} [the more natural phrase in ${learningLanguage}].")
-
-3.  **If the translation has minor errors:**
-    (Respond with a variation of: "${feedback_minor} [the brief correction in ${learningLanguage}].")
-
-4.  **If the translation is semantically wrong:**
-    (Respond with a variation of: "${feedback_wrong} [the correct phrase in ${learningLanguage}].")
-      `;
+Rules:
+- PERFECT = exact meaning + natural
+- GOOD = correct meaning, unnatural phrasing
+- CLOSE = minor mistakes
+- WRONG = different meaning
+- Response in ${uiLanguageName} only
+- Кeywords (PERFECT, GOOD, CLOSE, INCORRECT) as is.
+      `.trim();
     },
+    /**
+     * Сформировать промпт для анализа диалога
+     * @param {string} fullDialogText - Полный текст диалога (все реплики)
+     * @param {string} level - Уровень диалога
+     * @returns {string} - Промпт для Gemini
+     *
+     * AI анализирует диалог по 4 направлениям:
+     * 1. Интересная лексика
+     * 2. Разговорные выражения и идиомы
+     * 3. Грамматические особенности
+     * 4. Прагматика и вежливость
+     */
     getPromptInfo(fullDialogText, level) {
       if (!fullDialogText || fullDialogText.trim().length === 0) {
         return i18n.global.t('store.noData');
@@ -465,19 +593,34 @@ Dialogue:
 ${fullDialogText}
       `;
     },
+    /**
+     * Проверить перевод пользователя через AI (Level-3)
+     * @param {string} rusText - Оригинальный русский текст
+     * @param {string} finText - Правильный финский перевод
+     * @param {string} level - Уровень диалога
+     *
+     * Процесс:
+     * 1. Формируем промпт с оригиналом, правильным переводом и переводом пользователя
+     * 2. Вызываем Cloud Function
+     * 3. Получаем обратную связь от AI
+     * 4. Сохраняем в geminiResult
+     * 5. Перезагружаем счётчики
+     */
     async checkUserTranslation(rusText, finText, level) {
       this.isLoading = true;
       this.geminiResult = '';
       try {
         const prompt = this.getPromptForTranslation(rusText, finText, level);
 
-        // Вызываем Cloud Function
+        // ✅ Вызываем Cloud Function с БЫСТРОЙ моделью
         const callGemini = httpsCallable(functions, 'callGemini');
         const response = await callGemini({
           prompt: prompt,
           operationType: 'translation',
+          modelType: 'fast', // ✅ ВАЖНО: используем gemini-1.5-flash (быстрая)
         });
 
+        console.log('geminiResponseData', response.data);
         this.geminiResult = response.data.text;
 
         // ✅ Перезагружаем счётчики

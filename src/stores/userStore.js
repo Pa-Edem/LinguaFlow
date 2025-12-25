@@ -140,31 +140,32 @@ export const useUserStore = defineStore('user', {
             trialStartDate: null,
             trialEndDate: null,
             trialUsed: false,
-            // ✅ НОВОЕ: Статистика и достижения
+            // ✅ Статистика и достижения
             stats: {
-              // Основные
-              dialogsLearned: 0,
-              dialogsMastered: 0,
-              // По типам тренировок
-              level2Completed: 0,
-              level3Completed: 0,
-              level4Completed: 0,
-              // По уровням языка
+              // ✅ Основные счётчики
+              dialogsLearned: 0, // Полностью выученных диалогов (все 3 уровня)
+              trainingsCompleted: 0, // Уникальных успешных тренировок
+
+              // ✅ По типам тренировок (уникальные диалоги)
+              level2Completed: 0, // Уникальных диалогов с Level-2
+              level3Completed: 0, // Уникальных диалогов с Level-3
+              level4Completed: 0, // Уникальных диалогов с Level-4
+
+              // ✅ По уровням языка (упрощённая версия)
               dialogsLearnedA1: 0,
               dialogsLearnedA2: 0,
               dialogsLearnedB1: 0,
               dialogsLearnedB2: 0,
               dialogsLearnedC1: 0,
               dialogsLearnedC2: 0,
-              // Качество
-              averageAccuracy: 0,
-              perfectDialogs: 0,
-              // Серии
-              currentStreak: 0,
-              longestStreak: 0,
-              lastActivityDate: null,
-              // Время
-              totalTimeSpent: 0,
+
+              // ✅ Качество - глобальная средняя точность
+              globalAverageAccuracy: 0,
+
+              // ✅ Серии
+              currentStreak: 0, // Текущая серия дней
+              longestStreak: 0, // Рекордная серия
+              lastActivityDate: null, // Дата последней активности
             },
             achievements: [],
           };

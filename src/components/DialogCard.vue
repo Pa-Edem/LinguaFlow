@@ -1,16 +1,25 @@
 <!-- src\components\DialogCard.vue -->
 <template>
-  <router-link :to="{ name: 'view-dialog', params: { id: dialog.id } }" class="dialog-card">
+  <router-link
+    :to="{ name: 'view-dialog', params: { id: dialog.id } }"
+    class="dialog-card"
+    :class="isDialogLearned ? 'learned' : ''"
+  >
     <div class="card-content">
       <div class="card-title">{{ dialog.title }}</div>
 
-      <!-- ТОЧКИ СТАТУСА ТРЕНИРОВОК -->
-      <div v-if="userStore.isPaid" class="training-status">
-        <span class="status-dot" :class="trainingStatus.level2 ? 'completed' : 'incomplete'"></span>
-        <span class="status-dot" :class="trainingStatus.level3 ? 'completed' : 'incomplete'"></span>
-        <span class="status-dot" :class="trainingStatus.level4 ? 'completed' : 'incomplete'"></span>
+      <!-- ТОЧКИ СТАТУСА ТРЕНИРОВОК для PREMIUM -->
+      <div v-if="userStore.isPremium" class="training-status">
+        <span class="material-symbols-outlined icon status" :class="trainingStatus.level2 ? 'completed' : 'incomplete'"
+          >record_voice_over</span
+        >
+        <span class="material-symbols-outlined icon status" :class="trainingStatus.level3 ? 'completed' : 'incomplete'"
+          >translate</span
+        >
+        <span class="material-symbols-outlined icon status" :class="trainingStatus.level4 ? 'completed' : 'incomplete'"
+          >hearing</span
+        >
       </div>
-
       <div class="card-info">
         <span class="levelClass">{{ $t('card.level') }}{{ dialog.level }}</span>
         <span class="levelLines">{{ $t('card.lines') }}{{ dialog.replicasCount }}</span>
@@ -20,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useUserStore } from '../stores/userStore';
 import { getDialogTrainingStatus } from '../services/trainingProgressService';
 
@@ -33,12 +42,17 @@ const props = defineProps({
 
 const userStore = useUserStore();
 
-// ✅ СТАТУС ТРЕНИРОВОК
+// ✅ СТАТУС ТРЕНИРОВОК для PREMIUM
 const trainingStatus = ref({
   level2: false,
   level3: false,
   level4: false,
 });
+
+// ✅ Изучен ли диалог (все тренировки)?
+const isDialogLearned = computed(
+  () => trainingStatus.value.level2 && trainingStatus.value.level3 && trainingStatus.value.level4
+);
 
 // ✅ ЗАГРУЖАЕМ СТАТУС ПРИ МОНТИРОВАНИИ
 onMounted(async () => {
@@ -58,6 +72,10 @@ onMounted(async () => {
   text-decoration: none;
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+}
+.dialog-card.learned {
+  background-color: var(--g0);
+  border-color: var(--g2);
 }
 .dialog-card:hover {
   transform: translateY(-3px);
@@ -81,22 +99,16 @@ onMounted(async () => {
   right: 0;
   display: flex;
   flex-shrink: 0;
-  gap: 6px;
+  gap: 8px;
 }
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-  transition: all 0.2s ease;
+.status {
+  font-weight: 500;
 }
-.status-dot.completed {
-  background-color: #4caf50;
-  box-shadow: 0 0 4px rgba(76, 175, 80, 0.4);
+.status.completed {
+  color: var(--g3);
 }
-.status-dot.incomplete {
-  background-color: #e0e0e0;
-  border: 2px solid #bdbdbd;
+.status.incomplete {
+  color: var(--y11);
 }
 .card-info {
   display: flex;

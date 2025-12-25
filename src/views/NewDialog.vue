@@ -42,7 +42,7 @@
       </div>
 
       <div class="form-group">
-        <label for="replicas">{{ $t('new.lines') }}</label>
+        <label for="replicas">{{ $t('new.lines') }} (6-20)</label>
         <input id="replicas" v-model.number="form.replicas" type="number" min="6" max="20" required />
       </div>
       <div class="submit-wrap">

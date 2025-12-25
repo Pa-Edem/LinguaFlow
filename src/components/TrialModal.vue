@@ -42,7 +42,7 @@
 
           <!-- Кнопки -->
           <div class="modal-actions">
-            <button class="btn btn-primary" @click="activateTrial" :disabled="isLoading">
+            <button class="btn btn-action" @click="activateTrial" :disabled="isLoading">
               <span v-if="!isLoading">🚀 Активировать trial</span>
               <span v-else>Активация...</span>
             </button>

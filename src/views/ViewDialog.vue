@@ -204,14 +204,14 @@ const canUseAnalysis = computed(() => {
   return canView();
 });
 const canUseLevel2 = computed(() => {
-  if (userStore.isPro) return true;
+  if (userStore.isPro || userStore.isPremium) return true;
   if (upgradeShownFlags.value.level2) return false;
-  return canView();
+  return true;
 });
 const canUseLevel3 = computed(() => {
-  if (userStore.isPro) return true;
+  if (userStore.isPro || userStore.isPremium) return true;
   if (upgradeShownFlags.value.level3) return false;
-  return canView();
+  return true;
 });
 const hasSeenNote = computed(() => {
   if (noteMarkedAsSeen.value) return true;
@@ -273,7 +273,7 @@ const trainingLevels = [
 ];
 
 onMounted(async () => {
-  if (!userStore.isPro) {
+  if (!userStore.isPro && !userStore.isPremium) {
     await settingsStore.loadUsageStats();
   }
 
@@ -372,79 +372,21 @@ const getInfo = async () => {
     uiStore.showModal('analysis');
   }, 'analysis');
 };
-// const goToTraining = async (level) => {
-//   if (!level.isPro) {
-//     // Бесплатная тренировка — просто переходим
-//     router.push({ name: level.name, params: { id: props.id } });
-//     return;
-//   }
-
-//   // PREMIUM = безлимит
-//   if (userStore.isPremium) {
-//     router.push({ name: level.name, params: { id: props.id } });
-//     return;
-//   }
-
-//   // FREE и PRO → проверяем лимиты
-//   await settingsStore.loadUsageStats();
-
-//   const usedToday = settingsStore.dailyPreviewToday;
-//   const accumulated = settingsStore.accumulatedPreview;
-//   const dailyMax = settingsStore.limit.dailyPreviewMax;
-
-//   // ✅ Можно использовать если ЕСТЬ накопленные И не превышен дневной лимит
-//   const canUse = usedToday < dailyMax && accumulated > 0;
-
-//   if (canUse) {
-//     // ✅ Увеличиваем счётчик на сервере
-//     try {
-//       const callGemini = httpsCallable(functions, 'callGemini');
-//       await callGemini({
-//         prompt: 'increment_preview_count',
-//         operationType: 'training',
-//       });
-
-//       // ✅ Перезагружаем счётчики
-//       await settingsStore.loadUsageStats();
-
-//       // ✅ Показываем тост с ОБНОВЛЁННЫМИ счётчиками
-//       const newAccumulated = settingsStore.accumulatedPreview;
-//       const newUsedToday = settingsStore.dailyPreviewToday;
-//       const remaining = Math.min(newAccumulated, dailyMax - newUsedToday);
-
-//       const message = t('view.usePro');
-//       let toastMessage = `${message}${remaining}.`;
-//       if (remaining === 0) {
-//         toastMessage = t('view.endPro');
-//       }
-//       uiStore.showToast(toastMessage, 'warning');
-
-//       // ✅ Переходим на тренировку (ВСЕГДА, если canUse был true)
-//       router.push({ name: level.name, params: { id: props.id } });
-//     } catch (error) {
-//       console.error('❌ Ошибка увеличения счётчика:', error);
-//       uiStore.showToast('Произошла ошибка', 'error');
-//     }
-//   } else {
-//     // ❌ Лимит исчерпан → модалка + блокировка
-//     uiStore.showUpgradeModal();
-//     const buttonType = level.name === 'level-2' ? 'level2' : 'level3';
-//     sessionStorage.setItem(`upgradeShown_${buttonType}`, 'true');
-//     upgradeShownFlags.value[buttonType] = true;
-//   }
-// };
 const goToTraining = async (level) => {
-  trainingStore.isLoading = true;
+  // ✅ Level-1 и Level-4 — безлимит для ВСЕХ (FREE, PRO, PREMIUM)
   if (!level.isPro) {
     router.push({ name: level.name, params: { id: props.id } });
     return;
   }
 
+  // ✅ PREMIUM — безлимит
   if (userStore.isPremium) {
     router.push({ name: level.name, params: { id: props.id } });
     return;
   }
 
+  // ✅ PRO И FREE — списываем dailyPreview (лимит зависит от тарифа)
+  trainingStore.isLoading = true;
   await settingsStore.loadUsageStats();
 
   const usedToday = settingsStore.dailyPreviewToday;
@@ -461,27 +403,27 @@ const goToTraining = async (level) => {
         operationType: 'training',
       });
 
-      // ✅ УДАЛЕНО: await settingsStore.loadUsageStats();
-      // Счётчики обновятся при возврате на ViewDialog
-
       const remaining = Math.min(accumulated - 1, dailyMax - (usedToday + 1));
-
-      const message = t('view.usePro');
-      let toastMessage = `${message}${remaining}.`;
+      let toastMessage = '';
+      if (remaining === 1) {
+        const message = t('view.usePro');
+        toastMessage = `${message}${remaining}.`;
+        uiStore.showToast(toastMessage, 'warning');
+      }
       if (remaining === 0) {
         toastMessage = t('view.endPro');
+        uiStore.showToast(toastMessage, 'warning');
       }
-      uiStore.showToast(toastMessage, 'warning');
-
-      // ✅ СРАЗУ ПЕРЕХОДИМ (без лишнего ожидания)
-      router.push({ name: level.name, params: { id: props.id } });
       trainingStore.isLoading = false;
+
+      router.push({ name: level.name, params: { id: props.id } });
     } catch (error) {
       trainingStore.isLoading = false;
       console.error('❌ Ошибка увеличения счётчика:', error);
       uiStore.showToast('Произошла ошибка', 'error');
     }
   } else {
+    // Лимит исчерпан (для Level-2 или Level-3)
     trainingStore.isLoading = false;
     uiStore.showUpgradeModal();
     const buttonType = level.name === 'level-2' ? 'level2' : 'level3';

@@ -1,4 +1,5 @@
 <!-- \\src\components\Modal.vue -->
+
 <template>
   <Transition name="modal">
     <div v-if="uiStore.isModalActive" class="modal-mask" @click.self="uiStore.cancelModal()">
@@ -22,10 +23,14 @@
           </h3>
           <!-- trainingCompleteFree -->
           <h3 v-else-if="uiStore.modalContent === 'trainingCompleteFree'" class="title">💪 Отличная работа!</h3>
+          <!-- trainingCompleteLevel1 -->
+          <h3 v-else-if="uiStore.modalContent === 'trainingCompleteLevel1'" class="title">💪 Отличное начало!</h3>
           <!-- confirm -->
           <h3 v-else-if="uiStore.modalContent === 'confirm'" class="title">
             {{ uiStore.modalProps.title }}
           </h3>
+          <!-- ✅ НОВОЕ: monthlyStats -->
+          <h3 v-else-if="isMonthlyStatsModal" class="title">📊 Месячная статистика</h3>
           <!-- limits -->
           <h3 v-else-if="uiStore.modalContent === 'limits'" class="title">📊 Ваши лимиты</h3>
           <!-- plan -->
@@ -68,7 +73,7 @@
             <!-- ТОЧНОСТЬ -->
             <div class="accuracy-display">
               <div class="accuracy-label">Средняя точность:</div>
-              <div class="accuracy-value">{{ uiStore.modalProps.averageAccuracy }}%</div>
+              <div class="accuracy-value">{{ uiStore.modalData.averageAccuracy }}%</div>
             </div>
 
             <!-- СТАТУС -->
@@ -77,11 +82,11 @@
             </div>
 
             <!-- ДЕТАЛИ (опционально) -->
-            <div v-if="uiStore.modalProps.replicaScores" class="replica-details">
+            <div v-if="uiStore.modalData.replicaScores" class="replica-details">
               <div class="details-label">Результаты по репликам:</div>
               <div class="replica-scores">
                 <span
-                  v-for="(score, index) in uiStore.modalProps.replicaScores"
+                  v-for="(score, index) in uiStore.modalData.replicaScores"
                   :key="index"
                   class="replica-score"
                   :class="getReplicaScoreClass(score)"
@@ -101,7 +106,7 @@
             <!-- ТОЧНОСТЬ (БЕЗ СОХРАНЕНИЯ) -->
             <div class="accuracy-display">
               <div class="accuracy-label">Ваша точность:</div>
-              <div class="accuracy-value">{{ uiStore.modalProps.averageAccuracy }}%</div>
+              <div class="accuracy-value">{{ uiStore.modalData.averageAccuracy }}%</div>
             </div>
 
             <!-- UPGRADE ПРОМО -->
@@ -115,9 +120,26 @@
               </div>
             </div>
           </div>
+          <!-- trainingCompleteLevel1 -->
+          <div v-else-if="uiStore.modalContent === 'trainingCompleteLevel1'" class="training-complete-free-message">
+            <div class="result-icon">
+              <span class="material-symbols-outlined success-icon">sentiment_satisfied</span>
+            </div>
+            <div class="end-message">
+              <p>{{ $t('modal.textLevel1') }}</p>
+            </div>
+          </div>
           <!-- confirm -->
           <div v-else-if="uiStore.modalContent === 'confirm'" class="confirm-message">
             {{ uiStore.modalProps.message }}
+          </div>
+          <!-- ✅ НОВОЕ: Месячная статистика -->
+          <div v-else-if="isMonthlyStatsModal">
+            <!-- PRO: базовая статистика -->
+            <MonthlyStatsModal v-if="!hasDialogProgress" :data="uiStore.modalData" @close="uiStore.hideModal()" />
+
+            <!-- PREMIUM: статистика + детальный прогресс -->
+            <MonthlyStatsModalPremium v-else :data="uiStore.modalData" @close="uiStore.hideModal()" />
           </div>
           <!-- limits -->
           <LimitsModal v-else-if="uiStore.modalContent === 'limits'" />
@@ -129,7 +151,7 @@
           <!-- analysis -->
           <button
             v-if="uiStore.modalContent === 'analysis'"
-            class="btn btn-menu"
+            class="btn btn-menu mx-auto"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
@@ -154,7 +176,7 @@
           <!-- endOfLevel -->
           <button
             v-else-if="uiStore.modalContent === 'endOfLevel'"
-            class="btn btn-menu"
+            class="btn btn-menu mx-auto"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
@@ -163,7 +185,7 @@
           <!-- trainingComplete -->
           <div v-else-if="uiStore.modalContent === 'trainingComplete'" class="footer-buttons">
             <button
-              class="btn btn-menu"
+              class="btn btn-menu mx-auto"
               :class="isDesktop ? 'w-150' : 'mobile w-100'"
               @click="handleTrainingCompleteClose"
             >
@@ -185,6 +207,16 @@
               Купить PRO
             </router-link>
           </div>
+          <!-- trainingCompleteLevel1 -->
+          <div v-else-if="uiStore.modalContent === 'trainingCompleteLevel1'" class="footer-buttons">
+            <button
+              class="btn btn-menu mx-auto"
+              :class="isDesktop ? 'w-150' : 'mobile w-100'"
+              @click="handleTrainingCompleteClose"
+            >
+              {{ $t('buttons.close') }}
+            </button>
+          </div>
           <!-- confirm -->
           <div v-else-if="uiStore.modalContent === 'confirm'" class="footer-buttons">
             <button class="btn btn-menu" :class="isDesktop ? 'w-150' : 'mobile w-100'" @click="uiStore.cancelModal()">
@@ -198,10 +230,20 @@
               {{ uiStore.modalProps.confirmText || $t('buttons.ok') }}
             </button>
           </div>
+          <!-- ✅ НОВОЕ: monthlyStats -->
+          <button
+            v-else-if="isMonthlyStatsModal"
+            class="btn btn-menu mx-auto"
+            :class="isDesktop ? 'w-150' : 'mobile w-100'"
+            @click="uiStore.hideModal()"
+          >
+            <span class="material-symbols-outlined">close</span>
+            {{ $t('buttons.close') }}
+          </button>
           <!-- limits -->
           <button
             v-else-if="uiStore.modalContent === 'limits'"
-            class="btn btn-menu"
+            class="btn btn-menu mx-auto"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
@@ -211,7 +253,7 @@
           <!-- plan -->
           <button
             v-else-if="uiStore.modalContent === 'plan'"
-            class="btn btn-menu"
+            class="btn btn-menu mx-auto"
             :class="isDesktop ? 'w-150' : 'mobile w-100'"
             @click="uiStore.hideModal()"
           >
@@ -231,6 +273,8 @@ import { useUiStore } from '../stores/uiStore';
 import { useTrainingStore } from '../stores/trainingStore';
 import ProBenefitItem from './ProBenefitItem.vue';
 import LimitsModal from './LimitsModal.vue';
+import MonthlyStatsModal from './MonthlyStatsModal.vue';
+import MonthlyStatsModalPremium from './MonthlyStatsModalPremium.vue';
 import PlanModal from './PlanModal.vue';
 import { useBreakpoint } from '../composables/useBreakpoint';
 import { getPlanInfo } from '../config/stripeConfig';
@@ -239,6 +283,13 @@ const uiStore = useUiStore();
 const trainingStore = useTrainingStore();
 const router = useRouter();
 const { isDesktop } = useBreakpoint();
+
+// Определяем какую модалку статистики показывать
+const isMonthlyStatsModal = computed(() => uiStore.modalContent === 'monthlyStats');
+
+const hasDialogProgress = computed(() => {
+  return uiStore.modalData?.dialogProgress && uiStore.modalData.dialogProgress.length > 0;
+});
 
 const containerClass = computed(() => {
   return {
@@ -256,28 +307,29 @@ const containerClass = computed(() => {
 
 // Computed для trainingComplete модалки
 const trainingCompleteTitle = computed(() => {
-  if (uiStore.modalProps.dialogCompleted) {
-    return '🎉 Отлично! Диалог выучен!';
+  if (uiStore.modalData.dialogCompleted) {
+    return '🎉 Тренировка успешна завершена!';
   }
   return '💪 Хорошая работа!';
 });
 
 const trainingCompleteIcon = computed(() => {
-  if (uiStore.modalProps.dialogCompleted) {
+  if (uiStore.modalData.dialogCompleted) {
     return 'check_circle';
   }
   return 'pending';
 });
 
 const trainingCompleteIconClass = computed(() => {
-  if (uiStore.modalProps.dialogCompleted) {
+  if (uiStore.modalData.dialogCompleted) {
     return 'success-icon';
   }
   return 'warning-icon';
 });
 
 const trainingCompleteMessage = computed(() => {
-  const { dialogCompleted, minReplicaAccuracy, minDialogAccuracy } = uiStore.modalProps;
+  console.log(uiStore.modalData);
+  const { dialogCompleted, minReplicaAccuracy, minDialogAccuracy } = uiStore.modalData;
 
   if (dialogCompleted) {
     return `Все реплики ≥ ${minReplicaAccuracy}% и средняя точность ≥ ${minDialogAccuracy}%. Диалог засчитан!`;
@@ -286,7 +338,7 @@ const trainingCompleteMessage = computed(() => {
 });
 
 const trainingCompleteStatusClass = computed(() => {
-  if (uiStore.modalProps.dialogCompleted) {
+  if (uiStore.modalData.dialogCompleted) {
     return 'status-success';
   }
   return 'status-warning';
@@ -302,8 +354,15 @@ function getReplicaScoreClass(score) {
 // Обработчик закрытия модалки trainingComplete
 function handleTrainingCompleteClose() {
   uiStore.hideModal();
-  // Возвращаемся к списку диалогов
-  router.push({ name: 'all-dialogs' });
+
+  const dialogId = uiStore.modalProps.dialogId;
+  if (dialogId) {
+    // Возвращаемся к просмотру диалога
+    router.push({ name: 'view-dialog', params: { id: dialogId } });
+  } else {
+    // Fallback: возвращаемся к списку диалогов
+    router.push({ name: 'all-dialogs' });
+  }
 }
 
 // Получить информацию о выбранном плане
@@ -538,7 +597,7 @@ const planTitle = computed(() => {
 }
 .completion-status.status-warning {
   background-color: rgba(255, 152, 0, 0.1);
-  color: #ff9800;
+  color: var(--text-base);
   border: 1px solid #ff9800;
 }
 .replica-details {
@@ -569,12 +628,12 @@ const planTitle = computed(() => {
 }
 .replica-score.score-excellent {
   background-color: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
+  color: var(--g3);
   border: 1px solid #4caf50;
 }
 .replica-score.score-good {
   background-color: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
+  color: var(--text-base);
   border: 1px solid #ffc107;
 }
 .replica-score.score-poor {

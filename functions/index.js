@@ -575,14 +575,13 @@ export const deleteUserAccount = onCall(async (request) => {
       console.log(`✅ Удалено ${notificationsSnapshot.size} уведомлений`);
     }
 
-    // ✅ 3. Удаляем записи из коллекции usage
-    const usageSnapshot = await db.collection('usage').where('userId', '==', userId).get();
+    // ✅ 3. Удаляем записи из коллекции usage (документ = userId)
+    const usageRef = db.collection('usage').doc(userId);
+    const usageDoc = await usageRef.get();
 
-    if (!usageSnapshot.empty) {
-      const batch = db.batch();
-      usageSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-      console.log(`✅ Удалено ${usageSnapshot.size} записей usage`);
+    if (usageDoc.exists) {
+      await usageRef.delete();
+      console.log('✅ Удалена запись usage');
     }
 
     // ✅ 4. Удаляем подколлекцию dialogProgress в users/{userId}
@@ -648,11 +647,13 @@ export const callGemini = onCall(
       throw new HttpsError('unauthenticated', 'Необходима авторизация');
     }
 
-    const { prompt, operationType } = request.data;
+    const { prompt, operationType, modelType = 'pro' } = request.data;
     if (!prompt) {
       throw new HttpsError('invalid-argument', 'Промпт не предоставлен');
     }
-    console.log(`🤖 Gemini запрос от ${userId}, тип: ${operationType}`);
+    // ✅ ВЫБОР МОДЕЛИ
+    const modelName = modelType === 'fast' ? 'gemini-3-flash-preview' : 'gemini-2.5-flash';
+    console.log(`🤖 Gemini запрос от ${userId}, тип: ${operationType}, модель: ${modelName}`);
 
     try {
       // ✅ Читаем лимиты из Firestore
@@ -680,7 +681,7 @@ export const callGemini = onCall(
         // Вызов Gemini без проверок
         const apiKey = geminiApiKey.value();
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -786,7 +787,7 @@ export const callGemini = onCall(
         // Вызываем Gemini БЕЗ изменения счётчиков
         const apiKey = geminiApiKey.value();
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -821,7 +822,7 @@ export const callGemini = onCall(
       // ✅ Вызов Gemini API
       const apiKey = geminiApiKey.value();
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: modelName });
 
       const result = await model.generateContent(prompt);
       const response = await result.response;

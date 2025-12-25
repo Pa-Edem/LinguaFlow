@@ -2,26 +2,10 @@
 import { db, auth } from '../firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { TRAINING_CONFIG } from '../config/trainingConfig';
-import { updateUserStats, updateStreak, checkAchievements } from './statsService';
+import { updateDialogProgress, updateGlobalStats, isFirstCompletion, isDialogFullyLearned } from './statsService';
+import { checkAchievements } from './achievementService';
 
-/**
- * Сервис для работы с прогрессом тренировок
- * Структура данных в Firestore:
- * users/{userId}/dialogProgress/{dialogId}
- * {
- *   dialogId: 'abc123',
- *   level2: { completed: true, averageAccuracy: 94, ... },
- *   level3: { completed: false, averageAccuracy: 0, ... },
- *   level4: { completed: false, averageAccuracy: 0, ... },
- *   updatedAt: Timestamp
- * }
- */
-
-/**
- * Получить прогресс по диалогу
- * @param {string} dialogId - ID диалога
- * @returns {Promise<object|null>}
- */
+// Получить прогресс по диалогу
 export async function getDialogProgress(dialogId) {
   try {
     const user = auth.currentUser;
@@ -50,29 +34,19 @@ export async function getDialogProgress(dialogId) {
   }
 }
 
-/**
- * Сохранить прогресс по тренировке (с разделением по тарифам)
- * @param {string} dialogId - ID диалога
- * @param {string} levelType - Тип тренировки: 'level1', 'level2', 'level3', 'level4'
- * @param {object} data - Данные прогресса
- * @param {number} data.averageAccuracy - Средняя точность
- * @param {number[]} data.replicaScores - Массив точностей по репликам
- * @param {string} tier - Тариф пользователя ('free', 'pro', 'premium')
- * @param {string} languageLevel - Уровень языка диалога (A1, A2, B1...)
- * @returns {Promise<object|boolean>} - { success: true, newAchievements: [] } или false
- */
-export async function saveDialogProgress(dialogId, levelType, data, tier, languageLevel) {
+// Сохранить прогресс по тренировке (с разделением по тарифам)
+export async function saveDialogProgress(dialogId, levelType, data, tier, languageLevel, topic = '') {
   try {
     const user = auth.currentUser;
     if (!user) {
       console.error('❌ Пользователь не авторизован');
       return false;
     }
-
     console.log(`📊 Сохранение прогресса:`, { dialogId, levelType, tier, data });
 
-    // Проверяем, выучен ли диалог
-    const completed = TRAINING_CONFIG.isDialogCompleted(data.replicaScores);
+    const completed = TRAINING_CONFIG.isDialogCompleted(levelType, data);
+    const attempted = TRAINING_CONFIG.isLevelAttempted(levelType, data);
+    console.log(`📊 Результат: completed=${completed}, attempted=${attempted}`);
 
     // ❌ FREE: ничего не сохраняем
     if (tier === 'free' || !tier) {
@@ -84,16 +58,18 @@ export async function saveDialogProgress(dialogId, levelType, data, tier, langua
     if (tier === 'pro') {
       console.log('⭐ PRO: сохраняем только статистику');
 
-      // Обновить статистику
-      await updateUserStats(user.uid, levelType, {
-        averageAccuracy: data.averageAccuracy,
-        dialogCompleted: completed,
-        dialogId,
-        languageLevel,
-      });
+      const isFirst = await isFirstCompletion(user.uid, dialogId, levelType);
 
-      // Обновить серию
-      await updateStreak(user.uid);
+      // Обновить глобальную статистику
+      await updateGlobalStats(user.uid, dialogId, levelType, {
+        averageAccuracy: data.averageAccuracy,
+        completed,
+        attempted,
+        languageLevel,
+        isFirstCompletion: isFirst,
+        isFullyLearned: false,
+        isFirstFullCompletion: false,
+      });
 
       // Проверить достижения
       const newAchievements = await checkAchievements(user.uid);
@@ -105,21 +81,33 @@ export async function saveDialogProgress(dialogId, levelType, data, tier, langua
     if (tier === 'premium') {
       console.log('👑 PREMIUM: сохраняем статистику + детальный прогресс');
 
-      // 1. Обновить статистику
-      await updateUserStats(user.uid, levelType, {
+      const isFirst = await isFirstCompletion(user.uid, dialogId, levelType);
+      const wasFullyLearnedBefore = await isDialogFullyLearned(user.uid, dialogId);
+
+      // 3. Обновить детальный прогресс (dialogProgress)
+      const progressResult = await updateDialogProgress(user.uid, dialogId, levelType, {
         averageAccuracy: data.averageAccuracy,
-        dialogCompleted: completed,
-        dialogId,
+        completed,
+        replicaScores: data.replicaScores,
+        topic,
         languageLevel,
       });
 
-      // 2. Обновить серию
-      await updateStreak(user.uid);
+      // 4. Обновить глобальную статистику
+      const isFullyLearnedNow = progressResult?.isFullyLearned || false;
+      const isFirstFullCompletion = isFullyLearnedNow && !wasFullyLearnedBefore;
 
-      // 3. Сохранить детальный прогресс
-      await saveDetailedProgress(user.uid, dialogId, levelType, data, completed);
+      await updateGlobalStats(user.uid, dialogId, levelType, {
+        averageAccuracy: data.averageAccuracy,
+        completed,
+        attempted,
+        languageLevel,
+        isFirstCompletion: isFirst,
+        isFullyLearned: isFullyLearnedNow,
+        isFirstFullCompletion,
+      });
 
-      // 4. Проверить достижения
+      // 5. Проверить достижения
       const newAchievements = await checkAchievements(user.uid);
 
       return { success: true, newAchievements, tier: 'premium' };
@@ -132,56 +120,7 @@ export async function saveDialogProgress(dialogId, levelType, data, tier, langua
   }
 }
 
-/**
- * Сохранить детальный прогресс (только для PREMIUM)
- * @param {string} userId - ID пользователя
- * @param {string} dialogId - ID диалога
- * @param {string} levelType - Тип уровня
- * @param {object} data - Данные тренировки
- * @param {boolean} completed - Пройден ли уровень
- */
-async function saveDetailedProgress(userId, dialogId, levelType, data, completed) {
-  try {
-    const progressRef = doc(db, 'users', userId, 'dialogProgress', dialogId);
-    const progressDoc = await getDoc(progressRef);
-
-    const levelData = {
-      completed,
-      averageAccuracy: data.averageAccuracy,
-      replicaScores: data.replicaScores,
-      lastAttempt: new Date(),
-    };
-
-    if (progressDoc.exists()) {
-      // Обновляем существующий документ
-      await updateDoc(progressRef, {
-        [levelType]: levelData,
-        updatedAt: new Date(),
-      });
-      console.log(`✅ Прогресс обновлён: ${dialogId} → ${levelType}`);
-    } else {
-      // Создаём новый документ
-      await setDoc(progressRef, {
-        dialogId,
-        level1: { completed: false, averageAccuracy: 0, replicaScores: [] },
-        level2: { completed: false, averageAccuracy: 0, replicaScores: [] },
-        level3: { completed: false, averageAccuracy: 0, replicaScores: [] },
-        level4: { completed: false, averageAccuracy: 0, replicaScores: [] },
-        [levelType]: levelData,
-        updatedAt: new Date(),
-      });
-      console.log(`✅ Прогресс создан: ${dialogId} → ${levelType}`);
-    }
-  } catch (error) {
-    console.error('❌ Ошибка сохранения детального прогресса:', error);
-  }
-}
-
-/**
- * Получить статус всех тренировок для карточки диалога
- * @param {string} dialogId - ID диалога
- * @returns {Promise<object>} - { level2: false, level3: false, level4: false }
- */
+// Получить статус всех тренировок для карточки диалога
 export async function getDialogTrainingStatus(dialogId) {
   try {
     const progress = await getDialogProgress(dialogId);
@@ -209,11 +148,7 @@ export async function getDialogTrainingStatus(dialogId) {
   }
 }
 
-/**
- * Проверить: все тренировки пройдены?
- * @param {string} dialogId - ID диалога
- * @returns {Promise<boolean>}
- */
+// Проверить: все тренировки пройдены?
 export async function isDialogFullyCompleted(dialogId) {
   try {
     const status = await getDialogTrainingStatus(dialogId);
@@ -224,10 +159,7 @@ export async function isDialogFullyCompleted(dialogId) {
   }
 }
 
-/**
- * Получить общую статистику по всем диалогам пользователя
- * @returns {Promise<object>} - { totalDialogs, completedDialogs, completionRate }
- */
+// Получить общую статистику по всем диалогам пользователя
 export async function getUserTrainingStats() {
   try {
     const user = auth.currentUser;

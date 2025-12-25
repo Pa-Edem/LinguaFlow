@@ -38,7 +38,17 @@
 
         <!-- Список уведомлений -->
         <div class="notifications-list">
-          <div v-for="notif in notifications" :key="notif.id" class="notification-item" :class="{ unread: notif.read }">
+          <div
+            v-for="notif in notifications"
+            :key="notif.id"
+            class="notification-item"
+            :class="{
+              unread: notif.read,
+              clickable:
+                notif.type === 'monthly_stats' || notif.type === 'achievement' || notif.type === 'upgrade_prompt',
+            }"
+            @click="handleNotificationClick(notif)"
+          >
             <!-- Иконка в зависимости от типа -->
             <span class="notification-icon">
               {{ getNotificationIcon(notif.type) }}
@@ -48,6 +58,12 @@
             <div class="notification-content">
               <h4 class="notification-title">{{ notif.title }}</h4>
               <p class="notification-message">{{ notif.message }}</p>
+              <p
+                v-if="notif.type === 'monthly_stats' || notif.type !== 'achievement' || notif.type === 'upgrade_prompt'"
+                class="notification-hint"
+              >
+                👆 Нажмите для просмотра
+              </p>
               <p class="notification-time">{{ formatTime(notif.createdAt) }}</p>
             </div>
           </div>
@@ -67,9 +83,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useNotificationStore } from '../stores/notificationStore';
 import { useBreakpoint } from '../composables/useBreakpoint';
+import { useUiStore } from '../stores/uiStore';
 
 const notificationStore = useNotificationStore();
 const { isDesktop } = useBreakpoint();
+const uiStore = useUiStore();
 const bellRef = ref(null);
 const showDropdown = ref(false);
 
@@ -164,6 +182,30 @@ const handleClickOutside = (event) => {
   }
 };
 
+// Обработчик клика на уведомление
+const handleNotificationClick = (notification) => {
+  console.log(notification.data);
+  // Закрыть dropdown
+  showDropdown.value = false;
+
+  // Отметить прочитанным
+  if (!notification.read) {
+    notificationStore.markAsRead(notification.id);
+  }
+
+  // Обработать тип уведомления
+  if (notification.type === 'monthly_stats') {
+    // Открыть модалку со статистикой
+    uiStore.showModal('monthlyStats', notification.data);
+  } else if (notification.type === 'achievement') {
+    // Можно добавить модалку для достижений (TODO)
+    console.log('🏆 Достижение:', notification.data);
+  } else if (notification.type === 'upgrade_prompt') {
+    // Модалка upgrade
+    uiStore.showModal('upgrade', notification.data);
+  }
+};
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   // Загружаем уведомления при монтировании
@@ -232,7 +274,7 @@ onUnmounted(() => {
   background: var(--r2);
   color: var(--text-title);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: 0.625rem;
+  font-size: 10px;
   font-weight: 700;
   border-radius: 9px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -250,7 +292,7 @@ onUnmounted(() => {
   background: var(--r2);
   color: var(--text-title);
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: 0.625rem;
+  font-size: 8px;
   font-weight: 700;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -261,7 +303,7 @@ onUnmounted(() => {
   position: absolute;
   bottom: calc(100% + 8px); /* ✅ Выпадает СНИЗУ ВВЕРХ */
   left: 0; /* ✅ Слева от кнопки */
-  width: 320px;
+  width: 360px;
   max-height: 500px;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -347,6 +389,7 @@ onUnmounted(() => {
   display: flex;
   gap: 12px;
   padding: 8px;
+  border-left: 4px solid var(--gold-4);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -355,6 +398,7 @@ onUnmounted(() => {
   background: var(--y0);
 }
 .notification-item.unread {
+  border-left: none;
   opacity: 0.6;
 }
 
@@ -364,9 +408,7 @@ onUnmounted(() => {
 /* Иконка */
 .notification-icon {
   flex-shrink: 0;
-  font-size: 1.25rem;
-  width: 20px;
-  height: 20px;
+  font-size: var(--lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -379,26 +421,27 @@ onUnmounted(() => {
 .notification-title {
   margin: 0 0 4px 0;
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xs);
+  font-size: var(--sm);
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-head);
 }
 .notification-message {
   margin: 0 0 4px 0;
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xxs);
-  color: var(--text-head);
+  font-size: var(--sm);
+  color: var(--text-title);
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 .notification-time {
   font-family: 'Roboto Condensed', sans-serif;
-  font-size: var(--xxxs);
+  font-size: var(--xs);
   color: var(--text-base);
+  text-align: right;
 }
 /* Пустое состояние */
 .empty-state {
@@ -420,6 +463,20 @@ onUnmounted(() => {
   margin: 0;
   font-family: 'Roboto Condensed', sans-serif;
   font-size: var(--sm);
+}
+
+/* Кликабельные уведомления */
+.notification-item.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notification-item.clickable:hover {
+  background-color: var(--bg-card);
+}
+
+.notification-item.clickable:active {
+  transform: scale(0.98);
 }
 
 /* Футер */
@@ -446,6 +503,29 @@ onUnmounted(() => {
   background: var(--y10);
 }
 
+/* Подсказка в уведомлении */
+.notification-hint {
+  font-size: var(--xs);
+  color: var(--text-title);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Анимация при наведении */
+.notification-item.clickable:hover .notification-hint {
+  color: var(--text-head);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
 /* ========================================= */
 /* АНИМАЦИЯ */
 /* ========================================= */

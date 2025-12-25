@@ -10,6 +10,7 @@ export const useUiStore = defineStore('ui', {
     isModalActive: false,
     modalContent: 'default',
     modalProps: {},
+    modalData: {},
     modalResolve: null,
     toasts: [],
     toastIdCounter: 0,
@@ -31,8 +32,9 @@ export const useUiStore = defineStore('ui', {
     },
   },
   actions: {
-    showModal(content = 'default') {
-      this.modalProps = {};
+    showModal(content = 'default', data = {}) {
+      this.modalData = data;
+      this.modalProps = data;
       this.modalContent = content;
       this.isModalActive = true;
     },
@@ -79,6 +81,7 @@ export const useUiStore = defineStore('ui', {
     },
     hideModal() {
       this.isModalActive = false;
+      this.modalData = {};
       this.modalResolve = null;
     },
     showToast(message, type = 'info') {

@@ -51,7 +51,7 @@ defineProps({
   height: 48px;
   border-radius: 50%;
   display: block;
-  stroke-width: 3;
+  stroke-width: 4;
   stroke: #f44336;
   stroke-miterlimit: 10;
   animation: cross-scale 0.3s ease-in-out 0.9s both;
@@ -60,7 +60,7 @@ defineProps({
 .cross-circle {
   stroke-dasharray: 166;
   stroke-dashoffset: 166;
-  stroke-width: 3;
+  stroke-width: 4;
   stroke: #f44336;
   fill: none;
   animation: cross-stroke 0.8s cubic-bezier(0.65, 0, 0.45, 1) forwards;
@@ -71,7 +71,7 @@ defineProps({
   stroke-dasharray: 28;
   stroke-dashoffset: 28;
   stroke: #f44336;
-  stroke-width: 3;
+  stroke-width: 4;
   stroke-linecap: round;
   animation: cross-stroke 0.5s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
 }
@@ -96,17 +96,21 @@ defineProps({
 }
 /* TRANSITION (появление/исчезновение компонента) */
 .cross-fade-enter-active {
-  animation: fade-in 0.3s ease;
+  animation: fade-in 2s ease;
 }
 .cross-fade-leave-active {
   animation: fade-out 0.3s ease;
 }
 @keyframes fade-in {
-  from {
+  0% {
     opacity: 0;
     transform: scale(0.5);
   }
-  to {
+  50% {
+    opacity: 1;
+    transform: scale(2);
+  }
+  100% {
     opacity: 1;
     transform: scale(1);
   }

@@ -676,6 +676,7 @@ LinguaFlow
 │ ├─ components
 │ │ ├─ Auth.vue
 │ │ ├─ CheckmarkAnimation.vue
+│ │ ├─ CrossAnimation.vue
 │ │ ├─ DialogCard.vue
 │ │ ├─ DialogLayout.vue
 │ │ ├─ LimitsModal.vue
@@ -711,6 +712,7 @@ LinguaFlow
 │ │ └─ index.js
 │ ├─ services
 │ │ ├─ achievementService.js
+│ │ ├─ statsService.js
 │ │ └─ trainingProgressService.js
 │ ├─ stores
 │ │ ├─ dialogStore.js

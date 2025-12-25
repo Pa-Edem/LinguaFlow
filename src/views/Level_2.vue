@@ -13,7 +13,8 @@
             <button
               class="btn btn-control mic"
               @click="trainingStore.toggleSpeechRecognition()"
-              :class="{ active: trainingStore.isMicActive }"
+              :class="trainingStore.isMicActive ? ' active w-250' : ''"
+              :disabled="!trainingStore.canUseMic"
             >
               <span class="material-symbols-outlined icon">{{ trainingStore.isMicActive ? 'mic' : 'mic_off' }}</span>
               <span class="btn-text">{{ $t('buttons.mic') }}</span>
@@ -103,6 +104,7 @@
             class="btn btn-control mobile mic"
             @click="trainingStore.toggleSpeechRecognition()"
             :class="{ active: trainingStore.isMicActive }"
+            :disabled="!trainingStore.canUseMic"
           >
             <span class="material-symbols-outlined icon">{{ trainingStore.isMicActive ? 'mic' : 'mic_off' }}</span>
           </button>
@@ -116,15 +118,15 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useDialogStore } from '../stores/dialogStore';
 import { useTrainingStore } from '../stores/trainingStore';
-import { useBreakpoint } from '../composables/useBreakpoint';
-import { useUiStore } from '../stores/uiStore';
 import { useUserStore } from '../stores/userStore';
+import { useUiStore } from '../stores/uiStore';
+import { useBreakpoint } from '../composables/useBreakpoint';
+import { saveDialogProgress } from '../services/trainingProgressService';
+import { TRAINING_CONFIG } from '../config/trainingConfig';
 import DialogLayout from '../components/DialogLayout.vue';
 import TrainingSidebar from '../components/TrainingSidebar.vue';
 import CheckmarkAnimation from '../components/CheckmarkAnimation.vue';
 import CrossAnimation from '../components/CrossAnimation.vue';
-import { saveDialogProgress } from '../services/trainingProgressService';
-import { TRAINING_CONFIG } from '../config/trainingConfig';
 
 const props = defineProps({ id: { type: String, required: true } });
 const dialogStore = useDialogStore();
@@ -133,53 +135,16 @@ const uiStore = useUiStore();
 const userStore = useUserStore();
 const { isDesktop } = useBreakpoint();
 
-const lineIndex = computed(() => trainingStore.currentLineIndex);
-const dialog = computed(() => dialogStore.currentDialog);
-
-const mobileContent = ref(null);
-const desktopContent = ref(null);
-
-// ✅ НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ТОЧНОСТИ
 const replicaScores = ref([]);
 const showCheckmark = ref(false);
 const showCross = ref(false);
+const mobileContent = ref(null);
+const desktopContent = ref(null);
 
-// ✅ СЛЕДИМ ЗА ТОЧНОСТЬЮ ИЗ STORE
-watch(
-  () => trainingStore.currentAccuracy,
-  (newAccuracy) => {
-    if (newAccuracy > 0) {
-      // Сохраняем результат реплики
-      replicaScores.value[trainingStore.currentLineIndex] = newAccuracy;
+const lineIndex = computed(() => trainingStore.currentLineIndex);
+const dialog = computed(() => dialogStore.currentDialog);
 
-      console.log(`✅ Реплика ${trainingStore.currentLineIndex + 1}: ${newAccuracy}%`);
-
-      // ✅ ПОКАЗЫВАЕМ ГАЛОЧКУ если точность >= 85%
-      if (newAccuracy >= TRAINING_CONFIG.completion.minReplicaAccuracy) {
-        showCheckmark.value = true;
-        setTimeout(() => {
-          showCheckmark.value = false;
-        }, 3000);
-      } else {
-        // ПОКАЗЫВАЕМ КРЕСТИК если точность < 85%
-        showCross.value = true;
-        setTimeout(() => {
-          showCross.value = false;
-        }, 3000);
-      }
-
-      // ПРОВЕРЯЕМ: ВСЕ РЕПЛИКИ ПРОЙДЕНЫ И МЫ НА ПОСЛЕДНЕЙ?
-      const totalReplicas = dialog.value.fin.length;
-      const completedReplicas = replicaScores.value.filter((score) => score !== undefined).length;
-      const isLastReplica = trainingStore.currentLineIndex === totalReplicas - 1;
-
-      if (completedReplicas === totalReplicas && isLastReplica) {
-        completeTraining();
-      }
-    }
-  }
-);
-
+// АВТОСКРОЛЛ РЕПЛИК
 watch(lineIndex, () => {
   setTimeout(() => {
     const container = isDesktop.value ? desktopContent.value : mobileContent.value;
@@ -189,6 +154,33 @@ watch(lineIndex, () => {
   }, 100);
 });
 
+// СЛЕДИМ ЗА ТОЧНОСТЬЮ
+watch(
+  () => trainingStore.currentAccuracy,
+  (newAccuracy) => {
+    if (newAccuracy > 0) {
+      // Сохраняем результат реплики
+      replicaScores.value[trainingStore.currentLineIndex] = newAccuracy;
+      console.log(`✅ Реплика ${trainingStore.currentLineIndex + 1}: ${newAccuracy}%`);
+      // ПОКАЗЫВАЕМ ГАЛОЧКУ если точность >= min
+      if (newAccuracy >= TRAINING_CONFIG.completion.level2.minReplicaAccuracy) {
+        showCheckmark.value = true;
+        setTimeout(() => {
+          showCheckmark.value = false;
+          trainingStore.nextLine();
+        }, 3000);
+      }
+      // ПОКАЗЫВАЕМ КРЕСТИК если точность < min
+      if (newAccuracy < TRAINING_CONFIG.completion.level2.minReplicaAccuracy) {
+        showCross.value = true;
+        setTimeout(() => {
+          showCross.value = false;
+        }, 3000);
+      }
+    }
+  }
+);
+
 const visibleLines = computed(() => {
   if (!dialog.value) return { fin: [], rus: [] };
   return {
@@ -197,68 +189,80 @@ const visibleLines = computed(() => {
   };
 });
 
-// ✅ ЗАВЕРШЕНИЕ ТРЕНИРОВКИ
+// ОБРАБОТЧИК СОБЫТИЯ "ПОСЛЕДНЯЯ РЕПЛИКА"
+function handleCompleteEvent() {
+  completeTraining();
+}
+
+// ЗАВЕРШЕНИЕ ТРЕНИРОВКИ
 async function completeTraining() {
+  console.log('Завершение, сохранение прогресса');
   // Фильтруем только реально пройденные реплики
   const validScores = replicaScores.value.filter((score) => score !== undefined);
-
   if (validScores.length === 0) {
     console.warn('⚠️ Нет результатов для сохранения');
     return;
   }
-
   // Вычисляем среднюю точность
   const averageAccuracy = Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length);
-
   // Проверяем прохождение
-  const dialogCompleted = TRAINING_CONFIG.isDialogCompleted(validScores);
-
-  console.log(`🎯 Завершение тренировки:`, {
+  const dialogCompleted = TRAINING_CONFIG.isDialogCompleted('level2', {
+    averageAccuracy,
+    replicaScores: validScores,
+  });
+  console.log(`Level-2 завершён:`, {
     averageAccuracy,
     dialogCompleted,
     scores: validScores,
   });
-
-  // ✅ ПОЛУЧИТЬ ТАРИФ ПОЛЬЗОВАТЕЛЯ
+  // ТАРИФ ПОЛЬЗОВАТЕЛЯ
   const tier = userStore.isPremium ? 'premium' : userStore.isPro ? 'pro' : 'free';
-  console.log(`💳 Тариф пользователя: ${tier}`);
+  // СОХРАНИТЬ ПРОГРЕСС
+  if (tier !== 'free') {
+    const extractBaseLevel = (level) => {
+      if (!level) return '';
+      const match = level.match(/^([A-C][1-2])/);
+      return match ? match[1] : '';
+    };
 
-  // ✅ СОХРАНИТЬ ПРОГРЕСС (в зависимости от тарифа)
-  const result = await saveDialogProgress(
-    props.id,
-    'level2',
-    {
-      averageAccuracy,
-      replicaScores: validScores,
-    },
-    tier,
-    dialog.value?.languageLevel // A1, A2, B1...
-  );
+    const languageLevel = extractBaseLevel(dialog.value?.level);
 
-  // ✅ ПОКАЗАТЬ ДОСТИЖЕНИЯ (если есть)
-  if (result && result.newAchievements && result.newAchievements.length > 0) {
-    console.log('🎉 Новые достижения разблокированы:', result.newAchievements);
-    // TODO: Показать уведомления о достижениях
+    const result = await saveDialogProgress(
+      props.id,
+      'level2',
+      {
+        averageAccuracy,
+        replicaScores: validScores,
+      },
+      tier,
+      languageLevel
+    );
+    console.log('СОХРАНИТЬ ПРОГРЕСС', result);
   }
-
-  // ✅ ПОКАЗАТЬ МОДАЛКУ (в зависимости от тарифа)
+  // ПОКАЗАТЬ МОДАЛКУ
   if (tier === 'free') {
-    // FREE: модалка без сохранения
     uiStore.showModal('trainingCompleteFree', {
+      dialogId: props.id,
       averageAccuracy,
       dialogCompleted,
     });
   } else {
-    // PRO/PREMIUM: модалка с результатами
+    // PRO/PREMIUM
     uiStore.showModal('trainingComplete', {
+      dialogId: props.id,
       averageAccuracy,
       dialogCompleted,
       replicaScores: validScores,
-      minReplicaAccuracy: TRAINING_CONFIG.completion.minReplicaAccuracy,
-      minDialogAccuracy: TRAINING_CONFIG.completion.minDialogAccuracy,
+      minReplicaAccuracy: TRAINING_CONFIG.completion.level2.minReplicaAccuracy,
+      minDialogAccuracy: TRAINING_CONFIG.completion.level2.minDialogAccuracy,
     });
   }
 }
+
+// ЭКСПОРТИРУЕМ функцию завершения для кнопки
+defineExpose({
+  completeTraining,
+});
 
 onMounted(async () => {
   trainingStore.setCurrentTrainingType('level-2');
@@ -268,13 +272,14 @@ onMounted(async () => {
   }
   // Инициализируем массив результатов
   replicaScores.value = Array(dialog.value?.fin.length || 0).fill(undefined);
+  // СЛУШАЕМ СОБЫТИЕ ОТ nextLine()
+  window.addEventListener('completeTraining', handleCompleteEvent);
 });
 
 onUnmounted(() => {
   trainingStore.stopSpeech();
-
-  // Сбрасываем результаты
   replicaScores.value = [];
+  window.removeEventListener('completeTraining', handleCompleteEvent);
 });
 </script>
 

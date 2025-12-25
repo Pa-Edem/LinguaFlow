@@ -168,21 +168,25 @@ service cloud.firestore {
     // Notifications - уведомления пользователей
     // ==========================================
     match /notifications/{notificationId} {
-      // Пользователь может читать только СВОИ уведомления
-      allow read: if request.auth != null 
-                  && request.auth.uid == resource.data.userId;
-      
-      // Пользователь может обновлять только СВОИ уведомления (пометка как прочитанное)
-      allow update: if request.auth != null 
-                    && request.auth.uid == resource.data.userId
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-      
-      // Создавать могут только Cloud Functions
-      allow create: if false;
-      
-      // Удалять могут только Cloud Functions
-      allow delete: if false;
-    }
+  // Читать только свои
+  allow read: if request.auth != null 
+              && request.auth.uid == resource.data.userId;
+  
+  // СОЗДАНИЕ из frontend (achievementService)
+  allow create: if request.auth != null 
+                && request.auth.uid == request.resource.data.userId
+                && request.resource.data.keys().hasAll(['userId', 'type', 'title', 'message', 'read', 'createdAt'])
+                && request.resource.data.read == false;
+  
+  // Обновлять только свои (пометка прочитанным)
+  allow update: if request.auth != null 
+                && request.auth.uid == resource.data.userId
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+  
+  // Удалять может пользователь (свои)
+  allow delete: if request.auth != null 
+                && request.auth.uid == resource.data.userId;
+}
     
     // ==========================================
     // БЛОКИРОВКА ВСЕГО ОСТАЛЬНОГО

@@ -1,4 +1,5 @@
 <!-- src\views\Level_1.vue -->
+
 <template>
   <div v-if="isDesktop" class="in-view">
     <DialogLayout>
@@ -67,6 +68,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useDialogStore } from '../stores/dialogStore';
 import { useTrainingStore } from '../stores/trainingStore';
+import { useUiStore } from '../stores/uiStore';
 import { useBreakpoint } from '../composables/useBreakpoint';
 import DialogLayout from '../components/DialogLayout.vue';
 import TrainingSidebar from '../components/TrainingSidebar.vue';
@@ -74,6 +76,7 @@ import TrainingSidebar from '../components/TrainingSidebar.vue';
 const props = defineProps({ id: { type: String, required: true } });
 const dialogStore = useDialogStore();
 const trainingStore = useTrainingStore();
+const uiStore = useUiStore();
 const { isDesktop } = useBreakpoint();
 
 const lineIndex = computed(() => trainingStore.currentLineIndex);
@@ -82,6 +85,7 @@ const dialog = computed(() => dialogStore.currentDialog);
 const mobileContent = ref(null);
 const desktopContent = ref(null);
 
+// АВТОСКРОЛЛ РЕПЛИК
 watch(lineIndex, () => {
   setTimeout(() => {
     const container = isDesktop.value ? desktopContent.value : mobileContent.value;
@@ -99,16 +103,35 @@ const visibleLines = computed(() => {
   };
 });
 
+// ОБРАБОТЧИК СОБЫТИЯ "ПОСЛЕДНЯЯ РЕПЛИКА"
+function handleCompleteEvent() {
+  completeTraining();
+}
+
+// ЗАВЕРШЕНИЕ ТРЕНИРОВКИ
+async function completeTraining() {
+  uiStore.showModal('trainingCompleteLevel1', {
+    dialogId: props.id,
+  });
+}
+
+// ЭКСПОРТИРУЕМ функцию завершения для кнопки
+defineExpose({
+  completeTraining,
+});
+
 onMounted(async () => {
   trainingStore.setCurrentTrainingType('level-1');
   await dialogStore.fetchDialogById(props.id);
   if (dialogStore.currentDialog) {
     trainingStore.startLevel();
   }
+  window.addEventListener('completeTraining', handleCompleteEvent);
 });
 
 onUnmounted(() => {
   trainingStore.stopSpeech();
+  window.removeEventListener('completeTraining', handleCompleteEvent);
 });
 </script>
 

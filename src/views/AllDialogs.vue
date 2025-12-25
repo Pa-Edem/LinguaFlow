@@ -17,6 +17,16 @@
       <div class="user-profile">
         <!-- ✅ КОЛОКОЛЬЧИК -->
         <NotificationBell />
+        <!-- Кнопка Статистика (только PRO/PREMIUM) -->
+        <button
+          v-if="userStore.isPro || userStore.isPremium"
+          @click="router.push('/stats')"
+          class="btn btn-menu"
+          :title="$t('stats.title')"
+        >
+          <span class="material-symbols-outlined">bar_chart</span>
+          <span class="btn-text">{{ $t('stats.title') }}</span>
+        </button>
         <router-link to="/profile" class="btn btn-menu">
           <span class="material-symbols-outlined">person</span>
           <span>{{ $t('all.profile') }}</span>
@@ -120,6 +130,10 @@
           <span class="material-symbols-outlined">person</span>
           <span>{{ $t('all.profile') }}</span>
         </router-link>
+        <router-link v-if="userStore.isPro || userStore.isPremium" to="/stats" class="tab-item">
+          <span class="material-symbols-outlined">bar_chart</span>
+          <span>{{ $t('stats.title') }}</span>
+        </router-link>
         <!-- ✅ КОЛОКОЛЬЧИК -->
         <NotificationBell />
       </div>
@@ -212,7 +226,6 @@ onMounted(async () => {
       await dialogStore.fetchAllDialogs();
     }
   }
-
   upgradeShownForCreate.value = sessionStorage.getItem('upgradeShown_create') === 'true';
 
   // ✅ Показываем модалку trial при первом визите
@@ -226,15 +239,7 @@ onMounted(async () => {
 
       localStorage.setItem('trial_modal_shown', 'true');
     }
-    // else {
-    //   console.log('❌ Trial Modal already shown');
-    // }
   }
-  // else {
-  // console.log('❌ Trial Modal conditions not met:', {
-  //   reason: userStore.trialUsed ? 'trial already used' : 'not free tier',
-  // });
-  // }
 
   // ✅ Проверяем, закончился ли trial (показываем toast 1 раз)
   const trialExpiredShown = sessionStorage.getItem('trial_expired_shown') === 'true';
@@ -301,7 +306,7 @@ const goToCreateDialog = async () => {
   const totalLimit = settingsStore.limit.totalDialogs;
 
   // ✅ Проверка: есть ли накопленные И не превышен дневной максимум И не превышен лимит диалогов
-  const canUse = usedToday < dailyMax && accumulated > 0 && totalCount < totalLimit;
+  const canUse = usedToday < dailyMax && accumulated > 0 && totalCount <= totalLimit;
 
   if (canUse) {
     // ✅ Можно создавать — переходим
